@@ -1,9 +1,3 @@
-For your Flutter repository, the README should emphasize **UI/UX excellence**, **State Management**, and **Clean Architecture**. This is what mobile recruiters look for to distinguish a "hobbyist" from a "software engineer."
-
-Here is the professional English README for **UEvent-Frontend-Flutter**:
-
------
-
 # UEvent Mobile - Next-Gen Event Experience App
 
 [](https://flutter.dev/)
