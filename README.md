@@ -7,7 +7,7 @@
 
 **UEvent Mobile** is a high-performance, cross-platform application designed to revolutionize how users discover, join, and interact with events. Built with **Flutter**, it delivers a native-grade experience with a focus on real-time engagement and seamless entry validation.
 
-> **Backend (Django):** [Link to Repository](https://www.google.com/search?q=https://github.com/TriNguyenThanh/UEvent-backend-Django)
+> **Backend (Django):** [Link to Repository](https://github.com/TriNguyenThanh/UEvent-backend-Django)
 
 -----
 
