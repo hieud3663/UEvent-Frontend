@@ -1,9 +1,9 @@
 // File: lib/features/events/widgets/event_info_row.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_colors.dart';
-import '../../../apps/app_text_styles.dart';
-import '../../../apps/app_constants.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/theme/app_constants.dart';
 
 /// A single information row: icon tile + primary label + optional subtitle.
 class EventInfoRow extends StatelessWidget {

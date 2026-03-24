@@ -1,8 +1,8 @@
 // File: lib/features/events/widgets/event_action_bar.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_colors.dart';
-import '../../../apps/app_text_styles.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_text_styles.dart';
 
 enum EventActionBarMode { unregistered, registered }
 

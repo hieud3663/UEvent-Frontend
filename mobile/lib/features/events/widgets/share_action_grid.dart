@@ -1,8 +1,8 @@
 // File: lib/features/events/widgets/share_action_grid.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_colors.dart';
-import '../../../apps/app_text_styles.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_text_styles.dart';
 
 /// 4-icon action grid for Copy Link / Share via QR / Save Post / More.
 class ShareActionGrid extends StatelessWidget {

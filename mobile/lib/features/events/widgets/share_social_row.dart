@@ -1,7 +1,7 @@
 // File: lib/features/events/widgets/share_social_row.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_text_styles.dart';
+import 'package:frontend/core/theme/app_text_styles.dart';
 
 /// Horizontally scrollable row of social app icons for sharing.
 class ShareSocialRow extends StatelessWidget {

@@ -1,7 +1,7 @@
 // File: lib/features/events/widgets/event_hero_header.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_colors.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 
 /// Full-bleed hero image with gradient overlay + back/share/favourite overlay buttons.
 /// Returns a SliverAppBar or use as a plain widget inside CustomScrollView.

@@ -1,10 +1,10 @@
 // File: lib/features/events/widgets/event_qa_section.dart
 
 import 'package:flutter/material.dart';
-import '../../../apps/app_colors.dart';
-import '../../../apps/app_text_styles.dart';
-import '../../../apps/app_constants.dart';
-import '../models/event_question_model.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/theme/app_constants.dart';
+import 'package:frontend/features/events/models/event_question_model.dart';
 
 /// Q&A section: header with "Ask Question" button + list of questions.
 class EventQaSection extends StatelessWidget {
