@@ -11,6 +11,11 @@ import 'package:frontend/features/profile/views/user_profile_view.dart';
 import 'package:frontend/features/events/views/empty_search_view.dart';
 import 'package:frontend/features/events/views/event_detail_organizer_view.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'features/events/views/event_detail_screen.dart';
+import 'features/events/views/registration_confirmation_screen.dart';
+import 'features/events/views/registration_success_screen.dart';
+import 'features/events/views/ask_question_screen.dart';
+import 'features/events/views/share_event_sheet.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,8 +107,42 @@ class _AppShellState extends State<AppShell> {
 
   void _pushEventDetail(EventModel event) {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => EventDetailOrganizerView(
-        onBack: () => Navigator.of(context).pop(),
+      builder: (ctx) => EventDetailScreen(
+        onBack: () => Navigator.of(ctx).pop(),
+        onShare: () => ShareEventSheet.show(ctx),
+        onRegister: () => _pushRegistrationConfirmation(ctx),
+        onAskQuestion: () => _pushAskQuestion(ctx),
+      ),
+    ));
+  }
+
+  void _pushRegistrationConfirmation(BuildContext ctx) {
+    RegistrationConfirmationScreen.show(
+      ctx,
+      eventName: 'Global Developer Summit 2024',
+      onConfirm: () {
+        Navigator.of(ctx).pop(); // close sheet
+        _pushRegistrationSuccess(ctx);
+      },
+    );
+  }
+
+  void _pushRegistrationSuccess(BuildContext ctx) {
+    Navigator.of(ctx).push(MaterialPageRoute(
+      builder: (_) => RegistrationSuccessScreen(
+        eventName: 'Global Developer Summit 2024',
+        ticketId: '#UE-98210',
+        onViewTicket: () => Navigator.of(ctx).pop(),
+        onAddToWallet: () {},
+      ),
+    ));
+  }
+
+  void _pushAskQuestion(BuildContext ctx) {
+    Navigator.of(ctx).push(MaterialPageRoute(
+      builder: (_) => AskQuestionScreen(
+        onBack: () => Navigator.of(ctx).pop(),
+        onSend: (q, anon, notify) {},
       ),
     ));
   }
