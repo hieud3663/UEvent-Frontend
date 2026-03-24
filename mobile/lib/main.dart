@@ -2,15 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'apps/app_theme.dart';
-import 'views/home_view.dart';
-import 'views/discovery_view.dart';
-import 'views/notifications_view.dart';
-import 'views/create_event_view.dart';
-import 'views/user_profile_view.dart';
-import 'views/empty_search_view.dart';
-import 'views/event_detail_organizer_view.dart';
-import 'models/event_model.dart';
+import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/features/events/views/home_view.dart';
+import 'package:frontend/features/events/views/discovery_view.dart';
+import 'package:frontend/features/notifications/views/notifications_view.dart';
+import 'package:frontend/features/events/views/create_event_view.dart';
+import 'package:frontend/features/profile/views/user_profile_view.dart';
+import 'package:frontend/features/events/views/empty_search_view.dart';
+import 'package:frontend/features/events/views/event_detail_organizer_view.dart';
+import 'package:frontend/features/events/models/event_model.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
