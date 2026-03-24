@@ -9,8 +9,13 @@ import 'package:frontend/features/notifications/views/notifications_view.dart';
 import 'package:frontend/features/events/views/create_event_view.dart';
 import 'package:frontend/features/profile/views/user_profile_view.dart';
 import 'package:frontend/features/events/views/empty_search_view.dart';
-import 'package:frontend/features/events/views/event_detail_organizer_view.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/ticketing/models/ticket_model.dart';
+import 'package:frontend/features/ticketing/views/my_tickets_view.dart';
+import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
+import 'package:frontend/features/ticketing/views/past_event_detail_view.dart';
+import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart';
+import 'package:frontend/features/ticketing/views/cancel_error_dialog.dart';
 import 'features/events/views/event_detail_screen.dart';
 import 'features/events/views/registration_confirmation_screen.dart';
 import 'features/events/views/registration_success_screen.dart';
@@ -147,6 +152,38 @@ class _AppShellState extends State<AppShell> {
     ));
   }
 
+  // ── Ticketing Navigation ──
+
+  void _pushTicketDetail(TicketModel ticket) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => TicketDetailView(
+        ticket: ticket,
+        onBack: () => Navigator.of(ctx).pop(),
+        onCancelTap: () => _showCancelConfirmation(ctx, ticket),
+      ),
+    ));
+  }
+
+  void _showCancelConfirmation(BuildContext ctx, TicketModel ticket) {
+    CancelConfirmationSheet.show(
+      ctx,
+      eventName: ticket.eventName,
+      onConfirm: () {
+        Navigator.of(ctx).pop(); // close sheet
+        CancelErrorDialog.show(ctx); // always show error (demo: within 24h)
+      },
+    );
+  }
+
+  void _pushPastEventDetail(TicketModel ticket) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => PastEventDetailView(
+        ticket: ticket,
+        onBack: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return IndexedStack(
@@ -170,13 +207,12 @@ class _AppShellState extends State<AppShell> {
           onSearchEmpty: _pushEmptySearch,
           onEventTap: _pushEventDetail,
         ),
-        // Tab 2: TICKETS (placeholder — reuse Home for now)
-        HomeView(
+        // Tab 2: TICKETS
+        MyTicketsView(
           currentNavIndex: _currentIndex,
           onNavTap: _onNavTap,
-          onNotificationsTap: _pushNotifications,
-          onProfileTap: _pushProfile,
-          onCreateEventTap: _pushCreateEvent,
+          onTicketTap: _pushTicketDetail,
+          onPastTicketTap: _pushPastEventDetail,
         ),
         // Tab 3: SETTINGS (placeholder — reuse Home for now)
         HomeView(
