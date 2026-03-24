@@ -9,6 +9,8 @@ import 'views/notifications_view.dart';
 import 'views/create_event_view.dart';
 import 'views/user_profile_view.dart';
 import 'views/empty_search_view.dart';
+import 'views/event_detail_organizer_view.dart';
+import 'models/event_model.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,6 +100,14 @@ class _AppShellState extends State<AppShell> {
     ));
   }
 
+  void _pushEventDetail(EventModel event) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => EventDetailOrganizerView(
+        onBack: () => Navigator.of(context).pop(),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return IndexedStack(
@@ -110,6 +120,7 @@ class _AppShellState extends State<AppShell> {
           onNotificationsTap: _pushNotifications,
           onProfileTap: _pushProfile,
           onCreateEventTap: _pushCreateEvent,
+          onEventTap: _pushEventDetail,
         ),
         // Tab 1: DISCOVER
         DiscoveryView(
@@ -118,6 +129,7 @@ class _AppShellState extends State<AppShell> {
           onNotificationsTap: _pushNotifications,
           onProfileTap: _pushProfile,
           onSearchEmpty: _pushEmptySearch,
+          onEventTap: _pushEventDetail,
         ),
         // Tab 2: TICKETS (placeholder — reuse Home for now)
         HomeView(

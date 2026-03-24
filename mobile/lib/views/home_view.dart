@@ -5,6 +5,7 @@ import '../apps/app_colors.dart';
 import '../apps/app_constants.dart';
 import '../apps/app_text_styles.dart';
 import '../models/event_model.dart';
+import '../mock/mock_event_data.dart';
 import '../widgets/glass_top_bar.dart';
 import '../widgets/glass_bottom_nav_bar.dart';
 import '../widgets/event_card.dart';
@@ -17,6 +18,7 @@ class HomeView extends StatelessWidget {
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onProfileTap;
   final VoidCallback? onCreateEventTap;
+  final ValueChanged<EventModel>? onEventTap;
 
   const HomeView({
     super.key,
@@ -25,27 +27,8 @@ class HomeView extends StatelessWidget {
     this.onNotificationsTap,
     this.onProfileTap,
     this.onCreateEventTap,
+    this.onEventTap,
   });
-
-  // ── Mock Data ──
-  static final List<EventModel> _myEvents = [
-    EventModel(
-      id: '1',
-      title: 'Workshop Nhiếp Ảnh Căn Bản',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDuQsHATzTyDapvZjwkwkqCQweROKenFuGknzW9zUSqCQ0xGGI-3qyWIiUnQJxDofLYUmsCW77RKctoWOORYZ-C9VOyfO5onLl-SmmowvJANUGB1UyC5A6a0EZQq4ftjYn4uwWDxJC8K9QoXfIsGL927GPIeLulzLMSGWxyX2SEnL4PslhXvvwPVKIHgIt39Gl3rUlExwAcByDM3_wG9X6y5SjcOyOPvEgM06SayCpfP7qpiOJVnbxwMrfQl1gKtphIwFpFLtgmKfo',
-      location: 'The Lab Studio, Quận 1',
-      startDate: DateTime(2025, 5, 24),
-    ),
-    EventModel(
-      id: '2',
-      title: 'Lễ Hội Âm Nhạc Bãi Biển',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCvPC6lDKFEGyp8qY0ujcdU-w6F0GxOiIf9IWYTiyqNVfaB2IsxrVELFRzOzTTTx_IFCPh2lT7rqdNq26lIm7lx2dEdbUfRGcePsJm4RFW5HitgpSxYG3dS9vgW887rZ1YfXnLi0l1gVoF27EjJa8qS_su4uIcHVXB_P6kqtfbSM3BDOsMFSmrex-BlYAWmtAWHvazbxc_C2SoHgd8-nimw1-dhDMWGCLQryvxL3CNp11FC_4bc6FH4u0NRROb6PA29MkQtDIYnaM0',
-      location: 'Vũng Tàu Beach Club',
-      startDate: DateTime(2025, 5, 25),
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -91,11 +74,7 @@ class HomeView extends StatelessWidget {
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final event = _myEvents[index];
-                    final dates = [
-                      'Thứ 7, 24 Th05',
-                      'Chủ nhật, 25 Th05',
-                    ];
+                    final event = MockEventData.myEvents[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppConstants.pagePaddingH,
@@ -103,12 +82,13 @@ class HomeView extends StatelessWidget {
                       ),
                       child: EventCard(
                         event: event,
-                        formattedDate: dates[index],
+                        formattedDate: MockEventData.myEventDates[index],
                         trailing: _buildQrButton(),
+                        onTap: onEventTap != null ? () => onEventTap!(event) : null,
                       ),
                     );
                   },
-                  childCount: _myEvents.length,
+                  childCount: MockEventData.myEvents.length,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),

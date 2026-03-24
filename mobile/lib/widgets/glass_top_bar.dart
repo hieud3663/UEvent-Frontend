@@ -13,6 +13,7 @@ class GlassTopBar extends StatelessWidget {
   final Widget? leadingWidget;
   final IconData? leadingIcon;
   final IconData? trailingIcon;
+  final Widget? trailingWidget;
   final VoidCallback? onLeadingTap;
   final VoidCallback? onTrailingTap;
   final TextStyle? titleStyle;
@@ -23,6 +24,7 @@ class GlassTopBar extends StatelessWidget {
     this.leadingWidget,
     this.leadingIcon,
     this.trailingIcon,
+    this.trailingWidget,
     this.onLeadingTap,
     this.onTrailingTap,
     this.titleStyle,
@@ -80,7 +82,9 @@ class GlassTopBar extends StatelessWidget {
                   ),
 
                   // Trailing
-                  if (trailingIcon != null)
+                  if (trailingWidget != null)
+                    trailingWidget!
+                  else if (trailingIcon != null)
                     _buildIconButton(trailingIcon!, onTrailingTap)
                   else
                     const SizedBox(width: 40),

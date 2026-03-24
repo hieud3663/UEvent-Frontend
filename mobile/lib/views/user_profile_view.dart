@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../apps/app_colors.dart';
 import '../apps/app_constants.dart';
 import '../apps/app_text_styles.dart';
+import '../mock/mock_user_data.dart';
 
 import '../widgets/glass_top_bar.dart';
 import '../widgets/glass_container.dart';
@@ -53,7 +54,7 @@ class _UserProfileViewState extends State<UserProfileView> {
           shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4),
           boxShadow: [BoxShadow(color: AppColors.shadowNav, blurRadius: 20)],
         ), child: ClipOval(child: Image.network(
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
+          MockUserData.avatarUrl,
           fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceVariant),
         ))),
         Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(
@@ -61,28 +62,28 @@ class _UserProfileViewState extends State<UserProfileView> {
         ), child: const Icon(Icons.edit, size: 14, color: Colors.white)),
       ]),
       const SizedBox(height: 16),
-      Text('Nguyen Van A', style: AppTextStyles.headlineLarge),
+      Text(MockUserData.name, style: AppTextStyles.headlineLarge),
       const SizedBox(height: 4),
-      Text('MSSV: 21520000', style: AppTextStyles.labelSmall.copyWith(letterSpacing: 2)),
+      Text(MockUserData.studentId, style: AppTextStyles.labelSmall.copyWith(letterSpacing: 2)),
       const SizedBox(height: 8),
       Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(9999),
-      ), child: Text('Faculty of Computer Science', style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.onSurfaceVariant))),
+      ), child: Text(MockUserData.faculty, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.onSurfaceVariant))),
       const SizedBox(height: 4),
-      Text('Class: CS2021', style: AppTextStyles.bodySmall.copyWith(color: AppColors.navInactive)),
+      Text(MockUserData.className, style: AppTextStyles.bodySmall.copyWith(color: AppColors.navInactive)),
     ]);
   }
 
   Widget _buildStats() {
     return Row(children: [
       Expanded(child: GlassContainer(padding: const EdgeInsets.all(16), child: Column(children: [
-        Text('12', style: AppTextStyles.statNumber),
+        Text('${MockUserData.eventCount}', style: AppTextStyles.statNumber),
         const SizedBox(height: 4),
         Text('EVENTS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.navInactive)),
       ]))),
       const SizedBox(width: 16),
       Expanded(child: GlassContainer(padding: const EdgeInsets.all(16), child: Column(children: [
-        Text('5', style: AppTextStyles.statNumber),
+        Text('${MockUserData.clubCount}', style: AppTextStyles.statNumber),
         const SizedBox(height: 4),
         Text('CLUBS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.navInactive)),
       ]))),
@@ -105,12 +106,7 @@ class _UserProfileViewState extends State<UserProfileView> {
   }
 
   Widget _buildEventList() {
-    final events = [
-      {'title': 'AI Workshop: Future Trends', 'date': 'Oct 24, 2024', 'status': 'Active',
-        'image': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdkReXA_HMyY2sg2TmNmA-4IKSGCAxEeujwXP3JVGJj0W4Fp-e8ZD9fWuA5E5qrskyF4NRB5d91S1BNFky_Z1ypIIoaLx8Q2SJ3-wEB1g35UyvfuhoydWjoKDdRfoQsn7WS60bJvGCLWDu8z8KnsMdbiLnK3R94M8rb6m46ifdmPrcjeOrtzS81sXSpFBfMVHEoIAFPHXmsoj1sT-xNAwTj_zt2RnRSbC4XhUnryanmY0SL_O-zAt87b4FgYgSbMvmnWkPFdNYteY'},
-      {'title': 'Campus Open Mic Night', 'date': 'Oct 30, 2024', 'status': 'Draft',
-        'image': 'https://lh3.googleusercontent.com/aida-public/AB6AXuByft2wTiNzS6FnbkbPZHJM7hAg7DcadGP94XTPOk7sXKdZ7fEzzpQ13Ho9er_gRbVaZbHC3fto9gJyBgmaggPFk5_22irpwRb8I9gPJxecwEkEs7it7AlXKz5nVd4gbEYCk2j3U_xSna_zTKF3KAcL7HuCYpychLHF0U69k_juvv_9srVqtc2rcBvWaUbctZV39KSW34SUPSOPnZEEc1u8gHVCqUicXZkrsseUeVZhb5sUL4xtgvrXzh-1PfTnUrrobNrxHp0JjRY'},
-    ];
+    final events = MockUserData.profileEvents;
 
     return Column(children: events.map((e) => Padding(padding: const EdgeInsets.only(bottom: 16), child: GlassContainer(
       borderRadius: 12, child: Row(children: [

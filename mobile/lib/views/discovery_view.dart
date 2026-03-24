@@ -5,6 +5,7 @@ import '../apps/app_colors.dart';
 import '../apps/app_constants.dart';
 import '../apps/app_text_styles.dart';
 import '../models/event_model.dart';
+import '../mock/mock_event_data.dart';
 import '../widgets/glass_top_bar.dart';
 import '../widgets/glass_bottom_nav_bar.dart';
 import '../widgets/event_card_vertical.dart';
@@ -17,6 +18,7 @@ class DiscoveryView extends StatefulWidget {
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onProfileTap;
   final VoidCallback? onSearchEmpty;
+  final ValueChanged<EventModel>? onEventTap;
 
   const DiscoveryView({
     super.key,
@@ -25,6 +27,7 @@ class DiscoveryView extends StatefulWidget {
     this.onNotificationsTap,
     this.onProfileTap,
     this.onSearchEmpty,
+    this.onEventTap,
   });
 
   @override
@@ -33,47 +36,6 @@ class DiscoveryView extends StatefulWidget {
 
 class _DiscoveryViewState extends State<DiscoveryView> {
   int _selectedCategoryIndex = 0;
-
-  final List<String> _categories = [
-    'Music',
-    'Academic',
-    'Sports',
-    'Upcoming',
-    'Tech',
-  ];
-
-  static final List<EventModel> _events = [
-    EventModel(
-      id: '1',
-      title: 'Summer Beats Festival',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCeQBq3SB4o6ijps-gBLfANONvG6DZo-EyEXFXHUHBeewAffv2GsGbC5WVz0GcR3n2_I1fpudHo-Q474dzbpPOa9HmbAYvciXGnGjyGy6wZpfIW6tn68T2pWi531NLl1k_lLniE9jXAcdVY46Yu1FBFNL0yP-JVGY3qdVF_fwo0nV8QO_04aoTz87iHApTIRBd6APoJsnNOq3D6Ub6mNFzD8uTS2PxAXr1BdF1_9oxWV84QIEnU-XGEkC2R6KmwzDeS2370Ddbr6J8',
-      location: 'Main Campus Plaza, CA',
-      startDate: DateTime(2024, 8, 24),
-      timeRange: '08:00 PM - 02:00 AM',
-      category: 'Music',
-    ),
-    EventModel(
-      id: '2',
-      title: 'Future of AI Summit',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAEe8TiBatwY617qcuKh7CbBA2RCdpsNDZV6tXtdoEBV2EtUzt_iJzl_n8BLOnEldIK96mhNyWv3ljOt1DCrOZwg35QDPlfTWQ1SJs9Nb6oJFT-HQ3Sp8WTwGnDhCUzKVCxmu4QYufHq3mj1dChw0SWQhDfZqemiu9bsS6J55OnNtM4Dus6-epR6U6Izbuaj5v1pBkljSqSJBOreAVKjqRNDuPEji5bUJ7zatWmBVhNBByt4XfpXJDqXZDYJBeaweBptbmtd9k5_dc',
-      location: 'Grand Innovation Hall',
-      startDate: DateTime(2024, 9, 12),
-      timeRange: '10:00 AM - 04:00 PM',
-      category: 'Tech',
-    ),
-    EventModel(
-      id: '3',
-      title: 'Championship Qualifiers',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDttCruWuFR4EfJM10dJpyryKeWwKmu847sRG5y07zX_HCWUP8pRW0vMm3OXLJ7M-xPmwGwo8mKm9vZkjDEOnrwoymhr6bTe61IWNw8CQgmHCfRM1DU8NRZHCKvWz20hc5FIQVh10mCUagjAiq4wWnAc6IQ6bdCsHqABwGSrF9Mujm1jCYALnnZkwi2ZcXl0QVLFieG_Pjd2Mw_W-ShWw2g5bxq1479eNVBMuRrhPe_hbonHlhnOJN3aNF-iNA3j0XAnAkQMtLVqP0',
-      location: 'University Stadium',
-      startDate: DateTime(2024, 9, 5),
-      timeRange: '02:00 PM - 05:30 PM',
-      category: 'Sports',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -115,11 +77,11 @@ class _DiscoveryViewState extends State<DiscoveryView> {
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppConstants.pagePaddingH,
                     ),
-                    itemCount: _categories.length,
+                    itemCount: MockEventData.discoveryCategories.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       return CategoryFilterChip(
-                        label: _categories[index],
+                        label: MockEventData.discoveryCategories[index],
                         isSelected: index == _selectedCategoryIndex,
                         onTap: () {
                           setState(() => _selectedCategoryIndex = index);
@@ -149,8 +111,7 @@ class _DiscoveryViewState extends State<DiscoveryView> {
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final event = _events[index];
-                    final dateBadges = ['AUG 24', 'SEP 12', 'SEP 05'];
+                    final event = MockEventData.discoveryEvents[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppConstants.pagePaddingH,
@@ -158,11 +119,14 @@ class _DiscoveryViewState extends State<DiscoveryView> {
                       ),
                       child: EventCardVertical(
                         event: event,
-                        dateBadge: dateBadges[index],
+                        dateBadge: MockEventData.discoveryDateBadges[index],
+                        onTap: widget.onEventTap != null
+                            ? () => widget.onEventTap!(event)
+                            : null,
                       ),
                     );
                   },
-                  childCount: _events.length,
+                  childCount: MockEventData.discoveryEvents.length,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
