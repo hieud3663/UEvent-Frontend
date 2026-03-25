@@ -20,6 +20,7 @@ class MyTicketsView extends StatefulWidget {
   final ValueChanged<int> onNavTap;
   final ValueChanged<TicketModel>? onTicketTap;
   final ValueChanged<TicketModel>? onPastTicketTap;
+  final VoidCallback? onScanTap;
 
   const MyTicketsView({
     super.key,
@@ -27,6 +28,7 @@ class MyTicketsView extends StatefulWidget {
     required this.onNavTap,
     this.onTicketTap,
     this.onPastTicketTap,
+    this.onScanTap,
   });
 
   @override
@@ -79,8 +81,8 @@ class _MyTicketsViewState extends State<MyTicketsView> {
             child: GlassTopBar(
               title: 'My Tickets',
               titleStyle: AppTextStyles.titleLarge,
-              trailingIcon: Icons.settings_outlined,
-              onTrailingTap: () {},
+              trailingIcon: Icons.qr_code_scanner,
+              onTrailingTap: widget.onScanTap,
             ),
           ),
 

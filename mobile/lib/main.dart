@@ -21,6 +21,7 @@ import 'features/events/views/registration_confirmation_screen.dart';
 import 'features/events/views/registration_success_screen.dart';
 import 'features/events/views/ask_question_screen.dart';
 import 'features/events/views/share_event_sheet.dart';
+import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -154,6 +155,14 @@ class _AppShellState extends State<AppShell> {
 
   // ── Ticketing Navigation ──
 
+  void _pushQrScanner() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => QrScannerView(
+        onBack: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
   void _pushTicketDetail(TicketModel ticket) {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx) => TicketDetailView(
@@ -213,6 +222,7 @@ class _AppShellState extends State<AppShell> {
           onNavTap: _onNavTap,
           onTicketTap: _pushTicketDetail,
           onPastTicketTap: _pushPastEventDetail,
+          onScanTap: _pushQrScanner,
         ),
         // Tab 3: SETTINGS (placeholder — reuse Home for now)
         HomeView(
