@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings &amp; System Logs | UEvents Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#00687b",
+              "on-surface-variant": "#514532",
+              "background": "#fff8f2",
+              "surface-dim": "#e4d8c8",
+              "surface": "#fff8f2",
+              "primary-fixed": "#ffdea8",
+              "error": "#ba1a1a",
+              "secondary-container": "#fdd48e",
+              "on-tertiary-fixed-variant": "#004e5d",
+              "on-background": "#201b11",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "on-error-container": "#93000a",
+              "surface-bright": "#fff8f2",
+              "inverse-on-surface": "#fbefde",
+              "on-secondary-fixed": "#271900",
+              "secondary-fixed-dim": "#e8c17d",
+              "on-tertiary": "#ffffff",
+              "primary": "#7c5800",
+              "on-secondary-fixed-variant": "#5d4208",
+              "on-primary-fixed": "#271900",
+              "surface-container-highest": "#ede1d0",
+              "inverse-primary": "#ffba20",
+              "surface-variant": "#ede1d0",
+              "surface-container-high": "#f3e6d6",
+              "secondary-fixed": "#ffdea8",
+              "outline-variant": "#d5c4ab",
+              "on-secondary-container": "#785a20",
+              "on-primary-fixed-variant": "#5e4200",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#001f27",
+              "on-error": "#ffffff",
+              "outline": "#837560",
+              "tertiary-fixed": "#b0ecff",
+              "surface-container": "#f9ecdb",
+              "inverse-surface": "#363024",
+              "tertiary-fixed-dim": "#17d8ff",
+              "secondary": "#775a20",
+              "on-surface": "#201b11",
+              "on-primary-container": "#6b4c00",
+              "surface-tint": "#7c5800",
+              "surface-container-low": "#fef2e1",
+              "primary-container": "#ffb800",
+              "on-tertiary-container": "#005a6b",
+              "primary-fixed-dim": "#ffba20",
+              "on-primary": "#ffffff",
+              "tertiary-container": "#00d7fe"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+        }
+        .glass-border {
+            border: 0.5px solid rgba(255, 255, 255, 0.4);
+        }
+        body {
+            background: radial-gradient(circle at top left, #f5f6f8, #e8eaf0);
+            min-height: 100vh;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .nav-item-active {
+            background: #f59e0b; /* amber-500 */
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+<body class="font-['Inter'] text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-50 bg-white/70 backdrop-blur-[30px] border-r border-white/40 flex flex-col p-4 gap-2 shadow-xl">
+<div class="px-4 py-8 mb-4">
+<h1 class="text-[#1e293b] font-black tracking-tight text-xl leading-none">UEvents Admin</h1>
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Management Portal</p>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="dashboard">dashboard</span>
+<span class="font-semibold text-[15px]">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="group">group</span>
+<span class="font-semibold text-[15px]">Users</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="calendar_month">calendar_month</span>
+<span class="font-semibold text-[15px]">Events</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="category">category</span>
+<span class="font-semibold text-[15px]">Categories</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="notifications">notifications</span>
+<span class="font-semibold text-[15px]">Notifications</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="support_agent">support_agent</span>
+<span class="font-semibold text-[15px]">Support</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 transition-all duration-200 nav-item-active" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-semibold text-[15px]">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200/50">
+<button class="w-full bg-amber-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-amber-500/10 hover:brightness-105 active:scale-95 transition-all text-[11px] uppercase tracking-widest">
+                Create New Event
+            </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-40 w-full px-6 py-3 bg-white/65 backdrop-blur-[40px] border-b border-white/40 flex justify-between items-center shadow-sm">
+<div class="flex items-center gap-4 bg-slate-100/50 px-4 py-2 rounded-full w-96 glass-border">
+<span class="material-symbols-outlined text-slate-400">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-slate-400" placeholder="Search resources..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full text-slate-500 hover:bg-slate-100/50 transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 rounded-full text-slate-500 hover:bg-slate-100/50 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-900">Alex Rivers</p>
+<p class="text-[10px] font-medium text-slate-500 uppercase tracking-tight">Super Admin</p>
+</div>
+<img alt="Admin Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-amber-500/20 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuNIDJD1TsfO7V0sQsbA0FvKzHfbmox3Q9Wkl-kzsx_Rp96HwMt9NJ8TKOWt93JVJEw9fOoavikL8jPyrOw7myE44KAOgIo7Lzqcr5kPu-4I16rNsylWfoCpEIAhuAbdvNgdVexL9D2JoXQlFcLKmJDfM6GAnavXLOIOludXO7MJVCKuLxMPYfMPxAyxP4SlViNNMDLq36H0poeAMfbo7oG9c6s6QppX6nip7KWT34iEdk6Qng-DsYXyA7oWVZFsA_3SOKzQ4r3kM"/>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Header Section -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-slate-900">System Logs &amp; Audit Trail</h2>
+<p class="text-slate-500 text-sm mt-1">Real-time monitoring of platform operations and administrative actions.</p>
+</div>
+<button class="flex items-center gap-2 bg-white/80 hover:bg-white border border-white/40 px-5 py-2.5 rounded-xl shadow-sm transition-all text-slate-700 font-semibold text-sm backdrop-blur-md glass-border">
+<span class="material-symbols-outlined text-lg">download</span>
+                    Export Audit Logs
+                </button>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="glass-panel glass-border p-5 rounded-3xl shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-amber-100 rounded-lg text-amber-600">
+<span class="material-symbols-outlined">group</span>
+</span>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
+</div>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Sessions Today</p>
+<p class="text-2xl font-black text-slate-900 leading-tight">12,842</p>
+</div>
+</div>
+<div class="glass-panel glass-border p-5 rounded-3xl shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-red-100 rounded-lg text-red-600">
+<span class="material-symbols-outlined">gpp_maybe</span>
+</span>
+<span class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">-3%</span>
+</div>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Failed Logins</p>
+<p class="text-2xl font-black text-slate-900 leading-tight">42</p>
+</div>
+</div>
+<div class="glass-panel glass-border p-5 rounded-3xl shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-blue-100 rounded-lg text-blue-600">
+<span class="material-symbols-outlined">insights</span>
+</span>
+</div>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Peak Activity Time</p>
+<p class="text-2xl font-black text-slate-900 leading-tight">14:20 PM</p>
+</div>
+</div>
+<div class="glass-panel glass-border p-5 rounded-3xl shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-purple-100 rounded-lg text-purple-600">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+</span>
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white bg-slate-200"></div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-slate-300"></div>
+</div>
+</div>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Admins</p>
+<p class="text-2xl font-black text-slate-900 leading-tight">07</p>
+</div>
+</div>
+</div>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: System Logs Table -->
+<div class="lg:col-span-8 space-y-6">
+<div class="glass-panel glass-border p-4 rounded-[2rem] flex flex-wrap items-center gap-4">
+<div class="flex-1 min-w-[150px]">
+<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Date Range</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">calendar_today</span>
+<select class="w-full bg-slate-100/50 border-none rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 transition-all">
+<option>Last 24 Hours</option>
+<option>Last 7 Days</option>
+</select>
+</div>
+</div>
+<div class="flex-1 min-w-[150px]">
+<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Action Type</label>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-xl bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-md shadow-amber-500/20">All</button>
+<button class="px-4 py-2 rounded-xl bg-slate-100/80 text-slate-500 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-200/50 transition-colors">Error</button>
+</div>
+</div>
+</div>
+<div class="glass-panel glass-border rounded-[2.5rem] overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 border-b border-slate-100/50">
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Timestamp</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User/Admin</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50/50">
+<tr class="hover:bg-amber-50/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Oct 24, 2023</span>
+<span class="text-[10px] text-slate-400 font-mono">14:42:01.32</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">AR</div>
+<p class="text-sm font-bold text-slate-900">Alex Rivers</p>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-700">Settings Updated</span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">Success</span>
+</td>
+</tr>
+<tr class="hover:bg-amber-50/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Oct 24, 2023</span>
+<span class="text-[10px] text-slate-400 font-mono">14:35:44.92</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold">?</div>
+<p class="text-sm font-bold text-slate-900">Anonymous</p>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-700">Login Attempt</span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider">Failed</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50/30 border-t border-slate-100/50 flex items-center justify-between">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Showing 1-15 of 1,240</p>
+<div class="flex gap-1">
+<button class="w-8 h-8 rounded-lg bg-amber-500 text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 rounded-lg text-slate-600 text-xs font-bold hover:bg-slate-200/50">2</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: System Preferences & Support -->
+<div class="lg:col-span-4 space-y-6">
+<div class="glass-panel glass-border rounded-[32px] p-8 shadow-sm">
+<h3 class="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-amber-500">tune</span>
+                            System Preferences
+                        </h3>
+<div class="space-y-8">
+<div class="flex items-center justify-between group">
+<div class="space-y-1">
+<p class="font-bold text-slate-900">Dark Mode</p>
+<p class="text-xs text-slate-500">Sync with system default</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+<div class="flex items-center justify-between group">
+<div class="space-y-1">
+<p class="font-bold text-slate-900">Audit Alerts</p>
+<p class="text-xs text-slate-500">Notify on critical log events</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+</div>
+<div class="mt-12 p-6 rounded-2xl bg-amber-50 border border-amber-100/50">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-amber-600">verified_user</span>
+<div>
+<p class="text-xs font-bold text-amber-900 uppercase tracking-widest mb-1">Security Status</p>
+<p class="text-[11px] text-amber-800 leading-snug">Two-factor authentication is active. Last audit review 2h ago.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-panel glass-border rounded-[32px] p-8 shadow-sm bg-slate-900 text-white overflow-hidden relative">
+<div class="relative z-10">
+<h4 class="text-lg font-bold mb-2">System Support</h4>
+<p class="text-slate-400 text-sm mb-6">Need assistance with admin privileges or logs?</p>
+<button class="w-full py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl font-bold text-sm hover:bg-white/20 transition-colors">
+                                Open Support Ticket
+                            </button>
+</div>
+<div class="absolute -right-12 -bottom-12 w-40 h-40 bg-amber-500/20 blur-[60px] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

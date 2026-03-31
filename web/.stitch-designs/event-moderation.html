@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#fdd48e",
+              "surface-container-low": "#fef2e1",
+              "background": "#fff8f2",
+              "surface-bright": "#fff8f2",
+              "on-primary-fixed": "#271900",
+              "secondary-fixed": "#ffdea8",
+              "on-surface-variant": "#514532",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-highest": "#ede1d0",
+              "secondary": "#775a20",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "surface-container-high": "#f3e6d6",
+              "secondary-fixed-dim": "#e8c17d",
+              "primary-fixed": "#ffdea8",
+              "primary-fixed-dim": "#ffba20",
+              "primary": "#7c5800",
+              "on-tertiary": "#ffffff",
+              "on-surface": "#201b11",
+              "surface-dim": "#e4d8c8",
+              "on-secondary-fixed": "#271900",
+              "tertiary-container": "#00d7fe",
+              "tertiary-fixed": "#b0ecff",
+              "on-error": "#ffffff",
+              "tertiary-fixed-dim": "#17d8ff",
+              "on-tertiary-fixed": "#001f27",
+              "tertiary": "#00687b",
+              "on-tertiary-fixed-variant": "#004e5d",
+              "on-secondary-container": "#785a20",
+              "on-primary-container": "#6b4c00",
+              "inverse-primary": "#ffba20",
+              "surface-container": "#f9ecdb",
+              "inverse-surface": "#363024",
+              "inverse-on-surface": "#fbefde",
+              "primary-container": "#ffb800",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#5e4200",
+              "outline": "#837560",
+              "on-primary": "#ffffff",
+              "surface-tint": "#7c5800",
+              "outline-variant": "#d5c4ab",
+              "surface-variant": "#ede1d0",
+              "surface": "#fff8f2",
+              "on-tertiary-container": "#005a6b",
+              "on-background": "#201b11",
+              "on-secondary-fixed-variant": "#5d4208",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased min-h-screen">
+<!-- SideNavBar Shell -->
+<nav class="h-screen w-64 fixed left-0 top-0 border-r border-white/40 dark:border-slate-800/40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl flex flex-col h-full p-4 z-40 font-inter antialiased shadow-2xl shadow-black/5">
+<div class="mb-8 px-4">
+<h1 class="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">UEvents Admin</h1>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">MANAGEMENT PORTAL</p>
+</div>
+<div class="space-y-1.5 flex-grow">
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">grid_view</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">group</span>
+<span class="font-medium">Users</span>
+</a>
+<!-- Active State: Moderation Context (Events) -->
+<a class="flex items-center gap-4 px-4 py-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all" href="#"><span class="material-symbols-outlined text-2xl">calendar_today</span>
+<span class="font-bold">Events</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">category</span>
+<span class="font-medium">Categories</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">notifications</span>
+<span class="font-medium">Notifications</span>
+</a>
+<!-- Target item for highlighted state as seen in Image_87 reference style -->
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#"><span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">support_agent</span>
+<span class="font-medium">Support</span></a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</div>
+<div class="mt-auto p-4 glass-card rounded-2xl flex items-center gap-3 border border-white/60">
+<img alt="Admin User Profile" class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="close-up portrait of a professional man in a minimal office setting with soft natural morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzMbDuuWJU-67zakwXZwW7-fcJlXOjyVne59PpUn_wIGj4vOMobYrkwGwDVc9efpQUCd_dW6jIQaNhs26MPl0R9-lnwD-BmK0ld8W1a36iMvLuKDUTEYYEoZb4Hy0rKVUk3pA7lE7SfgP5lXcjAmAXue8YN_3pP6ntjPlMUah0TpW_0XTyjRhwrc7IvDkqc6SPU42WvEeGXhtUkZUuhk4ru-NLTghKrPpyqlGtPUyS6M2hXMJbGkaG2sHm6QmKdy8hFUw6SAjCYho"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate text-slate-900">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 truncate">Senior Moderator</p>
+</div>
+</div>
+</nav>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 left-64 h-16 border-b border-black/10 dark:border-white/10 bg-white/65 dark:bg-slate-950/65 backdrop-blur-[40px] saturate-[180%] flex items-center justify-between px-8 z-30 font-inter font-medium text-sm">
+<div class="flex items-center gap-6">
+<span class="hidden md:block text-lg font-bold text-slate-900 dark:text-white">UEvents</span>
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-slate-200/50 border-none rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-amber-500/20" placeholder="Search events or reports..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-600 dark:text-slate-300 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="text-slate-600 dark:text-slate-300 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold text-xs">A</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="max-w-7xl mx-auto p-8">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-on-surface">Event Moderation</h2>
+<p class="text-on-surface-variant text-sm mt-1">Review pending approvals and reported policy violations.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-full glass-card text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filter
+                    </button>
+<button class="px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-xs font-bold uppercase tracking-wider">
+                        Quick Audit
+                    </button>
+</div>
+</div>
+<!-- Moderation Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Urgent Reports Column -->
+<div class="lg:col-span-8 space-y-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-error flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-base">report</span>
+                        Urgent Violations (3)
+                    </h3>
+<!-- Reported Event Card 1 -->
+<div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row gap-6 border-l-4 border-l-error">
+<div class="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0">
+<img alt="Warehouse Rave" class="w-full h-full object-cover" data-alt="crowded underground neon-lit warehouse party with strobe lights and silhouettes of people dancing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWr1ZLrB2PRjy_meeHzsve3tDJ5IqG4_V7_hbpCy4BaTbyUvUmXr0COd6ppICAccsQji3LpzrAXoZty2sVF2a-9H_eZONwwoXfNMb2_dHDyoMbFM4EzljjyHGtAZ1ZVwf0vvHIM8LyzOOAKwhZoNCzeDf9XCpYjx_H1G4W1CQ0a_oQmdfw6SzxXNwfHF08cO8Pi5FLVuvEFxMakARkq8B9hYy2Cr71yzY68IKa65embMoyBmnrbk5LXjbJ4TAkfKs89fu7em7d07E"/>
+</div>
+<div class="flex-grow flex flex-col">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-lg text-on-surface">Midnight Echoes: Warehouse X</h4>
+<p class="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-sm">person</span>
+                                        Neon Pulse Collective • <span class="material-symbols-outlined text-sm">calendar_today</span> Oct 24, 2024
+                                    </p>
+</div>
+<span class="px-2 py-1 rounded bg-error/10 text-error text-[10px] font-bold uppercase tracking-tighter">Safety Concern</span>
+</div>
+<div class="mt-4 bg-error-container/30 p-3 rounded-xl">
+<p class="text-xs text-on-error-container leading-relaxed">
+<span class="font-bold">Report Snippet:</span> "Organizers are advertising unverified capacity. Previous events at this venue had blocked emergency exits and no fire marshals present..."
+                                </p>
+</div>
+<div class="mt-auto pt-4 flex gap-3">
+<button class="flex-grow md:flex-none px-6 py-2 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">View Event</button>
+<button class="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-opacity">Decline</button>
+<button class="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Reported Event Card 2 -->
+<div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row gap-6 border-l-4 border-l-error">
+<div class="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0">
+<img alt="Tech Summit" class="w-full h-full object-cover" data-alt="large modern conference hall with glowing stage and professional tech branding on screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM-9hYTuO2vpG1-AV5rmjnXqj3aMQRZQag8HNz53HFoGtdIweRS4HDR7YkMC7_Mmet-yBNI764yTib5EE1QOl5sm6fpj_kaaFP1KiJu39owtykk-zkfhY22527LJST21ZpsiVh_Av4-uIBwd2-tQ1BaTMe36BqJUsLrWkGXww6MoPB9DJqjpyz9HyDPciyLxRzC_LhDIJoiVmVRUbZdhYBWZ8jPtQxuqYuIrEWYa05xApOtfaKLMFu96fnsBSBeUg4D1X_3PVnVEg"/>
+</div>
+<div class="flex-grow flex flex-col">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-lg text-on-surface">Global AI Ethics Summit</h4>
+<p class="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-sm">person</span>
+                                        FutureLogic Labs • <span class="material-symbols-outlined text-sm">calendar_today</span> Nov 12, 2024
+                                    </p>
+</div>
+<span class="px-2 py-1 rounded bg-error/10 text-error text-[10px] font-bold uppercase tracking-tighter">Copyright Claim</span>
+</div>
+<div class="mt-4 bg-error-container/30 p-3 rounded-xl">
+<p class="text-xs text-on-error-container leading-relaxed">
+<span class="font-bold">Report Snippet:</span> "The event header image and keynote titles are direct intellectual property of the 'AIToday' group without licensing consent..."
+                                </p>
+</div>
+<div class="mt-auto pt-4 flex gap-3">
+<button class="flex-grow md:flex-none px-6 py-2 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">View Event</button>
+<button class="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-opacity">Decline</button>
+<button class="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 pt-6 mb-4">
+<span class="material-symbols-outlined text-base">verified</span>
+                        Pending Approval (12)
+                    </h3>
+<!-- Pending Approval Card -->
+<div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-shadow duration-300">
+<div class="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0">
+<img alt="Outdoor Retreat" class="w-full h-full object-cover" data-alt="scenic mountain lake at sunset with soft purple skies and peaceful water reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHRwADeOvL-aYEGvIlevWZus2G-2vSnUrmdx-O3HvJwzxepkds5x4F1uRyEc-jD9l1snnqGlB-TdkmOjEJANEuha_wmkbhHxkkZouX-Q3rcxcqzZnBtnDKun--Y0zrWoaY2OxWdMtPVCEmy68AxIbo61LJ68Rs8fTJ2IM7zBFB4II165OWUNt5f0UBBHSUAbx_9BzpUmd1KkVtBaEqsN4PJb28XaPUegn5rI97fHj8vP8M60a-dlFmtrLO6dSiMBMBt4NUkHvvdLs"/>
+</div>
+<div class="flex-grow flex flex-col">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-lg text-on-surface">Mindful Peaks Yoga Retreat</h4>
+<p class="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-sm">person</span>
+                                        Sierra Sol Wellness • <span class="material-symbols-outlined text-sm">calendar_today</span> Dec 05, 2024
+                                    </p>
+</div>
+<span class="px-2 py-1 rounded bg-secondary-container/30 text-secondary text-[10px] font-bold uppercase tracking-tighter">New Organizer</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-4 line-clamp-2 leading-relaxed">
+                                Sierra Sol is a newly registered wellness collective. They are proposing a 3-day high-altitude yoga experience for 50 guests. Documentation for insurance is attached.
+                            </p>
+<div class="mt-auto pt-4 flex gap-3">
+<button class="flex-grow md:flex-none px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors">Approve</button>
+<button class="flex-grow md:flex-none px-6 py-2 glass-card text-on-surface rounded-xl text-xs font-bold">Review Details</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Stats & Queue -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Stats Panel -->
+<div class="glass-card rounded-[32px] p-6">
+<h3 class="text-sm font-bold text-on-surface mb-4">Moderation Pulse</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/50 p-4 rounded-2xl border border-white/40">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg Response</p>
+<p class="text-2xl font-black text-on-surface mt-1">1.4h</p>
+</div>
+<div class="bg-white/50 p-4 rounded-2xl border border-white/40">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Queue Size</p>
+<p class="text-2xl font-black text-on-surface mt-1">42</p>
+</div>
+</div>
+<div class="mt-4 p-4 bg-primary-container/20 rounded-2xl border border-primary-container/30">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-primary">Target: &lt; 2h</span>
+<span class="material-symbols-outlined text-primary text-sm">trending_down</span>
+</div>
+<div class="w-full bg-primary/10 h-1.5 rounded-full mt-2">
+<div class="bg-primary w-3/4 h-full rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Recent Actions -->
+<div class="glass-card rounded-[32px] p-6">
+<h3 class="text-sm font-bold text-on-surface mb-6">Recent Activities</h3>
+<div class="space-y-6">
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-green-600 text-sm">check_circle</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Jazz on the Green approved</p>
+<p class="text-[10px] text-on-surface-variant">by Alex Rivera • 12m ago</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error text-sm">cancel</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Secret Bunker 404 declined</p>
+<p class="text-[10px] text-on-surface-variant">Policy violation: Lack of permit • 45m ago</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-blue-600 text-sm">flag</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Sky Lantern Fest flagged</p>
+<p class="text-[10px] text-on-surface-variant">Pending safety review • 1h ago</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Guidelines Quick-link -->
+<div class="bg-on-surface p-6 rounded-[32px] text-surface-container-lowest">
+<span class="material-symbols-outlined text-amber-400 mb-2">policy</span>
+<h4 class="font-bold text-sm mb-2">Moderator Policy Handbook</h4>
+<p class="text-[11px] text-white/60 mb-4 leading-relaxed">Ensure all events meet the Community Standards v4.2 regarding safety, noise levels, and verified ticketing partners.</p>
+<a class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors" href="#">
+                            Open Docs <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

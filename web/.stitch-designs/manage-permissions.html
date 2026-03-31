@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Role &amp; Permission Management | Amber Glass Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#6b4c00",
+              "tertiary-fixed": "#b0ecff",
+              "secondary-fixed-dim": "#e8c17d",
+              "tertiary": "#00687b",
+              "primary-container": "#ffb800",
+              "on-secondary-fixed-variant": "#5d4208",
+              "on-primary-fixed-variant": "#5e4200",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#ffdea8",
+              "primary-fixed-dim": "#ffba20",
+              "primary-fixed": "#ffdea8",
+              "on-tertiary-fixed": "#001f27",
+              "surface-container-highest": "#ede1d0",
+              "surface-tint": "#7c5800",
+              "surface-container-lowest": "#ffffff",
+              "on-surface": "#201b11",
+              "on-tertiary-fixed-variant": "#004e5d",
+              "surface-dim": "#e4d8c8",
+              "on-tertiary-container": "#005a6b",
+              "on-background": "#201b11",
+              "tertiary-fixed-dim": "#17d8ff",
+              "surface": "#fff8f2",
+              "surface-bright": "#fff8f2",
+              "surface-variant": "#ede1d0",
+              "on-error": "#ffffff",
+              "primary": "#7c5800",
+              "outline-variant": "#d5c4ab",
+              "inverse-surface": "#363024",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#514532",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#fef2e1",
+              "on-primary-fixed": "#271900",
+              "secondary": "#775a20",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#fbefde",
+              "background": "#fff8f2",
+              "outline": "#837560",
+              "on-secondary-container": "#785a20",
+              "inverse-primary": "#ffba20",
+              "surface-container-high": "#f3e6d6",
+              "secondary-container": "#fdd48e",
+              "surface-container": "#f9ecdb",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-container": "#00d7fe",
+              "on-secondary-fixed": "#271900"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-effect-right-border {
+            border-right: 0.5px solid rgba(0, 0, 0, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background: radial-gradient(circle at top left, #f5f6f8, #e8eaf0);
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="font-['Inter'] text-on-background selection:bg-primary-container/30">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 bg-white/65 dark:bg-slate-900/65 backdrop-blur-3xl backdrop-saturate-150 border-b-[0.5px] border-black/10 dark:border-white/10 shadow-sm flex justify-between items-center h-16 px-6">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Admin Control Center</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-amber-600 dark:text-amber-400 font-semibold text-sm" href="#">Permissions</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-sm transition-all duration-200" href="#">Users</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-sm transition-all duration-200" href="#">Security</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<input class="bg-slate-200/50 border-none rounded-full px-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-amber-500/20 transition-all" placeholder="Search system..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-slate-400 text-lg">search</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-full transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<button class="p-2 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-full transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">settings</span>
+</button>
+<button class="p-2 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-full transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">help</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden ml-2 border border-white/40">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a high-level system administrator in a tech environment, sharp focus, clean lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7SeeUCaMaqXY06YJsdWRzh0XAyj_eV0shXImgexJh-l3QV9444oMvi6LW_n3Wrswj4cR14FuvqFGH8sSw5Cr8ZmRjmCv1aD0ihhyoYcEb77KKQskje9lNFsHJNkYKCHvWb88c7r_62Nf_gnke6Zr3YvcQym2VkS2tDColJyPcXk7xfSLimoLv363sKn4fvv3gmv_hbPtruNJwBQgo5cEQE4FYUtWfupTnNt5g-b1KX0u0aqo2TwAqWjDcYmBUE_6A3_Xxb-8po_w"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Sidebar Shell -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-r border-white/40 dark:border-slate-800/40 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col p-4 gap-2 z-40">
+<div class="px-2 py-4 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-amber-500 leading-tight">Amber Admin</h2>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">System Management</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl hover:translate-x-1 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:saturate-150">group</span>
+<span class="text-sm font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl hover:translate-x-1 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:saturate-150">shield_person</span>
+<span class="text-sm font-medium">Roles</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20 group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">key</span>
+<span class="text-sm font-medium">Permissions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl hover:translate-x-1 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:saturate-150">security</span>
+<span class="text-sm font-medium">Security Log</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl hover:translate-x-1 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:saturate-150">history</span>
+<span class="text-sm font-medium">Audit</span>
+</a>
+</nav>
+<div class="mt-auto p-2">
+<button class="w-full bg-slate-900 text-white rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+                Export Reports
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-8 pb-20 min-h-screen">
+<header class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="text-24px font-bold text-slate-900 tracking-tight mb-1">Permission Architect</h1>
+<p class="text-14px text-slate-500 font-medium">Configure granular access levels for the <span class="text-amber-600">Lead Security Analyst</span> role.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 bg-white/80 border border-white/40 rounded-xl text-sm font-bold text-slate-600 backdrop-blur-sm hover:bg-white transition-all shadow-sm">Discard Changes</button>
+<button class="px-6 py-2.5 bg-primary-container text-on-primary-container rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 hover:saturate-150 active:scale-95 transition-all">Save Permissions</button>
+</div>
+</header>
+<!-- Bento Grid Permission UI -->
+<div class="grid grid-cols-12 gap-6">
+<!-- User Summary Card (Glass) -->
+<div class="col-span-12 lg:col-span-4 h-full">
+<div class="bg-white/70 backdrop-blur-2xl p-6 rounded-[24px] border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] sticky top-24">
+<div class="flex flex-col items-center text-center mb-6">
+<div class="relative w-24 h-24 mb-4">
+<img class="w-full h-full object-cover rounded-[20px] shadow-lg" data-alt="professional businesswoman portrait with friendly expression, soft office background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcyMNGbKoQsK6RoDd0gnJO1R61MH9DrlP6Gr4g-82KDWDKbIzPaZzkkyCbtVLmNinWzjhitEx0xa_FLJ_kRRefVPxGRZY3X7su-ZNc8R4VVDeZwPH19coV8gPZ72SZgs7S26o0l_PU49rkgXswovS5dxd7uW8PjPXaWQBfFZZiBhjTLRlKD27XoRc6i_E0zMmjZj0OwnfFg-Fd6sRmTI5JpKCGsdxpKP4KbrFuO4RIq38EmfE3QeNe86uzsSmO88TAstAufwdjwLY"/>
+<div class="absolute -bottom-2 -right-2 bg-amber-500 text-white p-1.5 rounded-lg shadow-lg">
+<span class="material-symbols-outlined text-sm block" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+</div>
+<h3 class="text-lg font-bold text-slate-900">Sarah Jenkins</h3>
+<p class="text-sm text-slate-500 font-medium">s.jenkins@amberglass.sys</p>
+<div class="mt-4 flex flex-wrap justify-center gap-2">
+<span class="px-3 py-1 bg-amber-100 text-amber-700 text-10px font-bold uppercase tracking-wider rounded-full">Security Analyst</span>
+<span class="px-3 py-1 bg-slate-100 text-slate-600 text-10px font-bold uppercase tracking-wider rounded-full">HQ Office</span>
+</div>
+</div>
+<div class="space-y-4 pt-6 border-t border-slate-200/50">
+<div class="flex justify-between items-center">
+<span class="text-12px font-bold uppercase text-slate-400">Total Assigned</span>
+<span class="text-sm font-bold text-slate-900">42 / 120</span>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full w-[35%] rounded-full shadow-[0_0_8px_rgba(255,184,0,0.4)]"></div>
+</div>
+<div class="p-4 bg-amber-50 rounded-xl mt-4">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-amber-600">info</span>
+<p class="text-xs leading-relaxed text-amber-800/80 font-medium">This user has custom overrides active that deviate from the standard <span class="font-bold">Analyst</span> role template.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Permission Toggles Area -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Category: Data Access -->
+<section class="bg-white rounded-[24px] p-8 shadow-sm border border-white/10">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">database</span>
+</div>
+<div>
+<h2 class="text-17px font-bold text-slate-900">Data Access &amp; Storage</h2>
+<p class="text-12px text-slate-400 font-medium uppercase tracking-wide">Infrastructure Level 2</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Permission Item -->
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-transparent hover:border-amber-500/20 hover:bg-white transition-all group">
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">Read Encryption Keys</span>
+<span class="text-12px text-slate-500">Access to sensitive root certificates</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+<!-- Permission Item -->
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-transparent hover:border-amber-500/20 hover:bg-white transition-all group">
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">Modify DB Schemas</span>
+<span class="text-12px text-slate-500">Structural changes to production tables</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+<!-- Permission Item -->
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-transparent hover:border-amber-500/20 hover:bg-white transition-all group">
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">PII De-masking</span>
+<span class="text-12px text-slate-500">View customer identities in cleartext</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+<!-- Permission Item -->
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-transparent hover:border-amber-500/20 hover:bg-white transition-all group">
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">Mass Export</span>
+<span class="text-12px text-slate-500">Permission to download datasets &gt;10k</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Category: Admin Ops -->
+<section class="bg-white rounded-[24px] p-8 shadow-sm border border-white/10">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">settings_suggest</span>
+</div>
+<div>
+<h2 class="text-17px font-bold text-slate-900">Administrative Operations</h2>
+<p class="text-12px text-slate-400 font-medium uppercase tracking-wide">Core System Access</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400">policy</span>
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">Global Policy Editor</span>
+<span class="text-12px text-slate-500">Manage organizational security protocols and compliance rules</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 bg-error/10 text-error text-[10px] font-bold rounded-full">High Risk</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400">lan</span>
+<div class="flex flex-col">
+<span class="text-14px font-bold text-slate-800">Network Topology View</span>
+<span class="text-12px text-slate-500">Read-only visualization of cluster and node health</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Advanced Options Chip Filter (Internal) -->
+<div class="flex items-center justify-center gap-4 py-4">
+<div class="h-[0.5px] bg-slate-200 flex-grow"></div>
+<span class="text-10px font-bold uppercase tracking-[0.2em] text-slate-400">Additional Scopes</span>
+<div class="h-[0.5px] bg-slate-200 flex-grow"></div>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-2 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md shadow-amber-500/10">Audit Reporting</button>
+<button class="px-5 py-2 bg-white text-slate-500 border border-slate-200 text-xs font-bold rounded-full hover:bg-slate-50">Webhooks v2</button>
+<button class="px-5 py-2 bg-white text-slate-500 border border-slate-200 text-xs font-bold rounded-full hover:bg-slate-50">API Key Rotation</button>
+<button class="px-5 py-2 bg-white text-slate-500 border border-slate-200 text-xs font-bold rounded-full hover:bg-slate-50">Tenant Isolation</button>
+<button class="px-5 py-2 bg-white text-slate-500 border border-slate-200 text-xs font-bold rounded-full hover:bg-slate-50">Session Management</button>
+</div>
+</div>
+</div>
+<!-- Footer Shell -->
+<footer class="absolute bottom-0 w-full flex justify-between items-center px-8 py-4 w-[calc(100%-256px)] ml-0">
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">© 2024 Amber Glass Systems. Admin Portal v2.4</span>
+<div class="flex gap-6">
+<a class="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors" href="#">Privacy Policy</a>
+<a class="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors" href="#">Terms of Service</a>
+<a class="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors" href="#">System Status</a>
+</div>
+</footer>
+</main>
+<!-- Contextual Floating Action Layer -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl">chat_bubble</span>
+</button>
+</div>
+</body></html>

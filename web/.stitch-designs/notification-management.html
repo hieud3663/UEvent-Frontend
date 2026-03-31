@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UEvents Admin - Notification Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #f5f6f8, #e8eaf0);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 0.5px solid rgba(255, 255, 255, 0.4);
+    }
+    .glass-border-right {
+      border-right: 0.5px solid rgba(255, 255, 255, 0.4);
+    }
+    .hairline-bottom {
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .shadow-8px-32px-rgba-0-0-0-0-08 {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-surface": "#201b11",
+            "secondary-fixed-dim": "#e8c17d",
+            "surface-tint": "#7c5800",
+            "surface-variant": "#ede1d0",
+            "outline-variant": "#d5c4ab",
+            "on-tertiary-fixed-variant": "#004e5d",
+            "on-background": "#201b11",
+            "on-tertiary-container": "#005a6b",
+            "on-tertiary": "#ffffff",
+            "surface": "#fff8f2",
+            "primary-container": "#ffb800",
+            "surface-container": "#f9ecdb",
+            "on-secondary-container": "#785a20",
+            "inverse-primary": "#ffba20",
+            "on-secondary-fixed": "#271900",
+            "inverse-surface": "#363024",
+            "inverse-on-surface": "#fbefde",
+            "surface-container-highest": "#ede1d0",
+            "background": "#fff8f2",
+            "secondary-fixed": "#ffdea8",
+            "on-secondary-fixed-variant": "#5d4208",
+            "tertiary-fixed-dim": "#17d8ff",
+            "secondary": "#775a20",
+            "on-secondary": "#ffffff",
+            "surface-container-high": "#f3e6d6",
+            "secondary-container": "#fdd48e",
+            "surface-container-low": "#fef2e1",
+            "outline": "#837560",
+            "primary-fixed": "#ffdea8",
+            "tertiary": "#00687b",
+            "surface-container-lowest": "#ffffff",
+            "surface-bright": "#fff8f2",
+            "on-primary-fixed": "#271900",
+            "surface-dim": "#e4d8c8",
+            "on-surface-variant": "#514532",
+            "tertiary-container": "#00d7fe",
+            "on-primary-container": "#6b4c00",
+            "primary": "#7c5800",
+            "on-error-container": "#93000a",
+            "tertiary-fixed": "#b0ecff",
+            "on-tertiary-fixed": "#001f27",
+            "on-error": "#ffffff",
+            "primary-fixed-dim": "#ffba20",
+            "on-primary-fixed-variant": "#5e4200",
+            "error": "#ba1a1a"
+          },
+          fontFamily: {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container/30">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-4 h-screen w-64 glass-border-right bg-white/70 backdrop-blur-xl shadow-8px-32px-rgba-0-0-0-0-08 z-50">
+<div class="mb-10 px-4 py-2">
+<div class="flex flex-col">
+<h1 class="text-2xl font-extrabold text-[#1e293b] tracking-tight leading-none">UEvents Admin</h1>
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Management Portal</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Dashboard -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="dashboard">dashboard</span>
+<span class="text-[15px] font-semibold">Dashboard</span>
+</a>
+<!-- Users -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="group">group</span>
+<span class="text-[15px] font-semibold">Users</span>
+</a>
+<!-- Events -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="calendar_today">calendar_today</span>
+<span class="text-[15px] font-semibold">Events</span>
+</a>
+<!-- Categories -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="category">category</span>
+<span class="text-[15px] font-semibold">Categories</span>
+</a>
+<!-- Notifications -->
+<a class="flex items-center gap-4 px-4 py-3 bg-[#f59e0b] text-white rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/30" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="notifications">notifications</span>
+<span class="text-[15px] font-semibold">Notifications</span>
+</a>
+<!-- Support (ACTIVE per IMAGE_87) -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="support_agent">support_agent</span>
+<span class="text-[15px] font-semibold">Support</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#64748b] hover:bg-slate-100/50 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="settings">settings</span>
+<span class="text-[15px] font-semibold">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50">
+<div class="flex items-center gap-3 px-4">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img alt="Admin Profile" data-alt="close-up portrait of a professional male administrator in a brightly lit office setting with soft background bokeh" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAraFZ78hiRpEFYBXFHU20FkCeiVm5ris9WVEwTYz8QFRpj4kdCJHO_Iml1mrZ_xZVEEfH_ZgQltGx_MtAbwUkpUoPv19rvmZX0A-_4j9iPDpiPhxXkL3zVf6_AAEhP5cfvsIL4fbUEelgiz2XJOuZLiRo7lnaS5J97wtOVMzyYPTocCbAqMZyJN961NJFV2nQ_v9uinbnHio5Nr6YrS1LIEYJtSqRzf7cJV6gGH8qwTF2bJ1tWZdgXWhAgNKXI-2rUYFhTHGrq0Tk"/>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-900">Alex Rivera</p>
+<p class="text-[10px] text-slate-500">System Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Anchor -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] ml-64 h-16 bg-white/65 backdrop-blur-[40px] hairline-bottom flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full bg-slate-200/50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-amber-500/20 placeholder:text-slate-400 transition-all" placeholder="Search notifications..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<button class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-500/20">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+        Create New Notification
+      </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pl-72 pr-8 pb-12">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+<div>
+<h2 class="text-2xl font-bold text-slate-900 tracking-tight">Notification History</h2>
+<p class="text-slate-500 text-sm mt-1">Review and manage your push communication logs</p>
+</div>
+<div class="flex gap-2">
+<button class="glass-card px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2 hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+          Filter
+        </button>
+<button class="glass-card px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2 hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+          Export
+        </button>
+</div>
+</div>
+<!-- Quick Stats Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="glass-card p-6 rounded-3xl">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Total Sent</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-extrabold text-slate-900">12,482</span>
+<span class="text-xs font-bold text-emerald-600">+12%</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-3xl border-amber-200/50">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Avg. Open Rate</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-extrabold text-slate-900">24.8%</span>
+<span class="text-xs font-bold text-amber-600">Stable</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-3xl">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Scheduled</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-extrabold text-slate-900">18</span>
+<span class="text-xs font-bold text-slate-400">Next 7 days</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-3xl overflow-hidden relative">
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="vibrant abstract gradient background with flowing orange and purple colors and subtle noise texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw6Ut6r0ND-B-FB3S_94O9elr5Udq486qoV6OiOCai65wPBgwTKoQG_0NpSWx4NDZCOn3KEVYmxhEuV9yTuWvkLdwTRIU_SWwWzhYWp4g_sbiPEYjWOAzZ9rvYSxKJSY_1rxp3FI_3il2JRfJ_-WTZlt2T-QL2Q-QUNeMR5ivE4vkIXolXBf-YohdK82tNKQIlmDctfXACMxmIetm0BN9U5Pi2ugwILjxIr21WJaYT57E5RbrhPH6C-8jm-fR30PWSPxPmSIN7D1M"/>
+</div>
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Active Users</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-extrabold text-slate-900">4,210</span>
+<span class="text-xs font-bold text-emerald-600">Live</span>
+</div>
+</div>
+</div>
+<!-- Notification Log Table/List -->
+<div class="glass-card rounded-[2rem] overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left">
+<thead>
+<tr class="hairline-bottom bg-slate-50/30">
+<th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Notification Title</th>
+<th class="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Target Audience</th>
+<th class="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Sent Date</th>
+<th class="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+<th class="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Performance</th>
+<th class="px-8 py-5 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-black/5">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-amber-600" data-icon="campaign">campaign</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Early Bird: Summer Music Fest</h4>
+<p class="text-xs text-slate-500 truncate max-w-[200px]">Get your tickets now for 20% off!</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase tracking-tighter">
+                  All Users
+                </span>
+</td>
+<td class="px-6 py-6">
+<p class="text-sm font-medium text-slate-700">Oct 24, 2023</p>
+<p class="text-[10px] text-slate-400">10:30 AM</p>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Sent
+                </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[80px]">
+<div class="h-full bg-amber-500 rounded-full" style="width: 78%"></div>
+</div>
+<span class="text-xs font-bold text-slate-700">78% Reach</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">32.4% Open Rate</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-400 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-blue-600" data-icon="event_note">event_note</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 group-hover:text-amber-600 transition-colors">New Organizer Guidelines</h4>
+<p class="text-xs text-slate-500 truncate max-w-[200px]">Updated rules for event submission</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 uppercase tracking-tighter">
+                  Organizers
+                </span>
+</td>
+<td class="px-6 py-6">
+<p class="text-sm font-medium text-slate-700">Oct 26, 2023</p>
+<p class="text-[10px] text-slate-400">02:15 PM</p>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-700">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  Scheduled
+                </span>
+</td>
+<td class="px-6 py-6 text-slate-400 text-xs italic">
+                Pending...
+              </td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-400 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-purple-600" data-icon="local_activity">local_activity</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Tech Talk @ Grand Hall</h4>
+<p class="text-xs text-slate-500 truncate max-w-[200px]">Important venue change for attendees</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-600 uppercase tracking-tighter">
+                  Specific Event
+                </span>
+</td>
+<td class="px-6 py-6">
+<p class="text-sm font-medium text-slate-700">Oct 22, 2023</p>
+<p class="text-[10px] text-slate-400">09:00 AM</p>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Sent
+                </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[80px]">
+<div class="h-full bg-amber-500 rounded-full" style="width: 95%"></div>
+</div>
+<span class="text-xs font-bold text-slate-700">95% Reach</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">64.1% Open Rate</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-400 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-slate-600" data-icon="update">update</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Weekly Event Roundup</h4>
+<p class="text-xs text-slate-500 truncate max-w-[200px]">Top activities in your city this week</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase tracking-tighter">
+                  All Users
+                </span>
+</td>
+<td class="px-6 py-6">
+<p class="text-sm font-medium text-slate-700">Oct 20, 2023</p>
+<p class="text-[10px] text-slate-400">08:00 AM</p>
+</td>
+<td class="px-6 py-6">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Sent
+                </span>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[80px]">
+<div class="h-full bg-amber-500 rounded-full" style="width: 45%"></div>
+</div>
+<span class="text-xs font-bold text-slate-700">45% Reach</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">12.8% Open Rate</p>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-400 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
+<p class="text-xs text-slate-500">Showing <span class="font-bold text-slate-900">1-4</span> of <span class="font-bold text-slate-900">42</span> notifications</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold shadow-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-white transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-white transition-colors">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Notification Preview Modal (Background only as it's a design mockup) -->
+<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6 hidden">
+<!-- This would be a modal content card if interactive -->
+</div>
+</body></html>
