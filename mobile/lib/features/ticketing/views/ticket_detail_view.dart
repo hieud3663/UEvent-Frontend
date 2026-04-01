@@ -180,7 +180,7 @@ class TicketDetailView extends StatelessWidget {
               child: Image.network(
                 ticket.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),

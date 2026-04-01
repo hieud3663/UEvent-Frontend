@@ -114,7 +114,7 @@ class EventOrganizerCard extends StatelessWidget {
       child: ClipOval(
         child: url != null
             ? Image.network(url, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     Container(color: AppColors.surfaceVariant))
             : Center(
                 child: Text(

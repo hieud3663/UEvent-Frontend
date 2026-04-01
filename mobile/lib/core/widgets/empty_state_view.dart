@@ -63,7 +63,7 @@ class EmptyStateView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Column(
               children: [
-                if (primaryAction != null) primaryAction!,
+                ?primaryAction,
                 if (secondaryAction != null) ...[
                   const SizedBox(height: 12),
                   secondaryAction!,

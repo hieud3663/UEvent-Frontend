@@ -63,7 +63,7 @@ class _QrScanOverlayState extends State<QrScanOverlay>
               // Animated scan line
               AnimatedBuilder(
                 animation: _scanAnimation,
-                builder: (_, __) {
+                builder: (_, _) {
                   return Positioned(
                     left: 12,
                     right: 12,

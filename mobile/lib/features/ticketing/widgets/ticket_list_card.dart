@@ -44,7 +44,7 @@ class TicketListCard extends StatelessWidget {
               child: Image.network(
                 ticket.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: AppColors.surfaceVariant,
                   child: const Icon(
                     Icons.event,
