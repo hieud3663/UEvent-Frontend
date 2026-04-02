@@ -47,6 +47,7 @@ app.*.map.json
 stitch_assets/*
 /stitch_assets
 
+mobile/pubspec.lock
 # Loại bỏ folder stitch_screens
 stitch_screens/
 
