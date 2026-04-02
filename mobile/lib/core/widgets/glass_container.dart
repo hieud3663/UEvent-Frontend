@@ -15,6 +15,7 @@ class GlassContainer extends StatelessWidget {
   final double borderOpacity;
   final Color? backgroundColor;
   final List<BoxShadow>? boxShadow;
+  final BoxBorder? border;
 
   const GlassContainer({
     super.key,
@@ -26,6 +27,7 @@ class GlassContainer extends StatelessWidget {
     this.borderOpacity = AppConstants.glassBorderOpacity,
     this.backgroundColor,
     this.boxShadow,
+    this.border,
   });
 
   @override
@@ -39,7 +41,7 @@ class GlassContainer extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor ?? Colors.white.withValues(alpha: opacity),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
+            border: border ?? Border.all(
               color: Colors.white.withValues(alpha: borderOpacity),
               width: 0.5,
             ),
