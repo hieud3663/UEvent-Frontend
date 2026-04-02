@@ -4,13 +4,19 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Settings, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function CreateUserPage() {
   const router = useRouter();
+  const roleOptions = [
+    { value: 'Student', label: 'Student' },
+    { value: 'Organizer', label: 'Organizer' },
+    { value: 'Faculty Admin', label: 'Faculty Admin' },
+  ] as const;
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('User created successfully!');
+    toast.success('User created successfully.');
     router.push('/users');
   };
 
@@ -113,9 +119,11 @@ export default function CreateUserPage() {
                   Role Type
                 </label>
                 <select className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none cursor-pointer">
-                  <option value="Student">Student</option>
-                  <option value="Organizer">Organizer</option>
-                  <option value="Faculty Admin">Faculty Admin</option>
+                  {roleOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

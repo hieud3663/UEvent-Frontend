@@ -18,6 +18,14 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
   messages: TicketMessage[];
+  detailContext?: TicketDetailContext;
+}
+
+export interface TicketDetailContext {
+  eventsCount: number;
+  ticketsCount: number;
+  relatedEventName: string;
+  channel: string;
 }
 
 export interface TicketMessage {

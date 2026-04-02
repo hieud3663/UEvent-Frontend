@@ -1,5 +1,9 @@
 // File: src/features/notifications/mock/mock-notifications.ts
-import type { Notification, NotificationStats } from '../types';
+import type {
+  Notification,
+  NotificationPaginationConfig,
+  NotificationStats,
+} from '../types';
 
 export const mockNotifications: Notification[] = [
   {
@@ -73,4 +77,9 @@ export const notificationStats: NotificationStats = {
   scheduledNote: 'Next 7 days',
   activeUsers: 4210,
   activeUsersStatus: 'Live',
+};
+
+export const notificationPaginationConfig: NotificationPaginationConfig = {
+  perPage: 4,
+  maxVisiblePages: 3,
 };

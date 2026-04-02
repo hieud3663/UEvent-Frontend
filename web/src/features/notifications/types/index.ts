@@ -32,3 +32,8 @@ export interface NotificationStats {
   activeUsers: number;
   activeUsersStatus?: string;
 }
+
+export interface NotificationPaginationConfig {
+  perPage: number;
+  maxVisiblePages: number;
+}

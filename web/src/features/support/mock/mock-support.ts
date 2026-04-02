@@ -14,6 +14,12 @@ export const mockTickets: Ticket[] = [
     userEmail: 's.jenkins@university.edu',
     createdAt: '2024-10-21T08:30:00Z',
     updatedAt: '2024-10-21T08:30:00Z',
+    detailContext: {
+      eventsCount: 12,
+      ticketsCount: 28,
+      relatedEventName: 'Urban Tech Summit 2024',
+      channel: 'Web Portal',
+    },
     messages: [
       {
         id: 'm1',
@@ -37,6 +43,12 @@ export const mockTickets: Ticket[] = [
     assignedTo: 'Alex Rivera',
     createdAt: '2024-10-18T14:20:00Z',
     updatedAt: '2024-10-20T10:00:00Z',
+    detailContext: {
+      eventsCount: 5,
+      ticketsCount: 14,
+      relatedEventName: 'Tech Meetup 2024',
+      channel: 'Mobile App',
+    },
     messages: [
       {
         id: 'm1',
@@ -74,6 +86,12 @@ export const mockTickets: Ticket[] = [
     assignedTo: 'Support Team',
     createdAt: '2024-10-15T09:00:00Z',
     updatedAt: '2024-10-16T14:30:00Z',
+    detailContext: {
+      eventsCount: 2,
+      ticketsCount: 9,
+      relatedEventName: 'N/A',
+      channel: 'Web Portal',
+    },
     messages: [
       {
         id: 'm1',
@@ -103,6 +121,12 @@ export const mockTickets: Ticket[] = [
     userEmail: 'd.park@university.edu',
     createdAt: '2024-10-20T16:45:00Z',
     updatedAt: '2024-10-20T16:45:00Z',
+    detailContext: {
+      eventsCount: 7,
+      ticketsCount: 21,
+      relatedEventName: 'Campus Dev Expo',
+      channel: 'iOS App',
+    },
     messages: [
       {
         id: 'm1',
@@ -126,6 +150,12 @@ export const mockTickets: Ticket[] = [
     assignedTo: 'Alex Rivera',
     createdAt: '2024-10-19T11:00:00Z',
     updatedAt: '2024-10-21T09:00:00Z',
+    detailContext: {
+      eventsCount: 10,
+      ticketsCount: 31,
+      relatedEventName: 'Jazz Night',
+      channel: 'Android App',
+    },
     messages: [
       {
         id: 'm1',

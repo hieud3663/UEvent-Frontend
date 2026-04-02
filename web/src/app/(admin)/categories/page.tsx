@@ -1,27 +1,116 @@
 // File: src/app/(admin)/categories/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Music, GraduationCap, Trophy, Construction, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, Edit, Trash2, Music, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card } from '@/core/components';
-import { mockCategories, categoryStats } from '@/features/categories/mock/mock-categories';
+import { Button, Card, ConfirmActionDialog } from '@/core/components';
+import {
+  deleteCategoryById,
+  getCategories,
+  getCategoryStats,
+} from '@/features/categories/services/categories.service';
+import { categoryIconMap } from '@/features/categories/utils/category-display';
 import { cn } from '@/core/lib/utils';
 import type { Category } from '@/features/categories/types';
+import { toast } from 'sonner';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
-const iconMap: Record<string, React.ElementType> = {
-  music: Music,
-  'graduation-cap': GraduationCap,
-  trophy: Trophy,
-  construction: Construction,
-};
-
-const filterCategories = ['ALL', 'ENTERTAINMENT', 'EDUCATION', 'NETWORKING', 'CHARITY'];
+const FILTER_CATEGORIES = ['ALL', 'ENTERTAINMENT', 'EDUCATION', 'NETWORKING', 'CHARITY'] as const;
 
 export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof getCategoryStats>> | null>(null);
   const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const router = useRouter();
+  const categoriesPerPage = 4;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategoriesPageData() {
+      const [categoriesResponse, categoriesStats] = await Promise.all([
+        getCategories(),
+        getCategoryStats(),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setCategories(categoriesResponse);
+      setStats(categoriesStats);
+      setSelectedFilter(FILTER_CATEGORIES[0]);
+    }
+
+    void loadCategoriesPageData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredCategories = useMemo(() => {
+    if (selectedFilter === 'ALL') {
+      return categories;
+    }
+
+    return categories.filter((category) =>
+      category.name.toUpperCase().includes(selectedFilter)
+    );
+  }, [categories, selectedFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCategories.length / categoriesPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedCategories = useMemo(
+    () =>
+      filteredCategories.slice(
+        (safeCurrentPage - 1) * categoriesPerPage,
+        safeCurrentPage * categoriesPerPage
+      ),
+    [filteredCategories, safeCurrentPage]
+  );
+
+  const handleEditCategory = (category: Category) => {
+    toast.info(`Opening editor for ${category.name}.`);
+    router.push(`/categories/create?categoryId=${category.id}`);
+  };
+
+  const handleDeleteCategory = async (category: Category) => {
+    const previousCategories = categories;
+    setCategories((prev) => prev.filter((item) => item.id !== category.id));
+
+    try {
+      await runActionWithToast(() => deleteCategoryById(category.id), {
+        loading: `Deleting ${category.name}...`,
+        success: `Deleted category ${category.name}.`,
+        error: `Failed to delete ${category.name}.`,
+      });
+    } catch {
+      setCategories(previousCategories);
+    }
+  };
+
+  const handleDeleteRequest = (category: Category) => {
+    setCategoryToDelete(category);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) {
+      return;
+    }
+
+    const target = categoryToDelete;
+    setCategoryToDelete(null);
+    await handleDeleteCategory(target);
+  };
+
+  if (!stats) {
+    return <div className="p-6 text-sm text-slate-500">Loading categories...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -51,14 +140,14 @@ export default function CategoriesPage() {
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             Total Categories
           </p>
-          <p className="text-3xl font-extrabold text-slate-900">24</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.totalCategories}</p>
         </Card>
         <Card className="glass-card border-none rounded-2xl p-6">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             Active Now
           </p>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-extrabold text-slate-900">18</p>
+            <p className="text-3xl font-extrabold text-slate-900">{stats.activeCategories}</p>
             <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">
               +2 new
             </span>
@@ -68,13 +157,13 @@ export default function CategoriesPage() {
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             Total Event Volume
           </p>
-          <p className="text-3xl font-extrabold text-slate-900">1,204</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.totalEvents.toLocaleString('en-US')}</p>
         </Card>
         <Card className="glass-card border-none rounded-2xl p-6 bg-amber-50/50 border-amber-200/50">
           <p className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-1">
             Trending
           </p>
-          <p className="text-xl font-bold text-amber-900">Music &amp; Arts</p>
+          <p className="text-xl font-bold text-amber-900">{stats.popularCategory}</p>
         </Card>
       </div>
 
@@ -101,8 +190,13 @@ export default function CategoriesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {mockCategories.slice(0, 4).map((category) => (
-              <CategoryRow key={category.id} category={category} />
+            {paginatedCategories.map((category) => (
+              <CategoryRow
+                key={category.id}
+                category={category}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteRequest}
+              />
             ))}
           </tbody>
         </table>
@@ -110,18 +204,21 @@ export default function CategoriesPage() {
         {/* Pagination */}
         <div className="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
           <p className="text-xs font-medium text-slate-500">
-            Showing 1-4 of 24 categories
+            Showing {(safeCurrentPage - 1) * categoriesPerPage + 1}-{Math.min(safeCurrentPage * categoriesPerPage, filteredCategories.length)} of {filteredCategories.length} categories
           </p>
           <div className="flex gap-2">
             <button
               type="button"
-              disabled
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={safeCurrentPage === 1}
               className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 transition-colors disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safeCurrentPage >= totalPages}
               className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-amber-600 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
@@ -136,11 +233,14 @@ export default function CategoriesPage() {
           Quick Filter Categories
         </h3>
         <div className="flex flex-wrap gap-2">
-          {filterCategories.map((filter) => (
+          {FILTER_CATEGORIES.map((filter) => (
             <button
               key={filter}
               type="button"
-              onClick={() => setSelectedFilter(filter)}
+              onClick={() => {
+                setSelectedFilter(filter);
+                setCurrentPage(1);
+              }}
               className={cn(
                 'px-4 py-2 rounded-full text-xs font-bold transition-all',
                 selectedFilter === filter
@@ -158,12 +258,39 @@ export default function CategoriesPage() {
       <Link href="/categories/create" className="fixed bottom-8 right-8 w-14 h-14 bg-on-surface text-white rounded-full shadow-2xl shadow-black/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
         <Plus className="w-6 h-6" />
       </Link>
+
+      <ConfirmActionDialog
+        open={categoryToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCategoryToDelete(null);
+          }
+        }}
+        title="Xác nhận xóa danh mục"
+        description={categoryToDelete
+          ? `Bạn sắp xóa danh mục ${categoryToDelete.name}. Hành động này có thể ảnh hưởng đến dữ liệu phân loại và không thể hoàn tác.`
+          : 'Bạn sắp xóa một danh mục.'}
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        variant="danger"
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+      />
     </div>
   );
 }
 
-function CategoryRow({ category }: { category: Category }) {
-  const Icon = iconMap[category.icon] || Music;
+function CategoryRow({
+  category,
+  onEdit,
+  onDelete,
+}: {
+  category: Category;
+  onEdit: (category: Category) => void;
+  onDelete: (category: Category) => void;
+}) {
+  const Icon = categoryIconMap[category.icon] || Music;
 
   return (
     <tr className="hover:bg-amber-50/30 transition-colors group">
@@ -214,14 +341,16 @@ function CategoryRow({ category }: { category: Category }) {
         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             type="button"
-            onClick={() => alert(`Editing category: ${category.name}`)}
+            onClick={() => onEdit(category)}
             className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             type="button"
-            onClick={() => alert(`Deleting category: ${category.name}`)}
+            onClick={() => {
+              void onDelete(category);
+            }}
             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
           >
             <Trash2 className="w-4 h-4" />

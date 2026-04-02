@@ -1,8 +1,10 @@
 // File: src/app/(admin)/categories/create/page.tsx
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   ChevronDown,
   Music,
@@ -18,9 +20,66 @@ import {
   Martini,
   Film,
 } from 'lucide-react';
+import { ConfirmActionDialog } from '@/core/components';
+
+type CategoryIconKey = 'music' | 'party' | 'gaming' | 'food' | 'theater' | 'art' | 'nightlife' | 'film';
+
+const iconOptions: Array<{ key: CategoryIconKey; label: string; icon: typeof Music }> = [
+  { key: 'party', label: 'Party', icon: PartyPopper },
+  { key: 'gaming', label: 'Gaming', icon: Gamepad2 },
+  { key: 'music', label: 'Music', icon: Music },
+  { key: 'food', label: 'Food', icon: Utensils },
+  { key: 'theater', label: 'Theater', icon: Theater },
+  { key: 'art', label: 'Art', icon: Brush },
+  { key: 'nightlife', label: 'Nightlife', icon: Martini },
+  { key: 'film', label: 'Film', icon: Film },
+];
 
 export default function CreateCategoryPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [iconKey, setIconKey] = useState<CategoryIconKey>('music');
+  const [isActive, setIsActive] = useState(true);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const selectedIcon = useMemo(
+    () => iconOptions.find((option) => option.key === iconKey) ?? iconOptions[2],
+    [iconKey]
+  );
+
+  const validateBeforeSubmit = () => {
+    if (!name.trim()) {
+      toast.error('Please enter a category name.');
+      return false;
+    }
+
+    if (!description.trim()) {
+      toast.error('Please enter a category description.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleCreateRequest = () => {
+    if (!validateBeforeSubmit()) {
+      return;
+    }
+
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmCreate = () => {
+    toast.success('Category created successfully.');
+    setIsConfirmOpen(false);
+    router.push('/categories');
+  };
+
+  const SelectedIcon = selectedIcon.icon;
+  const baseInputClass =
+    'w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10';
+
   return (
     <div className="min-h-screen relative p-8">
       {/* Background Decorative Elements */}
@@ -54,8 +113,10 @@ export default function CreateCategoryPage() {
                 </label>
                 <input
                   type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
                   placeholder="e.g. Music & Festivals"
-                  className="w-full bg-white/50 border border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-sm transition-all outline-none"
+                  className={baseInputClass}
                 />
               </div>
 
@@ -64,10 +125,20 @@ export default function CreateCategoryPage() {
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Category Icon
                 </label>
-                <div className="relative group flex items-center bg-white/50 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer group-hover:border-amber-300 transition-colors">
-                  <Music className="text-amber-500 mr-3 w-5 h-5" />
-                  <span className="text-sm text-slate-700 flex-1">Music Note</span>
-                  <ChevronDown className="text-slate-400 w-5 h-5" />
+                <div className="relative">
+                  <SelectedIcon className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-amber-500" />
+                  <select
+                    value={iconKey}
+                    onChange={(event) => setIconKey(event.target.value as CategoryIconKey)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white/70 py-3 pl-12 pr-10 text-sm font-medium text-slate-800 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                  >
+                    {iconOptions.map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -78,10 +149,15 @@ export default function CreateCategoryPage() {
                 Description
               </label>
               <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
                 placeholder="Describe what events fall under this category..."
                 rows={4}
-                className="w-full bg-white/50 border border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-4 py-3 text-sm transition-all outline-none resize-none"
+                className={`${baseInputClass} min-h-[112px] resize-none`}
               ></textarea>
+              <p className="text-[11px] text-slate-400 text-right">
+                {description.length}/280
+              </p>
             </div>
 
             {/* Visibility & Meta */}
@@ -98,10 +174,18 @@ export default function CreateCategoryPage() {
                 </div>
               </div>
               <div className="flex bg-white/80 p-1.5 rounded-full border border-slate-200 shadow-sm">
-                <button className="px-6 py-2 text-xs font-bold rounded-full bg-amber-500 text-white shadow-md">
+                <button
+                  type="button"
+                  onClick={() => setIsActive(true)}
+                  className={isActive ? 'px-6 py-2 text-xs font-bold rounded-full bg-amber-500 text-white shadow-md' : 'px-6 py-2 text-xs font-bold rounded-full text-slate-400 hover:text-slate-600'}
+                >
                   Active
                 </button>
-                <button className="px-6 py-2 text-xs font-bold rounded-full text-slate-400 hover:text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setIsActive(false)}
+                  className={!isActive ? 'px-6 py-2 text-xs font-bold rounded-full bg-slate-800 text-white shadow-md' : 'px-6 py-2 text-xs font-bold rounded-full text-slate-400 hover:text-slate-600'}
+                >
                   Inactive
                 </button>
               </div>
@@ -112,30 +196,36 @@ export default function CreateCategoryPage() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Suggested Icons
               </p>
-              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3">
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <PartyPopper className="text-slate-500 w-5 h-5" />
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                {iconOptions.map((option) => {
+                  const OptionIcon = option.icon;
+                  const isSelected = option.key === iconKey;
+
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => setIconKey(option.key)}
+                      className={isSelected
+                        ? 'aspect-square flex items-center justify-center bg-amber-500/10 border border-amber-500 rounded-lg cursor-pointer'
+                        : 'aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors'}
+                    >
+                      <OptionIcon className={isSelected ? 'text-amber-500 w-5 h-5' : 'text-slate-500 w-5 h-5'} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white/50 p-5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Live Preview</p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+                  <SelectedIcon className="w-5 h-5" />
                 </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Gamepad2 className="text-slate-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-amber-500/10 border border-amber-500 rounded-lg cursor-pointer">
-                  <Music className="text-amber-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Utensils className="text-slate-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Theater className="text-slate-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Brush className="text-slate-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Martini className="text-slate-500 w-5 h-5" />
-                </div>
-                <div className="aspect-square flex items-center justify-center bg-white/50 border border-slate-100 rounded-lg hover:border-amber-500 cursor-pointer transition-colors">
-                  <Film className="text-slate-500 w-5 h-5" />
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{name.trim() || 'New Category Name'}</p>
+                  <p className="text-xs text-slate-500">{isActive ? 'Visible to users' : 'Hidden from users'}</p>
                 </div>
               </div>
             </div>
@@ -151,10 +241,7 @@ export default function CreateCategoryPage() {
             </Link>
             <button 
               type="button"
-              onClick={() => {
-                alert('Category created successfully!');
-                router.push('/categories');
-              }}
+              onClick={handleCreateRequest}
               className="px-8 py-2.5 text-sm font-bold bg-amber-500 text-white rounded-xl shadow-[0_4px_12px_rgba(255,184,0,0.3)] hover:brightness-105 active:scale-95 transition-all"
             >
               Create Category
@@ -201,6 +288,16 @@ export default function CreateCategoryPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmActionDialog
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        title="Xác nhận tạo danh mục"
+        description="Bạn sắp tạo một danh mục mới. Thao tác này sẽ ảnh hưởng đến bộ lọc sự kiện và danh sách hiển thị trên hệ thống."
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        onConfirm={handleConfirmCreate}
+      />
     </div>
   );
 }

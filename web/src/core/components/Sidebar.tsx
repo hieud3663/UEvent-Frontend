@@ -1,6 +1,7 @@
 // File: src/core/components/Sidebar.tsx
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -11,7 +12,6 @@ import {
   Bell,
   HeadphonesIcon,
   Settings,
-  Shield,
 } from 'lucide-react';
 import { cn } from '@/core/lib/utils';
 import type { NavItem } from '@/core/types/navigation';
@@ -86,10 +86,12 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* User Profile */}
       <div className="mt-auto p-4 flex items-center gap-3 glass-card rounded-2xl border border-white/60">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200">
-          <img
+        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-200">
+          <Image
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV320YMqiYUJZn9nyC85F61ox_xlvreWDOTEqyzT_FR47l5PqjYlues7JX8exjtAHIJ2yVVUK5RnOQaAiFTyNWIInCwT-JZ7Qn91g-1ro-CrcgU7pGPZXkv7VNwfayOdKYwlJmxdiaBcSuAAJm9cZZiIVPAq3hupYI4jedmyGX2BCGzXOPfoJCky_ieXThT4FnivS5VNjQrzSBkpJ6UuDcFO38zPXjCLXogfbaN486bpvnr_LoT516mwma65yIzZpXSnv1D6bD8jk"
             alt="Admin User"
+            fill
+            sizes="40px"
             className="w-full h-full object-cover"
           />
         </div>

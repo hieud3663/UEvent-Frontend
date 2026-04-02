@@ -1,13 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Filter, Timer, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockTickets } from '@/features/support/mock/mock-support';
+import {
+  getSupportStats,
+  getTickets,
+} from '@/features/support/services/support.service';
 import { cn } from '@/core/lib/utils';
 import type { Ticket, TicketStatus } from '@/features/support/types';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
-const statusConfig: Record<TicketStatus, { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }> = {
+const supportStatusConfig: Record<
+  TicketStatus,
+  { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }
+> = {
   open: { label: 'Pending', variant: 'warning' },
   in_progress: { label: 'In Progress', variant: 'info' },
   resolved: { label: 'Resolved', variant: 'success' },
@@ -18,19 +25,46 @@ type FilterType = 'all' | 'pending' | 'in_progress';
 type QueueType = 'all' | 'technical' | 'billing' | 'general';
 
 export default function SupportPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof getSupportStats>> | null>(null);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [queueType, setQueueType] = useState<QueueType>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSupportPageData() {
+      const [ticketsResponse, supportStats] = await Promise.all([getTickets(), getSupportStats()]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setTickets(ticketsResponse);
+      setStats(supportStats);
+    }
+
+    void loadSupportPageData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (!stats) {
+    return <div className="p-6 text-sm text-slate-500">Loading support tickets...</div>;
+  }
+
   // Filter tickets based on selected filters
-  const filteredTickets = mockTickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket) => {
     if (filterType === 'pending' && ticket.status !== 'open') return false;
     if (filterType === 'in_progress' && ticket.status !== 'in_progress') return false;
 
     if (queueType === 'technical' && ticket.category !== 'technical') return false;
     if (queueType === 'billing' && ticket.category !== 'payment') return false;
-    // Note: 'general' could map to 'other' category or show all non-technical/billing
+    if (queueType === 'general' && ticket.category !== 'other') return false;
 
     return true;
   });
@@ -41,8 +75,16 @@ export default function SupportPage() {
     currentPage * itemsPerPage
   );
 
-  const totalTickets = 2451; // From Stitch design
-  const pendingInquiries = mockTickets.filter((t) => t.status === 'open').length;
+  const totalTickets = tickets.length;
+  const pendingInquiries = stats.openTickets;
+
+  const handleFilter = async () => {
+    await runActionWithToast(async () => Promise.resolve(), {
+      loading: 'Preparing support filters...',
+      success: 'Support filter panel is ready.',
+      error: 'Failed to open support filters.',
+    });
+  };
 
   return (
     <div className="space-y-8 pb-32">
@@ -97,7 +139,9 @@ export default function SupportPage() {
           {/* Filter Button */}
           <button 
             type="button"
-            onClick={() => alert('Opening advanced filter options...')}
+            onClick={() => {
+              void handleFilter();
+            }}
             className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-white/80 text-sm font-semibold text-slate-700 hover:scale-[1.02] transition-transform"
           >
             <Filter className="w-4 h-4" />
@@ -267,7 +311,7 @@ export default function SupportPage() {
 }
 
 function TicketRow({ ticket }: { ticket: Ticket }) {
-  const status = statusConfig[ticket.status];
+  const status = supportStatusConfig[ticket.status];
 
   // Extract ticket number from ID (e.g., TKT-001 -> #001)
   const ticketNumber = `#${ticket.id.replace('TKT-', '443')}`;

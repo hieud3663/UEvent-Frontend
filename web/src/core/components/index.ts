@@ -8,4 +8,5 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Car
 export { Button } from './Button';
 export { Input } from './Input';
 export { Badge } from './Badge';
+export { ConfirmActionDialog } from './ConfirmActionDialog';
 

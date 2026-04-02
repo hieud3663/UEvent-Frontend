@@ -1,29 +1,51 @@
 // File: src/app/(admin)/notifications/page.tsx
 'use client';
 
-import { Megaphone, AlertCircle, Gift, Calendar, MoreHorizontal, Filter, Download, Plus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ElementType } from 'react';
+import { MoreHorizontal, Filter, Download, Plus, AlertCircle, Calendar, Gift, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 import { Button, Card } from '@/core/components';
-import { mockNotifications, notificationStats } from '@/features/notifications/mock/mock-notifications';
+import {
+  exportNotificationsHistory,
+  getNotifications,
+  getNotificationPaginationConfig,
+  getNotificationStats,
+} from '@/features/notifications/services/notifications.service';
 import { cn } from '@/core/lib/utils';
-import type { Notification, NotificationType, NotificationStatus, AudienceType } from '@/features/notifications/types';
-import { useState } from 'react';
+import type {
+  AudienceType,
+  Notification,
+  NotificationPaginationConfig,
+  NotificationStatus,
+  NotificationType,
+} from '@/features/notifications/types';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
-const typeConfig: Record<NotificationType, { icon: React.ElementType; color: string; bg: string }> = {
+const notificationTypeConfig: Record<
+  NotificationType,
+  { icon: ElementType; color: string; bg: string }
+> = {
   announcement: { icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-100' },
   alert: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-100' },
   reminder: { icon: Megaphone, color: 'text-amber-600', bg: 'bg-amber-100' },
   promotion: { icon: Gift, color: 'text-purple-600', bg: 'bg-purple-100' },
 };
 
-const statusConfig: Record<NotificationStatus, { label: string; color: string; bg: string; dotColor: string }> = {
+const notificationStatusConfig: Record<
+  NotificationStatus,
+  { label: string; color: string; bg: string; dotColor: string }
+> = {
   draft: { label: 'Draft', color: 'text-slate-600', bg: 'bg-slate-100', dotColor: 'bg-slate-500' },
   scheduled: { label: 'Scheduled', color: 'text-amber-700', bg: 'bg-amber-100', dotColor: 'bg-amber-500' },
   sent: { label: 'Sent', color: 'text-emerald-700', bg: 'bg-emerald-100', dotColor: 'bg-emerald-500' },
   failed: { label: 'Failed', color: 'text-red-600', bg: 'bg-red-100', dotColor: 'bg-red-500' },
 };
 
-const audienceConfig: Record<AudienceType, { label: string; color: string; bg: string }> = {
+const notificationAudienceConfig: Record<
+  AudienceType,
+  { label: string; color: string; bg: string }
+> = {
   all: { label: 'All Users', color: 'text-slate-600', bg: 'bg-slate-100' },
   students: { label: 'Students', color: 'text-blue-600', bg: 'bg-blue-50' },
   organizers: { label: 'Organizers', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -32,9 +54,81 @@ const audienceConfig: Record<AudienceType, { label: string; color: string; bg: s
 };
 
 export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof getNotificationStats>> | null>(null);
+  const [paginationConfig, setPaginationConfig] = useState<NotificationPaginationConfig | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalNotifications = 42;
-  const notificationsPerPage = 4;
+  const notificationsPerPage = paginationConfig?.perPage ?? 4;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadNotificationsPageData() {
+      const [notificationsResponse, notificationStats, config] = await Promise.all([
+        getNotifications(),
+        getNotificationStats(),
+        getNotificationPaginationConfig(),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setNotifications(notificationsResponse);
+      setStats(notificationStats);
+      setPaginationConfig(config);
+    }
+
+    void loadNotificationsPageData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const totalNotifications = notifications.length;
+  const totalPages = Math.max(1, Math.ceil(totalNotifications / notificationsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedNotifications = useMemo(
+    () =>
+      notifications.slice(
+        (safeCurrentPage - 1) * notificationsPerPage,
+        safeCurrentPage * notificationsPerPage
+      ),
+    [safeCurrentPage, notifications, notificationsPerPage]
+  );
+
+  const handleFilter = async () => {
+    await runActionWithToast(async () => Promise.resolve(), {
+      loading: 'Preparing notification filters...',
+      success: 'Notification filters are ready.',
+      error: 'Failed to open notification filters.',
+    });
+  };
+
+  const handleExport = async () => {
+    await runActionWithToast(() => exportNotificationsHistory(), {
+      loading: 'Preparing notification export...',
+      success: 'Notification export has been queued.',
+      error: 'Failed to export notification history.',
+    });
+  };
+
+  const handleMoreActions = async (notification: Notification) => {
+    await runActionWithToast(async () => Promise.resolve(), {
+      loading: `Opening actions for "${notification.title}"...`,
+      success: `Actions menu ready for "${notification.title}".`,
+      error: `Failed to open actions for "${notification.title}".`,
+    });
+  };
+
+  if (!stats || !paginationConfig) {
+    return <div className="p-6 text-sm text-slate-500">Loading notifications...</div>;
+  }
+
+  const visiblePageCount = Math.min(paginationConfig.maxVisiblePages, totalPages);
+  const pageNumbers = Array.from({ length: visiblePageCount }, (_, index) => index + 1);
 
   return (
     <div className="space-y-8">
@@ -51,6 +145,9 @@ export default function NotificationsPage() {
         <div className="flex gap-2">
           <Button
             variant="secondary"
+            onClick={() => {
+              void handleFilter();
+            }}
             className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider"
             leftIcon={<Filter className="w-4 h-4" />}
           >
@@ -58,6 +155,9 @@ export default function NotificationsPage() {
           </Button>
           <Button
             variant="secondary"
+            onClick={() => {
+              void handleExport();
+            }}
             className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider"
             leftIcon={<Download className="w-4 h-4" />}
           >
@@ -83,11 +183,11 @@ export default function NotificationsPage() {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
-              {notificationStats.totalSent.toLocaleString('en-US')}
+              {stats.totalSent.toLocaleString('en-US')}
             </span>
-            {notificationStats.totalSentChange && (
+            {stats.totalSentChange && (
               <span className="text-xs font-bold text-emerald-600">
-                {notificationStats.totalSentChange}
+                {stats.totalSentChange}
               </span>
             )}
           </div>
@@ -99,11 +199,11 @@ export default function NotificationsPage() {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
-              {notificationStats.avgOpenRate}%
+              {stats.avgOpenRate}%
             </span>
-            {notificationStats.avgOpenRateStatus && (
+            {stats.avgOpenRateStatus && (
               <span className="text-xs font-bold text-amber-600">
-                {notificationStats.avgOpenRateStatus}
+                {stats.avgOpenRateStatus}
               </span>
             )}
           </div>
@@ -115,11 +215,11 @@ export default function NotificationsPage() {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
-              {notificationStats.scheduled}
+              {stats.scheduled}
             </span>
-            {notificationStats.scheduledNote && (
+            {stats.scheduledNote && (
               <span className="text-xs font-bold text-slate-400">
-                {notificationStats.scheduledNote}
+                {stats.scheduledNote}
               </span>
             )}
           </div>
@@ -134,11 +234,11 @@ export default function NotificationsPage() {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
-              {notificationStats.activeUsers.toLocaleString('en-US')}
+              {stats.activeUsers.toLocaleString('en-US')}
             </span>
-            {notificationStats.activeUsersStatus && (
+            {stats.activeUsersStatus && (
               <span className="text-xs font-bold text-emerald-600">
-                {notificationStats.activeUsersStatus}
+                {stats.activeUsersStatus}
               </span>
             )}
           </div>
@@ -172,8 +272,12 @@ export default function NotificationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {mockNotifications.map((notification) => (
-                <NotificationRow key={notification.id} notification={notification} />
+              {paginatedNotifications.map((notification) => (
+                <NotificationRow
+                  key={notification.id}
+                  notification={notification}
+                  onMoreActions={handleMoreActions}
+                />
               ))}
             </tbody>
           </table>
@@ -182,7 +286,7 @@ export default function NotificationsPage() {
         {/* Pagination */}
         <div className="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
           <p className="text-xs text-slate-500">
-            Showing <span className="font-bold text-slate-900">1-{notificationsPerPage}</span> of{' '}
+            Showing <span className="font-bold text-slate-900">{(safeCurrentPage - 1) * notificationsPerPage + 1}-{Math.min(safeCurrentPage * notificationsPerPage, totalNotifications)}</span> of{' '}
             <span className="font-bold text-slate-900">{totalNotifications}</span> notifications
           </p>
           <div className="flex gap-2">
@@ -190,52 +294,34 @@ export default function NotificationsPage() {
               type="button"
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors disabled:opacity-50"
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              title="Previous page"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <button
-              type="button"
-              className={cn(
-                'w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold',
-                currentPage === 1
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'border border-slate-200 text-slate-600 hover:bg-white transition-colors'
-              )}
-              onClick={() => setCurrentPage(1)}
-            >
-              1
-            </button>
-            <button
-              type="button"
-              className={cn(
-                'w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold',
-                currentPage === 2
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'border border-slate-200 text-slate-600 hover:bg-white transition-colors'
-              )}
-              onClick={() => setCurrentPage(2)}
-            >
-              2
-            </button>
-            <button
-              type="button"
-              className={cn(
-                'w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold',
-                currentPage === 3
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'border border-slate-200 text-slate-600 hover:bg-white transition-colors'
-              )}
-              onClick={() => setCurrentPage(3)}
-            >
-              3
-            </button>
+            {pageNumbers.map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                className={cn(
+                  'w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold',
+                  safeCurrentPage === pageNumber
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'border border-slate-200 text-slate-600 hover:bg-white transition-colors'
+                )}
+                onClick={() => setCurrentPage(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ))}
             <button
               type="button"
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors"
-              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              title="Next page"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -248,10 +334,16 @@ export default function NotificationsPage() {
   );
 }
 
-function NotificationRow({ notification }: { notification: Notification }) {
-  const type = typeConfig[notification.type];
-  const status = statusConfig[notification.status];
-  const audience = audienceConfig[notification.audience];
+function NotificationRow({
+  notification,
+  onMoreActions,
+}: {
+  notification: Notification;
+  onMoreActions: (notification: Notification) => void;
+}) {
+  const type = notificationTypeConfig[notification.type];
+  const status = notificationStatusConfig[notification.status];
+  const audience = notificationAudienceConfig[notification.audience];
   const TypeIcon = type.icon;
 
   const formatDate = (dateString: string) => {
@@ -354,6 +446,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
       <td className="px-8 py-6 text-right">
         <button
           type="button"
+          onClick={() => onMoreActions(notification)}
           className="text-slate-400 hover:text-slate-900 transition-colors"
           title="More actions"
         >

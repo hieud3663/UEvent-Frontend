@@ -1,6 +1,8 @@
 // File: src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { ToastProvider } from '@/core/components/ToastProvider';
+import { getThemeStyleVariables } from '@/core/theme';
 import './globals.css';
 
 const geistSans = Geist({
@@ -23,9 +25,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeVariables = getThemeStyleVariables();
+
   return (
-    <html lang="vi" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="h-full antialiased">{children}</body>
+    <html
+      lang="vi"
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      style={themeVariables}
+    >
+      <body className="h-full antialiased">
+        {children}
+        <ToastProvider />
+      </body>
     </html>
   );
 }

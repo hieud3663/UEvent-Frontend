@@ -1,16 +1,169 @@
 // File: src/app/(admin)/events/page.tsx
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
+import type { ElementType } from 'react';
 import { AlertTriangle, CheckCircle, Filter, MoreHorizontal, Calendar, User, TrendingDown, Flag, XCircle } from 'lucide-react';
-import { Card } from '@/core/components';
-import { mockEvents, eventStats } from '@/features/events/mock/mock-events';
-import type { Event } from '@/features/events/types';
+import { Card, ConfirmActionDialog } from '@/core/components';
+import {
+  getEvents,
+  getEventModerationActivities,
+  getEventModerationPulse,
+  getEventPolicyHandbook,
+  getEventStats,
+  moderateEventStatus,
+} from '@/features/events/services/events.service';
+import type {
+  Event,
+  EventModerationActivity,
+  EventModerationPulse,
+  EventPolicyHandbook,
+  ReportType,
+} from '@/features/events/types';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
+
+const reportTypeLabels: Record<NonNullable<ReportType>, string> = {
+  safety: 'Safety Concern',
+  copyright: 'Copyright Claim',
+  spam: 'Spam Report',
+  other: 'Other Issue',
+};
+
+const moderationActivityTypeConfig: Record<
+  EventModerationActivity['type'],
+  { icon: ElementType; iconColor: string; iconBg: string }
+> = {
+  approved: { icon: CheckCircle, iconColor: 'text-green-600', iconBg: 'bg-green-100' },
+  declined: { icon: XCircle, iconColor: 'text-error', iconBg: 'bg-error/10' },
+  flagged: { icon: Flag, iconColor: 'text-blue-600', iconBg: 'bg-blue-100' },
+};
 
 export default function EventsPage() {
-  const reportedEvents = mockEvents.filter((e) => e.status === 'reported').slice(0, 2);
-  const pendingEvents = mockEvents.filter((e) => e.status === 'pending').slice(0, 1);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof getEventStats>> | null>(null);
+  const [moderationPulse, setModerationPulse] = useState<EventModerationPulse | null>(null);
+  const [moderationActivities, setModerationActivities] = useState<EventModerationActivity[]>([]);
+  const [policyHandbook, setPolicyHandbook] = useState<EventPolicyHandbook | null>(null);
+  const [pendingModerationAction, setPendingModerationAction] = useState<
+    { type: 'approve' | 'decline'; eventId: string; title: string } | null
+  >(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEventsPageData() {
+      const [eventsResponse, eventsStats, pulse, activities, handbook] = await Promise.all([
+        getEvents(),
+        getEventStats(),
+        getEventModerationPulse(),
+        getEventModerationActivities(),
+        getEventPolicyHandbook(),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setEvents(eventsResponse);
+      setStats(eventsStats);
+      setModerationPulse(pulse);
+      setModerationActivities(activities);
+      setPolicyHandbook(handbook);
+    }
+
+    void loadEventsPageData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const reportedEvents = useMemo(
+    () => events.filter((item) => item.status === 'reported').slice(0, 2),
+    [events]
+  );
+
+  const pendingEvents = useMemo(
+    () => events.filter((item) => item.status === 'pending').slice(0, 1),
+    [events]
+  );
+
+  const handleDecline = async (eventId: string, title: string) => {
+    const previousEvents = events;
+    setEvents((prev) => prev.map((item) => (item.id === eventId ? { ...item, status: 'rejected' } : item)));
+
+    try {
+      await runActionWithToast(() => moderateEventStatus(eventId, 'rejected'), {
+        loading: `Declining ${title}...`,
+        success: `Declined event: ${title}`,
+        error: `Failed to decline ${title}.`,
+      });
+    } catch {
+      setEvents(previousEvents);
+    }
+  };
+
+  const handleApprove = async (eventId: string, title: string) => {
+    const previousEvents = events;
+    setEvents((prev) => prev.map((item) => (item.id === eventId ? { ...item, status: 'approved' } : item)));
+
+    try {
+      await runActionWithToast(() => moderateEventStatus(eventId, 'approved'), {
+        loading: `Approving ${title}...`,
+        success: `Approved event: ${title}`,
+        error: `Failed to approve ${title}.`,
+      });
+    } catch {
+      setEvents(previousEvents);
+    }
+  };
+
+  const handleFilter = async () => {
+    await runActionWithToast(async () => Promise.resolve(), {
+      loading: 'Preparing filter panel...',
+      success: 'Filter panel is ready.',
+      error: 'Failed to open filter panel.',
+    });
+  };
+
+  const handleQuickAudit = async () => {
+    await runActionWithToast(async () => Promise.resolve(), {
+      loading: 'Starting quick audit...',
+      success: 'Quick audit started for moderation queue.',
+      error: 'Failed to start quick audit.',
+    });
+  };
+
+  const handleApproveRequest = (eventId: string, title: string) => {
+    setPendingModerationAction({ type: 'approve', eventId, title });
+  };
+
+  const handleDeclineRequest = (eventId: string, title: string) => {
+    setPendingModerationAction({ type: 'decline', eventId, title });
+  };
+
+  const handleConfirmModeration = async () => {
+    if (!pendingModerationAction) {
+      return;
+    }
+
+    const currentAction = pendingModerationAction;
+    setPendingModerationAction(null);
+
+    if (currentAction.type === 'approve') {
+      await handleApprove(currentAction.eventId, currentAction.title);
+      return;
+    }
+
+    await handleDecline(currentAction.eventId, currentAction.title);
+  };
+
+  if (!stats || !moderationPulse || !policyHandbook) {
+    return <div className="p-6 text-sm text-slate-500">Loading events...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -27,7 +180,9 @@ export default function EventsPage() {
         <div className="flex gap-2">
           <button 
             type="button"
-            onClick={() => alert('Opening advanced filter dialog...')}
+            onClick={() => {
+              void handleFilter();
+            }}
             className="px-4 py-2 rounded-full glass-card text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-white/40"
           >
             <Filter className="w-4 h-4" />
@@ -35,7 +190,9 @@ export default function EventsPage() {
           </button>
           <button 
             type="button"
-            onClick={() => alert('Starting Quick Audit mode...')}
+            onClick={() => {
+              void handleQuickAudit();
+            }}
             className="px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-xs font-bold uppercase tracking-wider"
           >
             Quick Audit
@@ -54,17 +211,25 @@ export default function EventsPage() {
           </h3>
 
           {reportedEvents.map((event) => (
-            <ReportedEventCard key={event.id} event={event} />
+            <ReportedEventCard
+              key={event.id}
+              event={event}
+              onDecline={handleDeclineRequest}
+            />
           ))}
 
           {/* Pending Approval Section */}
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 pt-6 mb-4">
             <CheckCircle className="w-4 h-4" />
-            Pending Approval ({eventStats.pendingApproval})
+            Pending Approval ({stats.pendingApproval})
           </h3>
 
           {pendingEvents.map((event) => (
-            <PendingEventCard key={event.id} event={event} />
+            <PendingEventCard
+              key={event.id}
+              event={event}
+              onApprove={handleApproveRequest}
+            />
           ))}
         </div>
 
@@ -76,20 +241,23 @@ export default function EventsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/50 p-4 rounded-2xl border border-white/40">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg Response</p>
-                <p className="text-2xl font-black text-on-surface mt-1">1.4h</p>
+                <p className="text-2xl font-black text-on-surface mt-1">{moderationPulse.avgResponseHours}h</p>
               </div>
               <div className="bg-white/50 p-4 rounded-2xl border border-white/40">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Queue Size</p>
-                <p className="text-2xl font-black text-on-surface mt-1">42</p>
+                <p className="text-2xl font-black text-on-surface mt-1">{moderationPulse.queueSize}</p>
               </div>
             </div>
             <div className="mt-4 p-4 bg-primary-container/20 rounded-2xl border border-primary-container/30">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-primary">Target: &lt; 2h</span>
+                <span className="text-xs font-bold text-primary">{moderationPulse.targetLabel}</span>
                 <TrendingDown className="w-4 h-4 text-primary" />
               </div>
               <div className="w-full bg-primary/10 h-1.5 rounded-full mt-2">
-                <div className="bg-primary w-3/4 h-full rounded-full"></div>
+                <div
+                  className="bg-primary h-full rounded-full"
+                  style={{ width: `${moderationPulse.targetProgress}%` }}
+                ></div>
               </div>
             </div>
           </Card>
@@ -98,33 +266,24 @@ export default function EventsPage() {
           <Card className="glass-card border-none rounded-[32px] p-6">
             <h3 className="text-sm font-bold text-on-surface mb-6">Recent Activities</h3>
             <div className="space-y-6">
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-on-surface">Jazz on the Green approved</p>
-                  <p className="text-[10px] text-on-surface-variant">by Alex Rivera • 12m ago</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center shrink-0">
-                  <XCircle className="w-4 h-4 text-error" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-on-surface">Secret Bunker 404 declined</p>
-                  <p className="text-[10px] text-on-surface-variant">Policy violation: Lack of permit • 45m ago</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                  <Flag className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-on-surface">Sky Lantern Fest flagged</p>
-                  <p className="text-[10px] text-on-surface-variant">Pending safety review • 1h ago</p>
-                </div>
-              </div>
+              {moderationActivities.map((activity) => {
+                const config = moderationActivityTypeConfig[activity.type];
+                const Icon = config.icon;
+
+                return (
+                  <div key={activity.id} className="flex gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full ${config.iconBg} flex items-center justify-center shrink-0`}
+                    >
+                      <Icon className={`w-4 h-4 ${config.iconColor}`} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-on-surface">{activity.title}</p>
+                      <p className="text-[10px] text-on-surface-variant">{activity.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
 
@@ -135,15 +294,15 @@ export default function EventsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h4 className="font-bold text-sm mb-2">Moderator Policy Handbook</h4>
+            <h4 className="font-bold text-sm mb-2">{policyHandbook.title}</h4>
             <p className="text-[11px] text-white/60 mb-4 leading-relaxed">
-              Ensure all events meet the Community Standards v4.2 regarding safety, noise levels, and verified ticketing partners.
+              {policyHandbook.description}
             </p>
             <a
               className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors"
-              href="#"
+              href={policyHandbook.ctaHref}
             >
-              Open Docs
+              {policyHandbook.ctaLabel}
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -151,31 +310,45 @@ export default function EventsPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmActionDialog
+        open={pendingModerationAction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingModerationAction(null);
+          }
+        }}
+        title={pendingModerationAction?.type === 'approve' ? 'Xác nhận phê duyệt sự kiện' : 'Xác nhận từ chối sự kiện'}
+        description={pendingModerationAction
+          ? pendingModerationAction.type === 'approve'
+            ? `Bạn sắp phê duyệt sự kiện ${pendingModerationAction.title}. Hành động này sẽ cập nhật trạng thái kiểm duyệt.`
+            : `Bạn sắp từ chối sự kiện ${pendingModerationAction.title}. Hành động này có thể không hoàn tác.`
+          : 'Xác nhận hành động kiểm duyệt.'}
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        variant={pendingModerationAction?.type === 'decline' ? 'danger' : 'default'}
+        onConfirm={() => {
+          void handleConfirmModeration();
+        }}
+      />
     </div>
   );
 }
 
-function ReportedEventCard({ event }: { event: Event }) {
-  const reportTypeLabels = {
-    safety: 'Safety Concern',
-    copyright: 'Copyright Claim',
-    spam: 'Spam Report',
-    other: 'Other Issue',
-  };
-
-  // Image mapping based on event ID - using Stitch design images
-  const imageMap: Record<string, string> = {
-    '1': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWr1ZLrB2PRjy_meeHzsve3tDJ5IqG4_V7_hbpCy4BaTbyUvUmXr0COd6ppICAccsQji3LpzrAXoZty2sVF2a-9H_eZONwwoXfNMb2_dHDyoMbFM4EzljjyHGtAZ1ZVwf0vvHIM8LyzOOAKwhZoNCzeDf9XCpYjx_H1G4W1CQ0a_oQmdfw6SzxXNwfHF08cO8Pi5FLVuvEFxMakARkq8B9hYy2Cr71yzY68IKa65embMoyBmnrbk5LXjbJ4TAkfKs89fu7em7d07E',
-    '2': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDM-9hYTuO2vpG1-AV5rmjnXqj3aMQRZQag8HNz53HFoGtdIweRS4HDR7YkMC7_Mmet-yBNI764yTib5EE1QOl5sm6fpj_kaaFP1KiJu39owtykk-zkfhY22527LJST21ZpsiVh_Av4-uIBwd2-tQ1BaTMe36BqJUsLrWkGXww6MoPB9DJqjpyz9HyDPciyLxRzC_LhDIJoiVmVRUbZdhYBWZ8jPtQxuqYuIrEWYa05xApOtfaKLMFu96fnsBSBeUg4D1X_3PVnVEg',
-  };
-
+function ReportedEventCard({
+  event,
+  onDecline,
+}: {
+  event: Event;
+  onDecline: (eventId: string, title: string) => void;
+}) {
   return (
     <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 border-l-4 border-l-error">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-slate-200 to-slate-300">
-        {imageMap[event.id] && (
+        {event.coverImageUrl && (
           <Image
-            src={imageMap[event.id]}
+            src={event.coverImageUrl}
             alt={event.title}
             fill
             className="object-cover"
@@ -214,10 +387,20 @@ function ReportedEventCard({ event }: { event: Event }) {
           <Link href={`/events/${event.id}`} className="flex-grow md:flex-none px-6 py-2 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-bold hover:opacity-90 transition-opacity whitespace-nowrap text-center">
             View Event
           </Link>
-          <button className="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-opacity">
+          <button
+            type="button"
+            onClick={() => {
+              void onDecline(event.id, event.title);
+            }}
+            className="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-opacity"
+          >
             Decline
           </button>
-          <button className="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40">
+          <button
+            type="button"
+            onClick={() => toast.info(`More actions for ${event.title} coming soon.`)}
+            className="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40"
+          >
             <MoreHorizontal className="w-4 h-4" />
           </button>
         </div>
@@ -226,19 +409,20 @@ function ReportedEventCard({ event }: { event: Event }) {
   );
 }
 
-function PendingEventCard({ event }: { event: Event }) {
-  // Image mapping based on event ID - using Stitch design images
-  const imageMap: Record<string, string> = {
-    '3': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDHRwADeOvL-aYEGvIlevWZus2G-2vSnUrmdx-O3HvJwzxepkds5x4F1uRyEc-jD9l1snnqGlB-TdkmOjEJANEuha_wmkbhHxkkZouX-Q3rcxcqzZnBtnDKun--Y0zrWoaY2OxWdMtPVCEmy68AxIbo61LJ68Rs8fTJ2IM7zBFB4II165OWUNt5f0UBBHSUAbx_9BzpUmd1KkVtBaEqsN4PJb28XaPUegn5rI97fHj8vP8M60a-dlFmtrLO6dSiMBMBt4NUkHvvdLs',
-  };
-
+function PendingEventCard({
+  event,
+  onApprove,
+}: {
+  event: Event;
+  onApprove: (eventId: string, title: string) => void;
+}) {
   return (
     <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-amber-100 to-amber-200">
-        {imageMap[event.id] && (
+        {event.coverImageUrl && (
           <Image
-            src={imageMap[event.id]}
+            src={event.coverImageUrl}
             alt={event.title}
             fill
             className="object-cover"
@@ -258,17 +442,25 @@ function PendingEventCard({ event }: { event: Event }) {
               {event.date}
             </p>
           </div>
-          <span className="px-2 py-1 rounded bg-secondary-container/30 text-secondary text-[10px] font-bold uppercase tracking-tighter">
-            New Organizer
-          </span>
+          {event.organizerTag ? (
+            <span className="px-2 py-1 rounded bg-secondary-container/30 text-secondary text-[10px] font-bold uppercase tracking-tighter">
+              {event.organizerTag}
+            </span>
+          ) : null}
         </div>
 
         <p className="text-xs text-on-surface-variant mt-4 line-clamp-2 leading-relaxed">
-          Sierra Sol is a newly registered wellness collective. They are proposing a 3-day high-altitude yoga experience for 50 guests. Documentation for insurance is attached.
+          {event.moderationNote ?? 'No additional moderation context provided for this event.'}
         </p>
 
         <div className="mt-auto pt-4 flex gap-3">
-          <button className="flex-grow md:flex-none px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors">
+          <button
+            type="button"
+            onClick={() => {
+              void onApprove(event.id, event.title);
+            }}
+            className="flex-grow md:flex-none px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors"
+          >
             Approve
           </button>
           <Link href={`/events/${event.id}`} className="flex-grow md:flex-none px-6 py-2 glass-card text-on-surface rounded-xl text-xs font-bold border border-white/40 text-center">

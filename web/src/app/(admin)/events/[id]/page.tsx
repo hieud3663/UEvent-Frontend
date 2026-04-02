@@ -1,8 +1,9 @@
 // File: src/app/(admin)/events/[id]/page.tsx
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
   Bell,
@@ -14,10 +15,20 @@ import {
   Flag,
   History,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function EventReviewDetailPage() {
-  const params = useParams();
-  const eventId = params.id as string;
+  const router = useRouter();
+
+  const handleApprove = () => {
+    toast.success('Event approved and published.');
+    router.push('/events');
+  };
+
+  const handleDecline = () => {
+    toast.success('Event declined and organizer notified.');
+    router.push('/events');
+  };
 
   return (
     <div className="min-h-screen pb-12">
@@ -36,19 +47,35 @@ export default function EventReviewDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="px-6 py-2 rounded-full border border-red-600 text-red-600 font-bold text-sm hover:bg-red-50 transition-all active:scale-95">
+          <button
+            type="button"
+            onClick={handleDecline}
+            className="px-6 py-2 rounded-full border border-red-600 text-red-600 font-bold text-sm hover:bg-red-50 transition-all active:scale-95"
+          >
             Decline
           </button>
-          <button className="px-6 py-2 rounded-full bg-amber-500 text-white font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95">
+          <button
+            type="button"
+            onClick={handleApprove}
+            className="px-6 py-2 rounded-full bg-amber-500 text-white font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95"
+          >
             Approve
           </button>
 
           <div className="w-[1px] h-6 bg-black/10 mx-2"></div>
 
-          <button className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600">
+          <button
+            type="button"
+            onClick={() => toast.info('Notification center will open here.')}
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600"
+          >
             <Bell className="w-5 h-5" />
           </button>
-          <button className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600">
+          <button
+            type="button"
+            onClick={() => toast.info('Review settings panel is coming soon.')}
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600"
+          >
             <Settings className="w-5 h-5" />
           </button>
         </div>
@@ -80,9 +107,11 @@ export default function EventReviewDetailPage() {
           {/* Hero Section: Full Event Banner (8 Cols) */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <div className="relative aspect-[21/9] rounded-[32px] overflow-hidden shadow-xl group">
-              <img
+              <Image
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs4b_L9QgWf1XDH0qx4gM5_00TpPdC1Klew3A-z8zhcyac4mFYrzPpnVWxU2hh9IC3TqNhMnqkeRO-e-jKUu39WMa5GbbZDljjvyUb3JfhqPLtf8yAEeHSZlpem6qFS2vbRJpc2SFZHQgc2vtnlhdWh70dYdQHT9eAMFasMPLfvTA3y5iKFWKrAqQBXbha-ttNDKcLlJVCY0LJVK3zlB8EAEUs-5gab1dWrWcMQ8Jk7Kuk-kTB3ag13oVHmucQgBEKGgNaPn4ipyg"
                 alt="Event Banner"
+                fill
+                sizes="(min-width: 1024px) 66vw, 100vw"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -191,10 +220,12 @@ export default function EventReviewDetailPage() {
                 Organizer Account
               </h4>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500">
-                  <img
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500">
+                  <Image
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlemM4TN8HkVmWnlmJ0gV4AN3-psUFHmePxiA8y29GPJKViVdo1AjprMXDFLSD_eW4jAi_tVrZCleLri1d9D4mNB8Q6o1DlkACCPPWSCjOPZ-8L3OiGgs2rMWqW7kTYLu_fv1Kd_0iKSAanV_Nre6bSuoKmoRcxVlsly4fXu2JxY5VoVahs3Z-O6rZxFcUXL-rrG4LZVzeyRqL4Dw3TnEFEfJu6hkdehKDb6Eet653Xz8i0fXMDemv3CGbIcreJWxpLgbShurH43g"
                     alt="Organizer Profile"
+                    fill
+                    sizes="48px"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -223,10 +254,12 @@ export default function EventReviewDetailPage() {
             </div>
 
             {/* Moderation Map */}
-            <div className="rounded-[32px] overflow-hidden h-48 shadow-sm border border-white/40">
-              <img
+            <div className="relative rounded-[32px] overflow-hidden h-48 shadow-sm border border-white/40">
+              <Image
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK9BC1VKJFizyN0fihG055vITF5cI67w4CW6Rg3eY_e1xMCpd27UoEw37osGUiq5DCfHsejc3QqFCJm1ZnWAyjtxRFTKR5OXoUSJkQygkXsmousliSpJCcx9R8ul2JX0SyXvGr8_hiVNxnWfOzLMy1IdAzCFAaX-AF61aJBjHD2-T6MxNNCEa0UBb8l2KRW13GOmY8dRsyW6dkd372fqUwVo5c81mZlnmkiJk7Qm48_i1bv_FK5U7fDu8pnwA3C0GVbwHWq4VTWS0"
                 alt="Map"
+                fill
+                sizes="(min-width: 1024px) 30vw, 100vw"
                 className="w-full h-full object-cover grayscale brightness-90 contrast-125"
               />
             </div>
@@ -236,11 +269,19 @@ export default function EventReviewDetailPage() {
         {/* Action Footer */}
         <div className="mt-12 pt-8 border-t border-slate-200 flex justify-between items-center">
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors">
+            <button
+              type="button"
+              onClick={() => toast.info('Revision request sent to organizer.')}
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+            >
               <Flag className="w-5 h-5" />
               Request Revision
             </button>
-            <button className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors">
+            <button
+              type="button"
+              onClick={() => toast.info('Audit log viewer is coming soon.')}
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+            >
               <History className="w-5 h-5" />
               Audit Log
             </button>
@@ -252,7 +293,11 @@ export default function EventReviewDetailPage() {
             >
               Cancel
             </Link>
-            <button className="px-10 py-3 rounded-full bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all">
+            <button
+              type="button"
+              onClick={handleApprove}
+              className="px-10 py-3 rounded-full bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all"
+            >
               Confirm & Approve
             </button>
           </div>

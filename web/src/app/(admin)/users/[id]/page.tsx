@@ -1,14 +1,21 @@
 // File: src/app/(admin)/users/[id]/page.tsx
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronRight, Camera, Mail, Lock, Settings } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
+  const roleOptions = [
+    { value: 'Student', label: 'Student' },
+    { value: 'Organizer', label: 'Organizer' },
+    { value: 'Faculty Admin', label: 'Faculty Admin' },
+  ] as const;
 
   return (
     <div className="min-h-screen px-10 pb-20">
@@ -40,7 +47,7 @@ export default function EditUserPage() {
           <button 
             type="button"
             onClick={() => {
-              alert('Profile updated successfully!');
+              toast.success('Profile updated successfully.');
               router.push('/users');
             }}
             className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95"
@@ -56,14 +63,20 @@ export default function EditUserPage() {
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="glass-panel rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
             <div className="relative mb-6">
-              <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                <img
+              <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                <Image
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUVO4FhOeA38_fsKHgnSsdGBGwdx8JcsW9-W-PbiS-o32YlyO-IXMLyrAp_cwYujLn6JLqtKsXb0gGEon0QBYysA0eVLkt2j5N67ak-E8Jp8F8c4oyY7WOQjiS6yPxiDuUkdbSsJny8xgOyXCFXCR0zscZeMDQyK1TKC42jxcGu8S46SKz8F5E7EVSa4IKnXhHAShblhNqqmQiT5fvCCRriYnyoPA1LTU45X8pxzmetmQ-N9TLzchBqGCO0Ar-6sXN5GfKVlO4ej8"
                   alt="User avatar"
+                  fill
+                  sizes="128px"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <button className="absolute bottom-1 right-1 h-10 w-10 bg-amber-500 text-white rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-transform hover:scale-110 active:scale-90">
+              <button
+                type="button"
+                onClick={() => toast.info('Avatar upload flow will open here.')}
+                className="absolute bottom-1 right-1 h-10 w-10 bg-amber-500 text-white rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-transform hover:scale-110 active:scale-90"
+              >
                 <Camera className="w-5 h-5" />
               </button>
             </div>
@@ -96,11 +109,19 @@ export default function EditUserPage() {
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <button className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group">
+              <button
+                type="button"
+                onClick={() => toast.success('Password reset email has been queued.')}
+                className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group"
+              >
                 <Lock className="w-6 h-6 text-slate-400 group-hover:text-amber-600" />
                 <span className="text-xs font-bold text-slate-600">Reset Pass</span>
               </button>
-              <button className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group">
+              <button
+                type="button"
+                onClick={() => toast.success('Account notice sent to user inbox.')}
+                className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group"
+              >
                 <Mail className="w-6 h-6 text-slate-400 group-hover:text-amber-600" />
                 <span className="text-xs font-bold text-slate-600">Send Notice</span>
               </button>
@@ -170,9 +191,11 @@ export default function EditUserPage() {
                     Role Type
                   </label>
                   <select className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none">
-                    <option value="Student">Student</option>
-                    <option value="Organizer">Organizer</option>
-                    <option value="Faculty Admin">Faculty Admin</option>
+                    {roleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

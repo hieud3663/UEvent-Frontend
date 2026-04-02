@@ -4,6 +4,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { ConfirmActionDialog } from '@/core/components';
+import {
+  publishNotification,
+  saveNotificationDraft,
+} from '@/features/notifications/services/notifications.service';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
 import {
   ChevronRight,
   Send,
@@ -38,9 +45,96 @@ export default function CreateNotificationPage() {
   const [scheduleType, setScheduleType] = useState<ScheduleType>('now');
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
+  const [pendingAction, setPendingAction] = useState<'draft' | 'send' | null>(null);
+  const audienceOptions = [
+    { value: 'all', label: 'All Users' },
+    { value: 'students', label: 'Students' },
+    { value: 'organizers', label: 'Organizers' },
+    { value: 'specific', label: 'Specific Event' },
+  ] as const;
+  const baseInputClass =
+    'w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10';
 
   const toggleDeliveryMethod = (method: keyof typeof deliveryMethods) => {
     setDeliveryMethods((prev) => ({ ...prev, [method]: !prev[method] }));
+  };
+
+  const buildNotificationPayload = () => ({
+    title,
+    message,
+    audience,
+    scheduleType,
+    scheduleDate,
+    scheduleTime,
+    deliveryMethods,
+  });
+
+  const handleSaveDraft = async () => {
+    await runActionWithToast(() => saveNotificationDraft(buildNotificationPayload()), {
+      loading: 'Saving draft...',
+      success: 'Draft saved successfully.',
+      error: 'Failed to save draft.',
+    });
+  };
+
+  const handleSendNotification = async () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error('Please fill in both title and message before sending.');
+      return;
+    }
+
+    if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
+      toast.error('Please select at least one delivery method.');
+      return;
+    }
+
+    if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
+      toast.error('Please select schedule date and time.');
+      return;
+    }
+
+    await runActionWithToast(() => publishNotification(buildNotificationPayload()), {
+      loading: scheduleType === 'now' ? 'Sending notification...' : 'Scheduling notification...',
+      success: scheduleType === 'now' ? 'Notification sent successfully.' : 'Notification scheduled successfully.',
+      error: scheduleType === 'now' ? 'Failed to send notification.' : 'Failed to schedule notification.',
+    });
+
+    router.push('/notifications');
+  };
+
+  const handleRequestSaveDraft = () => {
+    setPendingAction('draft');
+  };
+
+  const handleRequestSendNotification = () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error('Please fill in both title and message before sending.');
+      return;
+    }
+
+    if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
+      toast.error('Please select at least one delivery method.');
+      return;
+    }
+
+    if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
+      toast.error('Please select schedule date and time.');
+      return;
+    }
+
+    setPendingAction('send');
+  };
+
+  const handleConfirmAction = async () => {
+    if (pendingAction === 'draft') {
+      await handleSaveDraft();
+    }
+
+    if (pendingAction === 'send') {
+      await handleSendNotification();
+    }
+
+    setPendingAction(null);
   };
 
   return (
@@ -77,7 +171,7 @@ export default function CreateNotificationPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-white/50 border-0 border-b-2 border-slate-100 focus:border-[#FFB800] focus:ring-0 text-lg font-medium py-3 px-2 transition-all placeholder:text-slate-300"
+                  className={`${baseInputClass} text-base`}
                   placeholder="Enter a compelling title..."
                 />
               </div>
@@ -92,12 +186,13 @@ export default function CreateNotificationPage() {
                     <select
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
-                      className="w-full appearance-none bg-white/60 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm focus:ring-2 focus:ring-[#FFB800]/20 focus:border-[#FFB800] outline-none transition-all cursor-pointer"
+                      className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200 bg-white/70 py-3.5 pl-4 pr-11 text-sm font-medium text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
                     >
-                      <option value="all">All Users</option>
-                      <option value="students">Students</option>
-                      <option value="organizers">Organizers</option>
-                      <option value="specific">Specific Event</option>
+                      {audienceOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-5 h-5" />
                   </div>
@@ -149,24 +244,28 @@ export default function CreateNotificationPage() {
                   <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100 flex gap-4">
                     <button
                       type="button"
+                      onClick={() => toast.info('Rich text controls will be available in the editor service.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <Bold className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
+                      onClick={() => toast.info('Rich text controls will be available in the editor service.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <Italic className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
+                      onClick={() => toast.info('Link insertion modal is coming soon.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <LinkIcon className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
+                      onClick={() => toast.info('Emoji picker is coming soon.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors ml-auto"
                     >
                       <Smile className="w-[18px] h-[18px]" />
@@ -175,7 +274,7 @@ export default function CreateNotificationPage() {
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="w-full bg-transparent border-none focus:ring-0 p-6 text-sm resize-none placeholder:text-slate-300"
+                    className="w-full resize-none border-none bg-transparent p-6 text-sm text-slate-800 outline-none placeholder:text-slate-400"
                     placeholder="Write your notification message here..."
                     rows={6}
                   />
@@ -240,7 +339,7 @@ export default function CreateNotificationPage() {
                         type="date"
                         value={scheduleDate}
                         onChange={(e) => setScheduleDate(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#FFB800]/20 outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
                       />
                     </div>
                     <div className="flex-1">
@@ -248,7 +347,7 @@ export default function CreateNotificationPage() {
                         type="time"
                         value={scheduleTime}
                         onChange={(e) => setScheduleTime(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#FFB800]/20 outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
                       />
                     </div>
                   </div>
@@ -259,7 +358,9 @@ export default function CreateNotificationPage() {
               <div className="pt-6 flex items-center justify-between gap-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => alert('Draft saved successfully!')}
+                  onClick={() => {
+                    handleRequestSaveDraft();
+                  }}
                   className="px-8 py-3.5 rounded-2xl border border-slate-200 bg-white/50 text-slate-600 font-bold text-sm hover:bg-white transition-all active:scale-95"
                 >
                   Save Draft
@@ -275,8 +376,7 @@ export default function CreateNotificationPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      alert('Notification sent successfully!');
-                      router.push('/notifications');
+                      handleRequestSendNotification();
                     }}
                     className="px-10 py-3.5 bg-[#FFB800] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#FFB800]/30 hover:saturate-150 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                   >
@@ -340,12 +440,14 @@ export default function CreateNotificationPage() {
         <div className="flex items-center gap-1">
           <button
             type="button"
+            onClick={() => toast.info('Preview mode is already active.')}
             className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
           >
             <Eye className="w-5 h-5" />
           </button>
           <button
             type="button"
+            onClick={() => toast.info('Notification history panel is coming soon.')}
             className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
           >
             <History className="w-5 h-5" />
@@ -354,12 +456,31 @@ export default function CreateNotificationPage() {
         <div className="h-6 w-[1px] bg-slate-200 mx-1"></div>
         <button
           type="button"
+          onClick={() => toast.success('AI Optimizer suggested an improved message tone.')}
           className="bg-[#FFB800] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:saturate-150 transition-all active:scale-95 shadow-lg shadow-[#FFB800]/20"
         >
           <Sparkles className="w-4 h-4" />
           AI Optimizer
         </button>
       </div>
+
+      <ConfirmActionDialog
+        open={pendingAction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingAction(null);
+          }
+        }}
+        title={pendingAction === 'draft' ? 'Xác nhận lưu bản nháp' : 'Xác nhận gửi thông báo'}
+        description={pendingAction === 'draft'
+          ? 'Bạn sắp lưu bản nháp thông báo. Dữ liệu hiện tại sẽ được ghi đè vào bản nháp trước đó nếu có.'
+          : 'Bạn sắp gửi hoặc lên lịch thông báo cho người dùng. Hành động này có thể không hoàn tác sau khi thực hiện.'}
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        onConfirm={() => {
+          void handleConfirmAction();
+        }}
+      />
     </>
   );
 }
