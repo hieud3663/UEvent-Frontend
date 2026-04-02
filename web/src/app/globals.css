@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  --background: var(--token-color-background);
+  --foreground: var(--token-color-foreground);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), var(--token-font-sans-fallback);
+  --font-mono: var(--font-geist-mono), var(--token-font-mono-fallback);
+
+  --color-primary-50: var(--token-color-primary-50);
+  --color-primary-100: var(--token-color-primary-100);
+  --color-primary-200: var(--token-color-primary-200);
+  --color-primary-300: var(--token-color-primary-300);
+  --color-primary-400: var(--token-color-primary-400);
+  --color-primary-500: var(--token-color-primary-500);
+  --color-primary-600: var(--token-color-primary-600);
+  --color-primary-700: var(--token-color-primary-700);
+  --color-primary-800: var(--token-color-primary-800);
+  --color-primary-900: var(--token-color-primary-900);
+  --color-primary: var(--token-color-primary);
+  --color-primary-container: var(--token-color-primary-container);
+  --color-on-primary: var(--token-color-on-primary);
+  --color-on-primary-container: var(--token-color-on-primary-container);
+
+  --color-secondary-50: var(--token-color-secondary-50);
+  --color-secondary-100: var(--token-color-secondary-100);
+  --color-secondary-200: var(--token-color-secondary-200);
+  --color-secondary-300: var(--token-color-secondary-300);
+  --color-secondary-400: var(--token-color-secondary-400);
+  --color-secondary-500: var(--token-color-secondary-500);
+  --color-secondary-600: var(--token-color-secondary-600);
+  --color-secondary-700: var(--token-color-secondary-700);
+  --color-secondary-800: var(--token-color-secondary-800);
+  --color-secondary-900: var(--token-color-secondary-900);
+  --color-secondary: var(--token-color-secondary);
+  --color-secondary-container: var(--token-color-secondary-container);
+
+  --color-neutral-50: var(--token-color-neutral-50);
+  --color-neutral-100: var(--token-color-neutral-100);
+  --color-neutral-200: var(--token-color-neutral-200);
+  --color-neutral-300: var(--token-color-neutral-300);
+  --color-neutral-400: var(--token-color-neutral-400);
+  --color-neutral-500: var(--token-color-neutral-500);
+  --color-neutral-600: var(--token-color-neutral-600);
+  --color-neutral-700: var(--token-color-neutral-700);
+  --color-neutral-800: var(--token-color-neutral-800);
+  --color-neutral-900: var(--token-color-neutral-900);
+
+  --color-slate-50: var(--token-color-slate-50);
+  --color-slate-100: var(--token-color-slate-100);
+  --color-slate-200: var(--token-color-slate-200);
+  --color-slate-300: var(--token-color-slate-300);
+  --color-slate-400: var(--token-color-slate-400);
+  --color-slate-500: var(--token-color-slate-500);
+  --color-slate-600: var(--token-color-slate-600);
+  --color-slate-700: var(--token-color-slate-700);
+  --color-slate-800: var(--token-color-slate-800);
+  --color-slate-900: var(--token-color-slate-900);
+
+  --color-surface: var(--token-color-surface);
+  --color-surface-container: var(--token-color-surface-container);
+  --color-surface-container-low: var(--token-color-surface-container-low);
+  --color-surface-container-high: var(--token-color-surface-container-high);
+  --color-surface-container-lowest: var(--token-color-surface-container-lowest);
+  --color-on-surface: var(--token-color-on-surface);
+  --color-on-surface-variant: var(--token-color-on-surface-variant);
+  --color-outline: var(--token-color-outline);
+  --color-outline-variant: var(--token-color-outline-variant);
+
+  --color-success: var(--token-color-success);
+  --color-success-light: var(--token-color-success-light);
+  --color-success-dark: var(--token-color-success-dark);
+  --color-warning: var(--token-color-warning);
+  --color-warning-light: var(--token-color-warning-light);
+  --color-warning-dark: var(--token-color-warning-dark);
+  --color-error: var(--token-color-error);
+  --color-error-light: var(--token-color-error-light);
+  --color-error-dark: var(--token-color-error-dark);
+  --color-info: var(--token-color-info);
+  --color-info-light: var(--token-color-info-light);
+  --color-info-dark: var(--token-color-info-dark);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Glass morphism effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+}
+
+.glass-border {
+  border: 0.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.ios-blur {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+}
+
+/* Auth page ethereal background */
+.bg-ethereal {
+  background: radial-gradient(circle at top left, #fff8f2 0%, #ede1d0 100%);
+}
