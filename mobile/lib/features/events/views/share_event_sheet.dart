@@ -135,7 +135,7 @@ class ShareEventSheet extends StatelessWidget {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _contactAvatars.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 20),
+                      separatorBuilder: (_, __) => const SizedBox(width: 20),
                       itemBuilder: (_, i) {
                         final (name, url, isActive) = _contactAvatars[i];
                         return _ContactItem(
@@ -168,7 +168,7 @@ class ShareEventSheet extends StatelessWidget {
             child: Image.network(
               eventImageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
+              errorBuilder: (_, __, ___) =>
                   Container(color: AppColors.surfaceVariant),
             ),
           ),
@@ -248,7 +248,7 @@ class _ContactItem extends StatelessWidget {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
+                errorBuilder: (_, __, ___) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),

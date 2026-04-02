@@ -67,7 +67,7 @@ class _DiscoveryViewState extends State<DiscoveryView> {
                       horizontal: AppConstants.pagePaddingH,
                     ),
                     itemCount: MockEventData.discoveryCategories.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       return CategoryFilterChip(
                         label: MockEventData.discoveryCategories[index],
@@ -162,7 +162,7 @@ class _DiscoveryViewState extends State<DiscoveryView> {
         child: Image.network(
           'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) =>
+          errorBuilder: (_, __, ___) =>
               Container(color: AppColors.surfaceVariant),
         ),
       ),

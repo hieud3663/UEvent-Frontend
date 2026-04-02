@@ -61,7 +61,7 @@ class _UserProfileViewState extends State<UserProfileView> {
           boxShadow: [BoxShadow(color: AppColors.shadowNav, blurRadius: 20)],
         ), child: ClipOval(child: Image.network(
           MockUserData.avatarUrl,
-          fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: AppColors.surfaceVariant),
+          fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceVariant),
         ))),
         Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(
           color: AppColors.profilePrimary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2),
@@ -117,7 +117,7 @@ class _UserProfileViewState extends State<UserProfileView> {
     return Column(children: events.map((e) => Padding(padding: const EdgeInsets.only(bottom: 16), child: GlassContainer(
       borderRadius: 12, child: Row(children: [
         SizedBox(width: 96, height: 96, child: ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
-          child: Image.network(e['image']!, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: AppColors.surfaceVariant)))),
+          child: Image.network(e['image']!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceVariant)))),
         Expanded(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(e['title']!, style: AppTextStyles.titleSmall.copyWith(fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),

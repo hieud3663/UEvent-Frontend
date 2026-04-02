@@ -32,7 +32,7 @@ class EventHeroHeader extends StatelessWidget {
           Image.network(
             imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) =>
+            errorBuilder: (_, __, ___) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // Gradient fade to background at bottom

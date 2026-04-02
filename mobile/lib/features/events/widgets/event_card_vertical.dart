@@ -50,7 +50,7 @@ class EventCardVertical extends StatelessWidget {
                   child: Image.network(
                     event.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
+                    errorBuilder: (_, __, ___) => Container(
                       color: AppColors.surfaceVariant,
                       child: const Center(
                         child: Icon(Icons.image, size: 48, color: AppColors.outline),

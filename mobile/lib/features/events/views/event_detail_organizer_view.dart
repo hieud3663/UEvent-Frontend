@@ -196,7 +196,7 @@ class EventDetailOrganizerView extends StatelessWidget {
           Image.network(
             _event.imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) =>
+            errorBuilder: (_, __, ___) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // "Live Now" badge
@@ -470,7 +470,7 @@ class EventDetailOrganizerView extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) =>
+          errorBuilder: (_, __, ___) =>
               Container(color: AppColors.surfaceVariant),
         ),
       ),

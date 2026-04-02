@@ -39,7 +39,7 @@ class EventCard extends StatelessWidget {
                 width: AppConstants.eventThumbnailSize,
                 height: AppConstants.eventThumbnailSize,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
+                errorBuilder: (_, __, ___) => Container(
                   width: AppConstants.eventThumbnailSize,
                   height: AppConstants.eventThumbnailSize,
                   decoration: BoxDecoration(

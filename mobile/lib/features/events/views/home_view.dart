@@ -172,7 +172,7 @@ class HomeView extends StatelessWidget {
         child: Image.network(
           'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Container(
+          errorBuilder: (_, __, ___) => Container(
             color: AppColors.surfaceVariant,
             child: const Icon(Icons.person, color: AppColors.primary),
           ),
@@ -229,7 +229,7 @@ class HomeView extends StatelessWidget {
           Image.network(
             'https://lh3.googleusercontent.com/aida-public/AB6AXuBKAOqXIg7Fd-ODNI2iA-TbQTc1BJoSEy4yKngPaqNEVxf3-y916SQLxrQaH4NvTthP_Db5oGhPTM5O8wBw7pJ33gXb0nj_X2rfVGKNFZ-zn56VtMOTnAT36BCXD2NK36mTB_zpIUB5g0k0B3zD_7uQXqXbD_w-If67-TtSBs-SFVkTUDlaz_AeItZgnTjdE2ZYNeju9jAaUKozQEAG65aVzZ5Zsq0k521yuugQN2V0EjEy70Vb1_CgLsyivemWIl_GoBQJ9YQz0qs',
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(color: AppColors.onSurface),
+            errorBuilder: (_, __, ___) => Container(color: AppColors.onSurface),
           ),
           // Gradient overlay
           Container(
@@ -378,7 +378,7 @@ class HomeView extends StatelessWidget {
       ),
       child: ClipOval(
         child: Image.network(url, fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(color: AppColors.surfaceVariant)),
+            errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceVariant)),
       ),
     );
   }

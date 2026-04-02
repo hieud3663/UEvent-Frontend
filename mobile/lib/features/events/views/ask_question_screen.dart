@@ -149,7 +149,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
               child: Image.network(
                 widget.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
+                errorBuilder: (_, __, ___) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),
@@ -325,7 +325,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: AppColors.primary,
+          activeColor: AppColors.primary,
           trackColor: WidgetStateProperty.resolveWith((states) =>
               states.contains(WidgetState.selected)
                   ? AppColors.primary.withValues(alpha: 0.5)

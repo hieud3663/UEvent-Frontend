@@ -95,7 +95,7 @@ class PastEventDetailView extends StatelessWidget {
                 child: Image.network(
                   ticket.eventImageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
+                  errorBuilder: (_, __, ___) => Container(
                     color: AppColors.surfaceVariant,
                   ),
                 ),
