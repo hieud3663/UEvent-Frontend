@@ -47,7 +47,7 @@ class ShareSocialRow extends StatelessWidget {
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       itemCount: _socials.length,
-      separatorBuilder: (_, __) => const SizedBox(width: 16),
+      separatorBuilder: (_, _) => const SizedBox(width: 16),
       itemBuilder: (_, i) => _SocialItem(app: _socials[i]),
     );
   }
@@ -104,7 +104,7 @@ class _SocialItem extends StatelessWidget {
             child: Image.network(
               app.iconUrl,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox(),
+              errorBuilder: (_, _, _) => const SizedBox(),
             ),
           ),
         ),

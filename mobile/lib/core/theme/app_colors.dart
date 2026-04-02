@@ -27,7 +27,8 @@ class AppColors {
   static const Color tertiary = Color(0xFF101322);
   static const Color tertiaryContainer = Color(0xFF1E293B);
 
-  // ── Error ──
+  // ── Succ  ess & Error ──
+  static const Color success = Color(0xFF22C55E);
   static const Color error = Color(0xFFEF4444);
   static const Color errorContainer = Color(0xFFFEE2E2);
   static const Color onError = Color(0xFFFFFFFF);

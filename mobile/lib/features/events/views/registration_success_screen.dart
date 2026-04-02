@@ -178,7 +178,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                     width: 100,
                     height: 100,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox(
+                    errorBuilder: (_, _, _) => const SizedBox(
                       width: 100,
                       height: 100,
                       child: Icon(Icons.qr_code_2, size: 64, color: Colors.black),

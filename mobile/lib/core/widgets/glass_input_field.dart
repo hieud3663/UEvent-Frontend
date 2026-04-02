@@ -17,6 +17,7 @@ class GlassInputField extends StatelessWidget {
   final int maxLines;
   final Widget? child;
   final Widget? trailing;
+  final Widget? labelTrailing;
 
   const GlassInputField({
     super.key,
@@ -28,6 +29,7 @@ class GlassInputField extends StatelessWidget {
     this.maxLines = 1,
     this.child,
     this.trailing,
+    this.labelTrailing,
   });
 
   @override
@@ -56,11 +58,23 @@ class GlassInputField extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Label
-              Text(
-                label.toUpperCase(),
-                style: AppTextStyles.inputLabel,
-              ),
+              // Label Row
+              if (labelTrailing != null)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      label.toUpperCase(),
+                      style: AppTextStyles.inputLabel,
+                    ),
+                    labelTrailing!,
+                  ],
+                )
+              else
+                Text(
+                  label.toUpperCase(),
+                  style: AppTextStyles.inputLabel,
+                ),
               const SizedBox(height: 4),
 
               // Input or child
@@ -92,7 +106,7 @@ class GlassInputField extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (trailing != null) trailing!,
+                    ?trailing,
                   ],
                 ),
             ],
