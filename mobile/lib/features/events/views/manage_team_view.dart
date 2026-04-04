@@ -7,11 +7,16 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/features/events/widgets/team_member_tile.dart';
 import 'package:frontend/features/events/widgets/info_bento_card.dart';
+import 'package:frontend/features/events/mock/mock_manage_team_data.dart';
+import 'package:frontend/features/events/models/team_member_model.dart';
 
 class ManageTeamView extends StatelessWidget {
   final VoidCallback? onBack;
 
   const ManageTeamView({super.key, this.onBack});
+
+  // Reference mock data
+  static List<TeamMemberModel> get _teamMembers => MockManageTeamData.teamMembers;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +64,7 @@ class ManageTeamView extends StatelessWidget {
                             border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                           ),
                           child: Text(
-                            '12 Members',
+                            '${_teamMembers.length} Members',
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.onSurfaceVariant,
                               fontWeight: FontWeight.w700,
@@ -129,25 +134,17 @@ class ManageTeamView extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     // ── Team List ──
-                    TeamMemberTile(
-                      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFuL6NEAAge6fvYvVth0uzStI429Dajq-NiNb2nAYa4pRLMrPGGE8jJTsSmhEucJa4f-KUkkV_fGulm3rw929-C5H7dH3cmXfNMTEoXTKyrXxsuFoXPPxkX-oPo5r9Bi8QCDyBMwPOQyEKbe8GgpjXBpn9__L1Og6KGMrcyV2zK-XrMaSIkB26jAUNy4hCyz4V8gH2DQ2UR2Q59FgQ1BK66c2sMi0xU8YNhLQvUN34Ap8LkfTxpbh65tmQQEMKw6hz1ztwShbCCR8',
-                      name: 'Alex Morgan',
-                      role: TeamRole.admin,
-                    ),
-                    TeamMemberTile(
-                      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqVls72LTDAaYL5PxFCVtnZTvtW7vPP6MuqEXvQp7XMjRQUYkZAhmDpUsp5FJrPQ3jlfKof36ucQdDjUerfqm9i5tqvUsJG75POZECaXd5tMTD67F39sD9153ffy1qh_XD0lhOwg-PrVO9cBA0X9FEymCjIAz5fq6dh4KvZFdI6HQLkwTlYTKTperkfjkPKcSDKZIc4TFhoYL9-0_IIVoOZxs8mCHfRKwYTScSoipsz2LWiKP5msD74Y9uJWLWHDsBcL3otuE2IwM',
-                      name: 'Jordan Smith',
-                      role: TeamRole.staff,
-                    ),
-                    TeamMemberTile(
-                      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAHXMeqmVpFETbxlZcWBB-5-lqS_veeqBx54mzWRkqIKdT9AST-MPgHOsmY35L-HGvDls7QmjOpsAKujBXVTigJxvwkN0Cvw29OQijkrH_zQbutusBdqaTHnV2_pXwZCANM_oytzX9W59lVe0ZYyM6WY_Uq2vcVfRFAzpINmqku86-xFHYavdPd2tNmdw4JIV2AZd7xKmrYs-Po9PKo0Hoy_fdI76Lwmx4y1wCBwSHU4W2p8QDAD1vV9pfjC0vhYzM3urGHfK-58M0',
-                      name: 'Riley King',
-                      role: TeamRole.staff,
-                    ),
-                    TeamMemberTile(
-                      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA-Bcf1Pcg8-bI__Mq4l6OmFnlil_ZzazuHOXQoHPBB6f1QsN_tSjSh-ZZWdO3wDpPDt6FGvPKi6xDEQsZEUFiKWKuV2wYefQMOXh4eey_CVMKmhe5r7n-43GR2hJrcP-jn_G9lNx5S1e3cf4bfwuo8P4QLD09sdoqR9TlLX8AqUGmYmkvSH81ao--Ltd5pZWhYD4r_KVh_cfA2J28lj7q6qGP0v9226JrPKbrU7TuTi6z1a-8RvhWx1PVCd-8EojwXY0bU5YsT-AU',
-                      name: 'Casey Wright',
-                      role: TeamRole.volunteer,
+                    ...List.generate(
+                      _teamMembers.length,
+                      (i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: TeamMemberTile(
+                          member: _teamMembers[i],
+                          onTap: () {
+                            // TODO: Navigate to team member detail/edit
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
 
@@ -195,7 +192,7 @@ class ManageTeamView extends StatelessWidget {
             right: 0,
             child: GlassTopBar(
               title: 'Event Manager',
-              leadingIcon: Icons.menu,
+              leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
               trailingWidget: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -207,23 +204,23 @@ class ManageTeamView extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.search, size: 20, color: AppColors.onSurface),
+                    // child: const Icon(Icons.search, size: 20, color: AppColors.onSurface),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuDFuL6NEAAge6fvYvVth0uzStI429Dajq-NiNb2nAYa4pRLMrPGGE8jJTsSmhEucJa4f-KUkkV_fGulm3rw929-C5H7dH3cmXfNMTEoXTKyrXxsuFoXPPxkX-oPo5r9Bi8QCDyBMwPOQyEKbe8GgpjXBpn9__L1Og6KGMrcyV2zK-XrMaSIkB26jAUNy4hCyz4V8gH2DQ2UR2Q59FgQ1BK66c2sMi0xU8YNhLQvUN34Ap8LkfTxpbh65tmQQEMKw6hz1ztwShbCCR8',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(width: 8),
+                  // Container(
+                  //   width: 40,
+                  //   height: 40,
+                  //   decoration: BoxDecoration(
+                  //     shape: BoxShape.circle,
+                  //     border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+                  //     image: const DecorationImage(
+                  //       image: NetworkImage(
+                  //         'https://lh3.googleusercontent.com/aida-public/AB6AXuDFuL6NEAAge6fvYvVth0uzStI429Dajq-NiNb2nAYa4pRLMrPGGE8jJTsSmhEucJa4f-KUkkV_fGulm3rw929-C5H7dH3cmXfNMTEoXTKyrXxsuFoXPPxkX-oPo5r9Bi8QCDyBMwPOQyEKbe8GgpjXBpn9__L1Og6KGMrcyV2zK-XrMaSIkB26jAUNy4hCyz4V8gH2DQ2UR2Q59FgQ1BK66c2sMi0xU8YNhLQvUN34Ap8LkfTxpbh65tmQQEMKw6hz1ztwShbCCR8',
+                  //       ),
+                  //       fit: BoxFit.cover,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
