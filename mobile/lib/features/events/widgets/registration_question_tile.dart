@@ -8,7 +8,7 @@ class RegistrationQuestionTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String typeAndRequirement;
-  final VoidCallback? onEdit;
+  final VoidCallback? onView;
   final VoidCallback? onDelete;
 
   const RegistrationQuestionTile({
@@ -16,7 +16,7 @@ class RegistrationQuestionTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.typeAndRequirement,
-    this.onEdit,
+    this.onView,
     this.onDelete,
   });
 
@@ -92,11 +92,11 @@ class RegistrationQuestionTile extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(Icons.visibility_outlined),
                 color: AppColors.navInactive,
                 iconSize: 20,
                 splashRadius: 24,
-                onPressed: onEdit,
+                onPressed: onView,
                 hoverColor: Colors.white.withValues(alpha: 0.4),
               ),
               IconButton(

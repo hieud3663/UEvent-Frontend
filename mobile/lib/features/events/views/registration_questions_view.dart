@@ -54,74 +54,90 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     const SizedBox(height: 32),
 
                     // ── Questions List ──
-                    const RegistrationQuestionTile(
+                    RegistrationQuestionTile(
                       icon: Icons.checkroom, // apparel equivalent
                       title: 'T-shirt size',
                       typeAndRequirement: 'Dropdown • Required',
+                      onView: widget.onQuestionTap,
+                      onDelete: () {
+                        // TODO: Show delete confirmation dialog
+                      },
                     ),
-                    const RegistrationQuestionTile(
+                    RegistrationQuestionTile(
                       icon: Icons.restaurant,
                       title: 'Dietary needs',
                       typeAndRequirement: 'Multi-select • Optional',
+                      onView: widget.onQuestionTap,
+                      onDelete: () {
+                        // TODO: Show delete confirmation dialog
+                      },
                     ),
-                    const RegistrationQuestionTile(
+                    RegistrationQuestionTile(
                       icon: Icons.medical_services_outlined,
                       title: 'Emergency Contact',
                       typeAndRequirement: 'Short Answer • Required',
+                      onView: widget.onQuestionTap,
+                      onDelete: () {
+                        // TODO: Show delete confirmation dialog
+                      },
                     ),
-                    const RegistrationQuestionTile(
+                    RegistrationQuestionTile(
                       icon: Icons.accessible_forward,
                       title: 'Accessibility requirements',
                       typeAndRequirement: 'Long Answer • Optional',
+                      onView: widget.onQuestionTap,
+                      onDelete: () {
+                        // TODO: Show delete confirmation dialog
+                      },
                     ),
                     
                     const SizedBox(height: 32),
 
                     // ── Global Settings ──
-                    Text(
-                      'GLOBAL SETTINGS',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navInactive,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    // Text(
+                    //   'GLOBAL SETTINGS',
+                    //   style: AppTextStyles.labelSmall.copyWith(
+                    //     fontWeight: FontWeight.w700,
+                    //     color: AppColors.navInactive,
+                    //     letterSpacing: 1.5,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 12),
                     
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.4),
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          GlassToggleTile(
-                            title: 'Allow question skipping',
-                            value: _allowSkipping,
-                            onChanged: (val) {
-                              setState(() {
-                                _allowSkipping = val;
-                              });
-                            },
-                            showDivider: true,
-                          ),
-                          GlassToggleTile(
-                            title: 'Show questions after payment',
-                            value: _showAfterPayment,
-                            onChanged: (val) {
-                              setState(() {
-                                _showAfterPayment = val;
-                              });
-                            },
-                            showDivider: false,
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Container(
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.white.withValues(alpha: 0.7),
+                    //     borderRadius: BorderRadius.circular(16),
+                    //     border: Border.all(
+                    //       color: Colors.white.withValues(alpha: 0.4),
+                    //       width: 0.5,
+                    //     ),
+                    //   ),
+                    //   child: Column(
+                    //     children: [
+                    //       GlassToggleTile(
+                    //         title: 'Allow question skipping',
+                    //         value: _allowSkipping,
+                    //         onChanged: (val) {
+                    //           setState(() {
+                    //             _allowSkipping = val;
+                    //           });
+                    //         },
+                    //         showDivider: true,
+                    //       ),
+                    //       GlassToggleTile(
+                    //         title: 'Show questions after payment',
+                    //         value: _showAfterPayment,
+                    //         onChanged: (val) {
+                    //           setState(() {
+                    //             _showAfterPayment = val;
+                    //           });
+                    //         },
+                    //         showDivider: false,
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     
                     const SizedBox(height: 100), // Bottom spacing
 

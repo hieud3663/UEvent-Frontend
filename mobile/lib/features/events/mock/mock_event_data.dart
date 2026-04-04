@@ -16,6 +16,7 @@ class MockEventData {
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDuQsHATzTyDapvZjwkwkqCQweROKenFuGknzW9zUSqCQ0xGGI-3qyWIiUnQJxDofLYUmsCW77RKctoWOORYZ-C9VOyfO5onLl-SmmowvJANUGB1UyC5A6a0EZQq4ftjYn4uwWDxJC8K9QoXfIsGL927GPIeLulzLMSGWxyX2SEnL4PslhXvvwPVKIHgIt39Gl3rUlExwAcByDM3_wG9X6y5SjcOyOPvEgM06SayCpfP7qpiOJVnbxwMrfQl1gKtphIwFpFLtgmKfo',
       location: 'The Lab Studio, Quận 1',
       startDate: DateTime(2025, 5, 24),
+      isOrganizer: true, // User created this event
     ),
     EventModel(
       id: '2',
@@ -24,6 +25,7 @@ class MockEventData {
           'https://lh3.googleusercontent.com/aida-public/AB6AXuCvPC6lDKFEGyp8qY0ujcdU-w6F0GxOiIf9IWYTiyqNVfaB2IsxrVELFRzOzTTTx_IFCPh2lT7rqdNq26lIm7lx2dEdbUfRGcePsJm4RFW5HitgpSxYG3dS9vgW887rZ1YfXnLi0l1gVoF27EjJa8qS_su4uIcHVXB_P6kqtfbSM3BDOsMFSmrex-BlYAWmtAWHvazbxc_C2SoHgd8-nimw1-dhDMWGCLQryvxL3CNp11FC_4bc6FH4u0NRROb6PA29MkQtDIYnaM0',
       location: 'Vũng Tàu Beach Club',
       startDate: DateTime(2025, 5, 25),
+      isOrganizer: false, // User is attending this event
     ),
   ];
 
@@ -43,6 +45,7 @@ class MockEventData {
       startDate: DateTime(2024, 8, 24),
       timeRange: '08:00 PM - 02:00 AM',
       category: 'Music',
+      isOrganizer: false, // Discovering events, not the organizer
     ),
     EventModel(
       id: '2',
@@ -53,6 +56,7 @@ class MockEventData {
       startDate: DateTime(2024, 9, 12),
       timeRange: '10:00 AM - 04:00 PM',
       category: 'Tech',
+      isOrganizer: false,
     ),
     EventModel(
       id: '3',
@@ -63,6 +67,7 @@ class MockEventData {
       startDate: DateTime(2024, 9, 5),
       timeRange: '02:00 PM - 05:30 PM',
       category: 'Sports',
+      isOrganizer: false,
     ),
   ];
 
@@ -90,5 +95,6 @@ class MockEventData {
         'Join global leaders in artificial intelligence as we explore the future of generative models, autonomous systems, and the ethical landscape of the 2024 technological revolution. Featuring keynote speakers from OpenAI, Google, and NVIDIA.',
     guestCount: 1842,
     status: EventStatus.active,
+    isOrganizer: true, // User is the organizer of this event
   );
 }

@@ -62,24 +62,20 @@ class _ManageEventHubViewState extends State<ManageEventHubView> {
               ),
             ],
           ),
-          
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: GlassBottomNavBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              items: const [
-                NavItemModel(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'DASHBOARD'),
-                NavItemModel(icon: Icons.group_add_outlined, activeIcon: Icons.group_add, label: 'GUESTS'),
-                NavItemModel(icon: Icons.campaign_outlined, activeIcon: Icons.campaign, label: 'NOTIFY'),
-              ],
-            ),
+
+          // No need for Positioned wrapper - GlassBottomNavBar handles its own positioning
+          GlassBottomNavBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            items: const [
+              NavItemModel(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'MANAGE'),
+              NavItemModel(icon: Icons.group_add_outlined, activeIcon: Icons.group_add, label: 'GUESTS'),
+              NavItemModel(icon: Icons.campaign_outlined, activeIcon: Icons.campaign, label: 'NOTIFY'),
+            ],
           ),
         ],
       ),

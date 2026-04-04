@@ -15,6 +15,10 @@ class EventModel {
   final String? description;
   final int? guestCount;
 
+  /// Whether the current user is the organizer/creator of this event.
+  /// true = user created this event, false = user is attending/discovering.
+  final bool isOrganizer;
+
   const EventModel({
     required this.id,
     required this.title,
@@ -28,6 +32,7 @@ class EventModel {
     this.status = EventStatus.active,
     this.description,
     this.guestCount,
+    this.isOrganizer = false,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +57,7 @@ class EventModel {
       ),
       description: json['description'] as String?,
       guestCount: json['guestCount'] as int?,
+      isOrganizer: json['isOrganizer'] as bool? ?? false,
     );
   }
 
@@ -69,6 +75,7 @@ class EventModel {
       'status': status.name,
       'description': description,
       'guestCount': guestCount,
+      'isOrganizer': isOrganizer,
     };
   }
 }

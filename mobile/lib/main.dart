@@ -29,6 +29,7 @@ import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
 
 // Event Organizer
 import 'package:frontend/features/events/views/create_event_view.dart';
+import 'package:frontend/features/events/views/event_detail_organizer_view.dart';
 import 'package:frontend/features/events/views/manage_event_hub_view.dart';
 import 'package:frontend/features/events/views/edit_event_details_view.dart';
 import 'package:frontend/features/events/views/manage_team_view.dart';
@@ -123,14 +124,30 @@ class _AppShellState extends State<AppShell> {
   // ── Attendee Flow ──
 
   void _pushEventDetail(EventModel event) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (ctx) => EventDetailScreen(
-        onBack: () => Navigator.of(ctx).pop(),
-        onShare: () => ShareEventSheet.show(ctx),
-        onRegister: () => _pushRegistrationConfirmation(ctx),
-        onAskQuestion: () => _pushAskQuestion(ctx),
-      ),
-    ));
+    // Route to different screens based on user relationship to event
+    if (event.isOrganizer) {
+      // User is the organizer - show organizer view
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (ctx) => EventDetailOrganizerView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onCheckIn: _pushQrScanner,
+          onInvite: () {}, // TODO: Navigate to invite screen
+          onNotify: () {}, // TODO: Navigate to send notification screen
+          onManage: _pushManageEventHub,
+          onShare: () => ShareEventSheet.show(ctx),
+        ),
+      ));
+    } else {
+      // User is attendee/discovering - show attendee view
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (ctx) => EventDetailScreen(
+          onBack: () => Navigator.of(ctx).pop(),
+          onShare: () => ShareEventSheet.show(ctx),
+          onRegister: () => _pushRegistrationConfirmation(ctx),
+          onAskQuestion: () => _pushAskQuestion(ctx),
+        ),
+      ));
+    }
   }
 
   void _pushRegistrationConfirmation(BuildContext ctx) {
@@ -320,10 +337,14 @@ class _AppShellState extends State<AppShell> {
           onPastTicketTap: _pushPastEventDetail,
           onScanTap: _pushQrScanner, // For users to scan their ticket QR
         ),
-        // Tab 3: SETTINGS / PROFILE (Native tab without back button)
-        UserProfileView(
-           // Important: Passing null here hides the back button since this is a root tab!
-           onBack: null,
+        // Tab 3: SETTINGS (chưa có nên dùng tạm Home)
+        HomeView(
+          currentNavIndex: _currentIndex,
+          onNavTap: _onNavTap,
+          onNotificationsTap: _pushNotifications,
+          onProfileTap: _pushProfile,
+          onCreateEventTap: _pushCreateEvent,
+          onEventTap: _pushEventDetail,
         ),
       ],
     );
