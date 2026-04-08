@@ -18,6 +18,7 @@ class GlassInputField extends StatelessWidget {
   final Widget? child;
   final Widget? trailing;
   final Widget? labelTrailing;
+  final bool obscureText;
 
   const GlassInputField({
     super.key,
@@ -30,6 +31,7 @@ class GlassInputField extends StatelessWidget {
     this.child,
     this.trailing,
     this.labelTrailing,
+    this.obscureText = false,
   });
 
   @override
@@ -95,6 +97,7 @@ class GlassInputField extends StatelessWidget {
                       child: TextField(
                         controller: controller,
                         keyboardType: keyboardType,
+                        obscureText: obscureText,
                         maxLines: maxLines,
                         style: AppTextStyles.bodyLarge,
                         decoration: InputDecoration(
