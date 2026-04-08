@@ -10,6 +10,15 @@ class AppTextStyles {
 
   static const String _fontFamily = 'Inter';
 
+  // ── Display ──
+  static const TextStyle displayLarge = TextStyle(
+    fontFamily: _fontFamily,
+    fontWeight: FontWeight.w800,
+    fontSize: 52,
+    letterSpacing: -1.5,
+    color: AppColors.onSurface,
+  );
+
   // ── Headline ──
   static const TextStyle headlineLarge = TextStyle(
     fontFamily: _fontFamily,
