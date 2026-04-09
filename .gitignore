@@ -52,3 +52,8 @@ mobile/pubspec.lock
 stitch_screens/
 
 .vscode/
+
+mobile/macos/Flutter/
+mobile/ios/
+mobile/linux/
+mobile/windows/
