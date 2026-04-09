@@ -96,12 +96,11 @@ class OtpVerificationView extends StatelessWidget {
                         ),
 
                         // Content
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
                                 Text(
                                   'Mã xác nhận',
                                   style: AppTextStyles.headlineLarge.copyWith(
@@ -125,7 +124,7 @@ class OtpVerificationView extends StatelessWidget {
                                   onPressed: onVerify,
                                 ),
 
-                                const Spacer(),
+                                const SizedBox(height: 48),
 
                                 // Resend & Timer
                                 Column(
@@ -176,8 +175,7 @@ class OtpVerificationView extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 40),
-                              ],
-                            ),
+                            ],
                           ),
                         ),
 

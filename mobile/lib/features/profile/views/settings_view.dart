@@ -8,6 +8,8 @@ import 'package:frontend/features/profile/widgets/settings_group.dart';
 import 'package:frontend/features/profile/widgets/settings_tiles.dart';
 
 class SettingsView extends StatefulWidget {
+  final int currentNavIndex;
+  final ValueChanged<int>? onNavTap;
   final VoidCallback? onBack;
   final VoidCallback? onEditProfile;
   final VoidCallback? onChangeEmail;
@@ -21,6 +23,8 @@ class SettingsView extends StatefulWidget {
 
   const SettingsView({
     super.key,
+    this.currentNavIndex = 3,
+    this.onNavTap,
     this.onBack,
     this.onEditProfile,
     this.onChangeEmail,
@@ -289,9 +293,9 @@ class _SettingsViewState extends State<SettingsView> {
             left: 0,
             right: 0,
             child: GlassBottomNavBar(
-              currentIndex: 3,
+              currentIndex: widget.currentNavIndex,
               items: GlassBottomNavBar.defaultItems,
-              onTap: (_) {},
+              onTap: widget.onNavTap ?? (_) {},
             ),
           ),
         ],
