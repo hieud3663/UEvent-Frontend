@@ -1,55 +1,24 @@
-// File: lib/mock/mock_notification_data.dart
+import 'package:frontend/features/notifications/models/notification_dto.dart';
 
-import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/app_colors.dart';
-
-/// Mock notification data for the Notifications screen.
 class MockNotificationData {
-  MockNotificationData._();
-
-  static const List<Map<String, dynamic>> todayNotifications = [
-    {
-      'icon': Icons.event,
-      'iconBgColor': AppColors.primaryFixed,
-      'iconColor': AppColors.primary,
-      'title': 'New Event Invite',
-      'timestamp': '2m ago',
-      'description':
-          'Sarah Jenkins invited you to "Neon Nights: Underground Jazz" this Friday at 8:00 PM.',
-      'actionLabel': 'Add to Calendar',
-    },
-    {
-      'icon': Icons.campaign,
-      'iconBgColor': AppColors.secondaryContainer,
-      'iconColor': AppColors.secondary,
-      'title': 'Venue Update',
-      'timestamp': '1h ago',
-      'description':
-          'The workshop "Creative Coding 101" has been moved to Studio B on the 3rd floor.',
-    },
-  ];
-
-  static const List<Map<String, dynamic>> yesterdayNotifications = [
-    {
-      'icon': Icons.alarm,
-      'iconBgColor': AppColors.errorContainer,
-      'iconColor': AppColors.error,
-      'title': 'Upcoming Workshop',
-      'timestamp': '24h ago',
-      'description':
-          'Reminder: "Digital Portraiture Masterclass" starts in 1 hour. Don\'t forget your tablet!',
-      'opacity': 0.9,
-    },
-    {
-      'icon': Icons.confirmation_number,
-      'iconBgColor': AppColors.primaryFixed,
-      'iconColor': AppColors.primary,
-      'title': 'Tickets Confirmed',
-      'timestamp': '1d ago',
-      'description':
-          'Your order #UE-9021 for "Summer Solstice Gala" is confirmed. See you there!',
-      'actionLabel': 'View Receipt',
-      'opacity': 0.9,
-    },
+  static final List<NotificationDTO> notifications = [
+    NotificationDTO(
+      id: 'notif-001',
+      title: 'Sự kiện sắp diễn ra!',
+      message: 'Sự kiện "UEvent Launch Party 2026" sẽ bắt đầu sau 24 giờ nữa.',
+      isRead: false,
+      type: 'event_reminder',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
+      relatedEventId: 'event-001',
+    ),
+    NotificationDTO(
+      id: 'notif-002',
+      title: 'Xác nhận đăng ký',
+      message: 'Bạn đã đăng ký thành công sự kiện. Quét mã QR tại cổng để vào cửa.',
+      isRead: true,
+      type: 'ticket_update',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      relatedEventId: 'event-001',
+    ),
   ];
 }

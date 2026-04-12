@@ -1,100 +1,67 @@
-// File: lib/mock/mock_event_data.dart
+import 'package:frontend/features/events/models/event_dto.dart';
 
-import 'package:frontend/features/events/models/event_model.dart';
-
-/// Mock event data extracted from Views to comply with MOCK DATA SEPARATION rule.
-/// Views MUST receive data through constructor or state management, NOT own their data.
 class MockEventData {
-  MockEventData._();
-
-  // ── Home: My Events ──
-  static final List<EventModel> myEvents = [
-    EventModel(
-      id: '1',
-      title: 'Workshop Nhiếp Ảnh Căn Bản',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDuQsHATzTyDapvZjwkwkqCQweROKenFuGknzW9zUSqCQ0xGGI-3qyWIiUnQJxDofLYUmsCW77RKctoWOORYZ-C9VOyfO5onLl-SmmowvJANUGB1UyC5A6a0EZQq4ftjYn4uwWDxJC8K9QoXfIsGL927GPIeLulzLMSGWxyX2SEnL4PslhXvvwPVKIHgIt39Gl3rUlExwAcByDM3_wG9X6y5SjcOyOPvEgM06SayCpfP7qpiOJVnbxwMrfQl1gKtphIwFpFLtgmKfo',
-      location: 'The Lab Studio, Quận 1',
-      startDate: DateTime(2025, 5, 24),
-      isOrganizer: true, // User created this event
-    ),
-    EventModel(
-      id: '2',
-      title: 'Lễ Hội Âm Nhạc Bãi Biển',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCvPC6lDKFEGyp8qY0ujcdU-w6F0GxOiIf9IWYTiyqNVfaB2IsxrVELFRzOzTTTx_IFCPh2lT7rqdNq26lIm7lx2dEdbUfRGcePsJm4RFW5HitgpSxYG3dS9vgW887rZ1YfXnLi0l1gVoF27EjJa8qS_su4uIcHVXB_P6kqtfbSM3BDOsMFSmrex-BlYAWmtAWHvazbxc_C2SoHgd8-nimw1-dhDMWGCLQryvxL3CNp11FC_4bc6FH4u0NRROb6PA29MkQtDIYnaM0',
-      location: 'Vũng Tàu Beach Club',
-      startDate: DateTime(2025, 5, 25),
-      isOrganizer: false, // User is attending this event
-    ),
-  ];
-
-  static const List<String> myEventDates = [
-    'Thứ 7, 24 Th05',
-    'Chủ nhật, 25 Th05',
-  ];
-
-  // ── Discovery: Events ──
-  static final List<EventModel> discoveryEvents = [
-    EventModel(
-      id: '1',
-      title: 'Summer Beats Festival',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCeQBq3SB4o6ijps-gBLfANONvG6DZo-EyEXFXHUHBeewAffv2GsGbC5WVz0GcR3n2_I1fpudHo-Q474dzbpPOa9HmbAYvciXGnGjyGy6wZpfIW6tn68T2pWi531NLl1k_lLniE9jXAcdVY46Yu1FBFNL0yP-JVGY3qdVF_fwo0nV8QO_04aoTz87iHApTIRBd6APoJsnNOq3D6Ub6mNFzD8uTS2PxAXr1BdF1_9oxWV84QIEnU-XGEkC2R6KmwzDeS2370Ddbr6J8',
-      location: 'Main Campus Plaza, CA',
-      startDate: DateTime(2024, 8, 24),
-      timeRange: '08:00 PM - 02:00 AM',
-      category: 'Music',
-      isOrganizer: false, // Discovering events, not the organizer
-    ),
-    EventModel(
-      id: '2',
-      title: 'Future of AI Summit',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAEe8TiBatwY617qcuKh7CbBA2RCdpsNDZV6tXtdoEBV2EtUzt_iJzl_n8BLOnEldIK96mhNyWv3ljOt1DCrOZwg35QDPlfTWQ1SJs9Nb6oJFT-HQ3Sp8WTwGnDhCUzKVCxmu4QYufHq3mj1dChw0SWQhDfZqemiu9bsS6J55OnNtM4Dus6-epR6U6Izbuaj5v1pBkljSqSJBOreAVKjqRNDuPEji5bUJ7zatWmBVhNBByt4XfpXJDqXZDYJBeaweBptbmtd9k5_dc',
-      location: 'Grand Innovation Hall',
-      startDate: DateTime(2024, 9, 12),
-      timeRange: '10:00 AM - 04:00 PM',
-      category: 'Tech',
-      isOrganizer: false,
-    ),
-    EventModel(
-      id: '3',
-      title: 'Championship Qualifiers',
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDttCruWuFR4EfJM10dJpyryKeWwKmu847sRG5y07zX_HCWUP8pRW0vMm3OXLJ7M-xPmwGwo8mKm9vZkjDEOnrwoymhr6bTe61IWNw8CQgmHCfRM1DU8NRZHCKvWz20hc5FIQVh10mCUagjAiq4wWnAc6IQ6bdCsHqABwGSrF9Mujm1jCYALnnZkwi2ZcXl0QVLFieG_Pjd2Mw_W-ShWw2g5bxq1479eNVBMuRrhPe_hbonHlhnOJN3aNF-iNA3j0XAnAkQMtLVqP0',
-      location: 'University Stadium',
-      startDate: DateTime(2024, 9, 5),
-      timeRange: '02:00 PM - 05:30 PM',
-      category: 'Sports',
-      isOrganizer: false,
-    ),
-  ];
-
-  static const List<String> discoveryDateBadges = ['AUG 24', 'SEP 12', 'SEP 05'];
-
-  static const List<String> discoveryCategories = [
-    'Music',
-    'Academic',
-    'Sports',
-    'Upcoming',
-    'Tech',
-  ];
-
-  // ── Event Detail Organizer ──
-  static final EventModel eventDetailOrganizer = EventModel(
-    id: 'evt_001',
-    title: 'Future Tech Summit 2024: The AI Revolution',
-    imageUrl:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC7nwgVPoexpc7gSTL_8w5ornJCFV0UU5W66yRT2ei2S-Z9tA5RStKOFn7uMyKlxX2yo0MxSj190A7w7AEafDkZiBYczbi2cwfKVNOnYFXjRWYz86Bv4A2fywaxVa6vP4hefLNWvb9TsHNVleHeyCFgA5rWG4hGoY0J6q2MZvHkhXxe9VtFdkItOBEcOg5fXlvTkmHASYBAXZeG0W0dv0b0MaqjF4gWG91sb_tTkQt5Wfe8p2pZNjB5XYEEWKOgPs524CtvmCMqLdQ',
-    location: 'Convention Center, San Francisco',
-    startDate: DateTime(2024, 10, 24),
-    timeRange: '09:00 AM - 06:00 PM',
-    category: 'Technology & Innovation',
-    description:
-        'Join global leaders in artificial intelligence as we explore the future of generative models, autonomous systems, and the ethical landscape of the 2024 technological revolution. Featuring keynote speakers from OpenAI, Google, and NVIDIA.',
-    guestCount: 1842,
-    status: EventStatus.active,
-    isOrganizer: true, // User is the organizer of this event
+  static const CategoryDTO mockMusicCategory = CategoryDTO(
+    id: 'cat-001',
+    name: 'Âm nhạc',
+    slug: 'am-nhac',
+    icon: 'music_note',
+    color: '#FF5733',
   );
+
+  static const CategoryDTO mockTechCategory = CategoryDTO(
+    id: 'cat-002',
+    name: 'Technology',
+    slug: 'tech',
+    icon: 'computer',
+    color: '#3388FF',
+  );
+
+  static const LocationDTO mockLocation = LocationDTO(
+    id: 'loc-001',
+    type: 'room',
+    name: 'Hội trường C',
+    address: 'Khu trung tâm, Cơ sở Quận 9',
+    capacity: 500,
+  );
+
+  static final EventDTO mockEventLaunchParty = EventDTO(
+    id: 'event-001',
+    title: 'UEvent Launch Party 2026',
+    slug: 'uevent-launch-party',
+    description: 'Bữa tiệc ra mắt nền tảng UEvent hoành tráng.',
+    status: 'active',
+    category: mockMusicCategory,
+    startAt: DateTime.now().add(const Duration(days: 7)),
+    endAt: DateTime.now().add(const Duration(days: 7, hours: 3)),
+    location: mockLocation,
+    maxCapacity: 500,
+    coverImageUrl: 'https://picsum.photos/800/400',
+    registrationOpenAt: DateTime.now().subtract(const Duration(days: 1)),
+    registrationCloseAt: DateTime.now().add(const Duration(days: 6)),
+    cancellationDeadlineAt: DateTime.now().add(const Duration(days: 5)),
+  );
+
+  static final EventDTO mockEventTechSummit = EventDTO(
+    id: 'event-002',
+    title: 'Future Tech Summit 2024: The AI Revolution',
+    slug: 'future-tech-summit-2024',
+    description: 'Join global leaders in artificial intelligence...',
+    status: 'active',
+    category: mockTechCategory,
+    startAt: DateTime(2024, 10, 24, 9),
+    endAt: DateTime(2024, 10, 24, 18),
+    location: const LocationDTO(
+      id: 'loc-002', type: 'string', name: 'Convention Center, San Francisco'
+    ),
+    maxCapacity: 2000,
+    coverImageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC7nwgVPoexpc...LdQ',
+    registrationOpenAt: DateTime(2024, 9, 24),
+    registrationCloseAt: DateTime(2024, 10, 20),
+  );
+
+  static final List<EventDTO> list = [
+    mockEventLaunchParty,
+    mockEventTechSummit,
+  ];
 }
