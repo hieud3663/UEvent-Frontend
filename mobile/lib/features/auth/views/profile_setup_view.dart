@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
+import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 
-class ProfileSetupView extends StatelessWidget {
+class ProfileSetupView extends StatefulWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onBack;
 
@@ -14,6 +15,13 @@ class ProfileSetupView extends StatelessWidget {
     this.onComplete,
     this.onBack,
   });
+
+  @override
+  State<ProfileSetupView> createState() => _ProfileSetupViewState();
+}
+
+class _ProfileSetupViewState extends State<ProfileSetupView> {
+  String? _selectedKhoa;
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +69,23 @@ class ProfileSetupView extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  GlassInputField(
+                  GlassDropdownField<String>(
                     label: 'KHOA',
                     placeholder: 'Chọn khoa của bạn',
-                    trailing: const Icon(Icons.expand_more, color: AppColors.outline),
+                    value: _selectedKhoa,
+                    items: const [
+                      GlassDropdownItem(value: 'cntt', label: 'Công nghệ thông tin'),
+                      GlassDropdownItem(value: 'kt', label: 'Kinh tế'),
+                      GlassDropdownItem(value: 'nn', label: 'Ngoại ngữ'),
+                      GlassDropdownItem(value: 'luat', label: 'Luật'),
+                      GlassDropdownItem(value: 'xd', label: 'Xây dựng'),
+                      GlassDropdownItem(value: 'dien', label: 'Điện - Điện tử'),
+                      GlassDropdownItem(value: 'co-khi', label: 'Cơ khí'),
+                      GlassDropdownItem(value: 'mt', label: 'Mỹ thuật công nghiệp'),
+                      GlassDropdownItem(value: 'moi-truong', label: 'Môi trường & Tài nguyên'),
+                      GlassDropdownItem(value: 'khoa-hoc', label: 'Khoa học ứng dụng'),
+                    ],
+                    onChanged: (val) => setState(() => _selectedKhoa = val),
                   ),
                   const SizedBox(height: 20),
 
@@ -143,7 +164,7 @@ class ProfileSetupView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           GestureDetector(
-                            onTap: onBack,
+                            onTap: widget.onBack,
                             child: const SizedBox(
                               width: 40,
                               height: 40,
@@ -173,7 +194,6 @@ class ProfileSetupView extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  color: AppColors.background.withValues(alpha: 0.8),
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
@@ -181,6 +201,7 @@ class ProfileSetupView extends StatelessWidget {
                     bottom: MediaQuery.of(context).padding.bottom + 24,
                   ),
                   decoration: BoxDecoration(
+                    color: AppColors.background.withValues(alpha: 0.8),
                     border: Border(
                       top: BorderSide(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -190,7 +211,7 @@ class ProfileSetupView extends StatelessWidget {
                   child: PrimaryButton(
                     label: 'Hoàn tất',
                     icon: Icons.arrow_forward,
-                    onPressed: onComplete,
+                    onPressed: widget.onComplete,
                   ),
                 ),
               ),

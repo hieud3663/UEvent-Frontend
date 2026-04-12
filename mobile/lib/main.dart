@@ -4,13 +4,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 
+// Auth Flow
+import 'package:frontend/features/auth/views/splash_view.dart';
+import 'package:frontend/features/auth/views/login_view.dart';
+import 'package:frontend/features/auth/views/otp_verification_view.dart';
+import 'package:frontend/features/auth/views/profile_setup_view.dart';
+import 'package:frontend/features/auth/views/passkey_setup_view.dart';
+
 // Shell & Tabs
 import 'package:frontend/features/events/views/home_view.dart';
 import 'package:frontend/features/events/views/discovery_view.dart';
+import 'package:frontend/features/events/views/invite_guests_view.dart';
+import 'package:frontend/features/events/views/send_notification_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
-import 'package:frontend/features/profile/views/user_profile_view.dart';
+import 'package:frontend/features/profile/views/settings_view.dart';
 import 'package:frontend/features/ticketing/views/my_tickets_view.dart';
 import 'package:frontend/features/events/views/empty_search_view.dart';
+
+// Profile (push navigation from Settings)
+import 'package:frontend/features/profile/views/user_profile_view.dart';
+import 'package:frontend/features/profile/views/edit_profile_view.dart';
+import 'package:frontend/features/profile/views/change_email_view.dart';
+import 'package:frontend/features/profile/views/help_center_view.dart';
+import 'package:frontend/features/profile/views/send_feedback_view.dart';
+import 'package:frontend/features/profile/views/privacy_policy_view.dart';
+import 'package:frontend/features/profile/views/sync_contacts_view.dart';
 
 // Event Attendee & General
 import 'package:frontend/features/events/views/event_detail_screen.dart';
@@ -51,6 +69,64 @@ void main() {
   runApp(const UEventsApp());
 }
 
+// ════════════════════════════════════════════════════════════════════
+// AUTH FLOW NAVIGATION
+// Top-level functions reused by both initial auth flow AND sign-out.
+// Each function captures the builder's `ctx` for subsequent navigation.
+// ════════════════════════════════════════════════════════════════════
+
+void _navigateToLogin(BuildContext context) {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (ctx) => LoginView(
+        onLoginWithEmail: () => _navigateToOtp(ctx),
+        onLoginWithGoogle: () => _navigateToAppShell(ctx),
+        onLoginWithPasskey: () => _navigateToPasskeySetup(ctx),
+      ),
+    ),
+    (route) => false,
+  );
+}
+
+void _navigateToOtp(BuildContext context) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (ctx) => OtpVerificationView(
+      onVerify: () => _navigateToProfileSetup(ctx),
+      onBack: () => Navigator.of(ctx).pop(),
+      onResend: () {}, // TODO: Implement OTP resend logic
+    ),
+  ));
+}
+
+void _navigateToProfileSetup(BuildContext context) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (ctx) => ProfileSetupView(
+      onComplete: () => _navigateToAppShell(ctx),
+      onBack: () => Navigator.of(ctx).pop(),
+    ),
+  ));
+}
+
+void _navigateToPasskeySetup(BuildContext context) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (ctx) => PasskeySetupView(
+      onBack: () => Navigator.of(ctx).pop(),
+      onCreatePasskey: () => _navigateToAppShell(ctx),
+    ),
+  ));
+}
+
+void _navigateToAppShell(BuildContext context) {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => const AppShell()),
+    (route) => false,
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// APP ROOT
+// ════════════════════════════════════════════════════════════════════
+
 class UEventsApp extends StatelessWidget {
   const UEventsApp({super.key});
 
@@ -60,10 +136,19 @@ class UEventsApp extends StatelessWidget {
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const AppShell(),
+      // Splash → Login → OTP → ProfileSetup → AppShell
+      home: Builder(
+        builder: (context) => SplashView(
+          onInitializationComplete: () => _navigateToLogin(context),
+        ),
+      ),
     );
   }
 }
+
+// ════════════════════════════════════════════════════════════════════
+// APP SHELL – Bottom Nav Tabs + Push Navigation
+// ════════════════════════════════════════════════════════════════════
 
 /// App shell that manages bottom nav tab switching + push navigation.
 class AppShell extends StatefulWidget {
@@ -95,7 +180,6 @@ class _AppShellState extends State<AppShell> {
     ));
   }
 
-  // To push profile specifically over the stack (if accessed from somewhere else besides Tab 3)
   void _pushProfile() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => UserProfileView(
@@ -124,15 +208,14 @@ class _AppShellState extends State<AppShell> {
   // ── Attendee Flow ──
 
   void _pushEventDetail(EventModel event) {
-    // Route to different screens based on user relationship to event
     if (event.isOrganizer) {
       // User is the organizer - show organizer view
       Navigator.of(context).push(MaterialPageRoute(
         builder: (ctx) => EventDetailOrganizerView(
           onBack: () => Navigator.of(ctx).pop(),
           onCheckIn: _pushQrScanner,
-          onInvite: () {}, // TODO: Navigate to invite screen
-          onNotify: () {}, // TODO: Navigate to send notification screen
+          onInvite: () => _pushInviteGuests(event), // TODO: Navigate to invite screen
+          onNotify: () => _pushSendNotification(event), // TODO: Navigate to send notification screen
           onManage: _pushManageEventHub,
           onShare: () => ShareEventSheet.show(ctx),
         ),
@@ -223,16 +306,33 @@ class _AppShellState extends State<AppShell> {
     ));
   }
 
+  void _pushInviteGuests(EventModel event) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => InviteGuestsView(
+        onBack: () => Navigator.of(context).pop(),
+      ),
+    ));
+  }
+
+  void _pushSendNotification(EventModel event) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SendNotificationView(
+        onBack: () => Navigator.of(context).pop(),
+      ),
+    ));
+  }
+
+
   void _pushManageEventHub() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ManageEventHubView(
-        onBack: () => Navigator.of(context).pop(), // Returns to whatever pushed it (e.g. Event Detail)
+        onBack: () => Navigator.of(context).pop(),
         onEditDetailsTap: _pushEditEventDetails,
         onManageTeamTap: _pushManageTeam,
         onArchiveTap: _pushArchiveEvent,
         onAttendeeListTap: _pushAttendeeList,
         onRegistrationQuestionsTap: _pushRegistrationQuestions,
-        onParticipantCheckInTap: _pushQrScanner, // Reusing QR Scanner
+        onParticipantCheckInTap: _pushQrScanner,
         onExportAttendeeListTap: _pushExportAttendeeList,
       ),
     ));
@@ -282,12 +382,11 @@ class _AppShellState extends State<AppShell> {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx) => RegistrationQuestionsView(
         onBack: () => Navigator.of(ctx).pop(),
-        onQuestionTap: () => _pushQuestionDetail(), // Optionally to view a question detail
+        onQuestionTap: () => _pushQuestionDetail(),
       ),
     ));
   }
 
-  // Opened from Notifications or Registration section
   void _pushQuestionDetail() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx) => QuestionDetailView(
@@ -304,6 +403,75 @@ class _AppShellState extends State<AppShell> {
     ));
   }
 
+  // ── Profile / Settings Sub-Navigation ──
+
+  void _pushEditProfile() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => EditProfileView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onSave: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushChangeEmail() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => ChangeEmailView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onSave: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushPasskeyLogin() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => PasskeySetupView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onCreatePasskey: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushHelpCenter() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => HelpCenterView(
+        onBack: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushSendFeedback() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => SendFeedbackView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onSubmit: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushPrivacyPolicy() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => PrivacyPolicyView(
+        onBack: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _pushSyncContacts() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => SyncContactsView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onSync: () => Navigator.of(ctx).pop(),
+      ),
+    ));
+  }
+
+  void _signOut() {
+    _navigateToLogin(context);
+  }
+
+  // ── Build ──
+
   @override
   Widget build(BuildContext context) {
     return IndexedStack(
@@ -317,8 +485,6 @@ class _AppShellState extends State<AppShell> {
           onProfileTap: _pushProfile,
           onCreateEventTap: _pushCreateEvent,
           onEventTap: _pushEventDetail,
-          // If the Home UI has a button for managing an event:
-          // onManageEventTap: _pushManageEventHub
         ),
         // Tab 1: DISCOVER
         DiscoveryView(
@@ -335,16 +501,22 @@ class _AppShellState extends State<AppShell> {
           onNavTap: _onNavTap,
           onTicketTap: _pushTicketDetail,
           onPastTicketTap: _pushPastEventDetail,
-          onScanTap: _pushQrScanner, // For users to scan their ticket QR
+          onScanTap: _pushQrScanner,
         ),
-        // Tab 3: SETTINGS (chưa có nên dùng tạm Home)
-        HomeView(
+        // Tab 3: SETTINGS
+        SettingsView(
           currentNavIndex: _currentIndex,
           onNavTap: _onNavTap,
-          onNotificationsTap: _pushNotifications,
-          onProfileTap: _pushProfile,
-          onCreateEventTap: _pushCreateEvent,
-          onEventTap: _pushEventDetail,
+          onBack: () => _onNavTap(0), // Close → go Home
+          onEditProfile: _pushEditProfile,
+          onChangeEmail: _pushChangeEmail,
+          onPasskeyLogin: _pushPasskeyLogin,
+          onTwoFactorAuth: () {}, // TODO: Navigate to 2FA screen
+          onHelpCenter: _pushHelpCenter,
+          onSendFeedback: _pushSendFeedback,
+          onPrivacyPolicy: _pushPrivacyPolicy,
+          onSyncContacts: _pushSyncContacts,
+          onSignOut: _signOut,
         ),
       ],
     );

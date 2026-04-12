@@ -14,7 +14,7 @@ class InviteGuestsView extends StatefulWidget {
   const InviteGuestsView({
     super.key,
     this.onBack,
-  });
+  }); 
 
   @override
   State<InviteGuestsView> createState() => _InviteGuestsViewState();
