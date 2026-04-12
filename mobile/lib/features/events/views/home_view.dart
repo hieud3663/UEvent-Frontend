@@ -1,18 +1,21 @@
 // File: lib/views/home_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/models/event_model.dart';
-import 'package:frontend/features/events/mock/mock_event_data.dart';
+import 'package:frontend/features/events/providers/event_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/features/events/widgets/event_card.dart';
 import 'package:frontend/core/widgets/section_header.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
+import 'package:frontend/core/widgets/async_state_slivers.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends ConsumerWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback? onNotificationsTap;
@@ -31,7 +34,9 @@ class HomeView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myEventsAsync = ref.watch(myEventsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -56,25 +61,51 @@ class HomeView extends StatelessWidget {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final event = MockEventData.myEvents[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.pagePaddingH,
-                        vertical: 8,
-                      ),
-                      child: EventCard(
-                        event: event,
-                        formattedDate: MockEventData.myEventDates[index],
-                        trailing: _buildQrButton(),
-                        onTap: onEventTap != null ? () => onEventTap!(event) : null,
-                      ),
-                    );
-                  },
-                  childCount: MockEventData.myEvents.length,
-                ),
+              ...myEventsAsync.when(
+                data: (events) {
+                  return [
+                    AppSuccessSliver(
+                      isEmpty: events.isEmpty,
+                      emptyIcon: Icons.event_busy,
+                      emptyTitle: 'Chua co su kien',
+                      emptyDescription:
+                          'Ban chua co su kien nao trong danh sach cua minh.',
+                      contentSlivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final event = events[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppConstants.pagePaddingH,
+                                  vertical: 8,
+                                ),
+                                child: EventCard(
+                                  event: event,
+                                  formattedDate:
+                                      DateFormat('EEE, d MMM').format(event.startDate),
+                                  trailing: _buildQrButton(),
+                                  onTap: onEventTap != null ? () => onEventTap!(event) : null,
+                                ),
+                              );
+                            },
+                            childCount: events.length,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ];
+                },
+                loading: () => [
+                  const AppLoadingSliver(),
+                ],
+                error: (error, _) => [
+                  AppErrorSliver(
+                    title: 'Tai du lieu that bai',
+                    description: 'Khong the lay danh sach su kien. Keo xuong de thu lai.',
+                    onRetry: () => ref.refresh(myEventsProvider),
+                  ),
+                ],
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
 

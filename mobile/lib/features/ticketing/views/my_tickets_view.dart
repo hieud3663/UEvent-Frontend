@@ -1,21 +1,22 @@
 // File: lib/features/ticketing/views/my_tickets_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
-import 'package:frontend/core/widgets/empty_state_view.dart';
-import 'package:frontend/features/ticketing/mock/mock_ticket_data.dart';
+import 'package:frontend/core/widgets/async_state_slivers.dart';
 import 'package:frontend/features/ticketing/models/ticket_model.dart';
+import 'package:frontend/features/ticketing/providers/ticketing_providers.dart';
 import 'package:frontend/features/ticketing/widgets/ticket_list_card.dart';
 import 'package:frontend/features/ticketing/widgets/past_ticket_card.dart';
 import 'package:frontend/features/ticketing/widgets/tickets_tab_bar.dart';
 
 /// Tab 2 — My Tickets main screen.
 /// Shows Upcoming / Past ticket lists with a segmented tab switcher.
-class MyTicketsView extends StatefulWidget {
+class MyTicketsView extends ConsumerStatefulWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final ValueChanged<TicketModel>? onTicketTap;
@@ -32,14 +33,17 @@ class MyTicketsView extends StatefulWidget {
   });
 
   @override
-  State<MyTicketsView> createState() => _MyTicketsViewState();
+  ConsumerState<MyTicketsView> createState() => _MyTicketsViewState();
 }
 
-class _MyTicketsViewState extends State<MyTicketsView> {
+class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
   int _tabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final upcomingAsync = ref.watch(upcomingTicketsProvider);
+    final pastAsync = ref.watch(pastTicketsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -65,8 +69,8 @@ class _MyTicketsViewState extends State<MyTicketsView> {
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // Conditional content
-              if (_tabIndex == 0) ..._buildUpcomingContent(),
-              if (_tabIndex == 1) ..._buildPastContent(),
+              if (_tabIndex == 0) ..._buildUpcomingContent(upcomingAsync),
+              if (_tabIndex == 1) ..._buildPastContent(pastAsync),
 
               // Bottom padding for nav bar
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
@@ -97,105 +101,118 @@ class _MyTicketsViewState extends State<MyTicketsView> {
     );
   }
 
-  List<Widget> _buildUpcomingContent() {
-    final tickets = MockTicketData.upcomingTickets;
-    if (tickets.isEmpty) {
-      return [
-        SliverFillRemaining(
-          child: Center(
-            child: EmptyStateView(
-              icon: Icons.confirmation_number_outlined,
-              title: 'No Upcoming Tickets',
-              description: 'Your registered event tickets will appear here.',
-            ),
-          ),
-        ),
-      ];
-    }
-    return [
-      // Section label
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-          child: Text(
-            '${tickets.length} upcoming event${tickets.length > 1 ? 's' : ''}',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
-          ),
-        ),
-      ),
-      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-      SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final ticket = tickets[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-                vertical: 6,
+  List<Widget> _buildUpcomingContent(AsyncValue<List<TicketModel>> ticketsAsync) {
+    return ticketsAsync.when(
+      data: (tickets) {
+        return [
+          AppSuccessSliver(
+            isEmpty: tickets.isEmpty,
+            emptyIcon: Icons.confirmation_number_outlined,
+            emptyTitle: 'No Upcoming Tickets',
+            emptyDescription: 'Your registered event tickets will appear here.',
+            emptyFillRemaining: true,
+            contentSlivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  child: Text(
+                    '${tickets.length} upcoming event${tickets.length > 1 ? 's' : ''}',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
+                  ),
+                ),
               ),
-              child: TicketListCard(
-                ticket: ticket,
-                onTap: widget.onTicketTap != null
-                    ? () => widget.onTicketTap!(ticket)
-                    : null,
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final ticket = tickets[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.pagePaddingH,
+                        vertical: 6,
+                      ),
+                      child: TicketListCard(
+                        ticket: ticket,
+                        onTap: widget.onTicketTap != null
+                            ? () => widget.onTicketTap!(ticket)
+                            : null,
+                      ),
+                    );
+                  },
+                  childCount: tickets.length,
+                ),
               ),
-            );
-          },
-          childCount: tickets.length,
+            ],
+          ),
+        ];
+      },
+      loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
+      error: (_, __) => [
+        AppErrorSliver(
+          title: 'Cannot load tickets',
+          description: 'Please check your network and try again.',
+          onRetry: () => ref.refresh(upcomingTicketsProvider),
+          retryText: 'Retry',
         ),
-      ),
-    ];
+      ],
+    );
   }
 
-  List<Widget> _buildPastContent() {
-    final tickets = MockTicketData.pastTickets;
-    if (tickets.isEmpty) {
-      return [
-        SliverFillRemaining(
-          child: Center(
-            child: EmptyStateView(
-              icon: Icons.history,
-              title: 'No Past Events',
-              description: 'Events you have attended will appear here.',
-            ),
+  List<Widget> _buildPastContent(AsyncValue<List<TicketModel>> ticketsAsync) {
+    return ticketsAsync.when(
+      data: (tickets) {
+        return [
+          AppSuccessSliver(
+            isEmpty: tickets.isEmpty,
+            emptyIcon: Icons.history,
+            emptyTitle: 'No Past Events',
+            emptyDescription: 'Events you have attended will appear here.',
+            emptyFillRemaining: true,
+            contentSlivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  child: _buildSummaryBanner(tickets.length),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final ticket = tickets[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.pagePaddingH,
+                        vertical: 6,
+                      ),
+                      child: PastTicketCard(
+                        ticket: ticket,
+                        onTap: widget.onPastTicketTap != null
+                            ? () => widget.onPastTicketTap!(ticket)
+                            : null,
+                      ),
+                    );
+                  },
+                  childCount: tickets.length,
+                ),
+              ),
+            ],
           ),
+        ];
+      },
+      loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
+      error: (_, __) => [
+        AppErrorSliver(
+          title: 'Cannot load past tickets',
+          description: 'Please check your network and try again.',
+          onRetry: () => ref.refresh(pastTicketsProvider),
+          retryText: 'Retry',
         ),
-      ];
-    }
-    return [
-      // Attendance summary banner
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
-          child: _buildSummaryBanner(),
-        ),
-      ),
-      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-      // Past ticket cards
-      SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final ticket = tickets[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
-                vertical: 6,
-              ),
-              child: PastTicketCard(
-                ticket: ticket,
-                onTap: widget.onPastTicketTap != null
-                    ? () => widget.onPastTicketTap!(ticket)
-                    : null,
-              ),
-            );
-          },
-          childCount: tickets.length,
-        ),
-      ),
-    ];
+      ],
+    );
   }
 
-  Widget _buildSummaryBanner() {
+  Widget _buildSummaryBanner(int attendedCount) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -224,7 +241,7 @@ class _MyTicketsViewState extends State<MyTicketsView> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              MockTicketData.attendanceSummary,
+              'You attended $attendedCount event${attendedCount > 1 ? 's' : ''}.',
               style: AppTextStyles.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.onPrimaryDark,

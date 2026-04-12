@@ -1,7 +1,7 @@
-import 'package:frontend/features/auth/models/user_dto.dart';
+import 'package:frontend/features/auth/models/user_model.dart';
 
 class MockUserData {
-  static const UserDTO currentUser = UserDTO(
+  static const UserModel currentUser = UserModel(
     id: 'user-001',
     email: 'student@utc2.edu.vn',
     fullName: 'Nguyễn Văn A',
@@ -14,7 +14,7 @@ class MockUserData {
     avatarUrl: 'https://i.pravatar.cc/300',
   );
 
-  static const AuthResponseDTO mockAuthResponse = AuthResponseDTO(
+  static const AuthResponseModel mockAuthResponse = AuthResponseModel(
     accessToken: 'mock_jwt_token_12345',
     expiresIn: 3600,
     user: currentUser,

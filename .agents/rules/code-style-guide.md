@@ -107,13 +107,13 @@ Every feature that interacts with data MUST follow the **Service Interface Patte
 - Database migrations MUST be versioned and handled in `database_helper.dart` using `onUpgrade`.
 
 # STATE MANAGEMENT
-- Use **ChangeNotifier** + **ListenableBuilder** (Flutter built-in). Do NOT add external state management packages (Riverpod, Bloc, GetX, etc.) unless explicitly approved.
-- Each feature MUST have its own Notifier in `lib/features/{feature}/state/`:
-  - File naming: `{feature}_notifier.dart` (e.g., `event_notifier.dart`, `auth_notifier.dart`).
-  - Notifier class holds: `data`, `isLoading`, `error` fields.
-  - Notifier receives its Service via constructor injection — NEVER instantiate services inside Notifier.
-- Views access Notifiers via the Service Locator or `InheritedWidget` / `ListenableBuilder`.
-- Notifiers MUST call `notifyListeners()` after every state change (loading start, data received, error).
+- Use **Riverpod** for state management and dependency injection into the UI.
+- Organize providers either functionally (`lib/core/providers/service_providers.dart` for global services) or by feature (`lib/features/{feature}/providers/`):
+  - File naming: `{feature}_providers.dart` (e.g., `event_providers.dart`, `auth_providers.dart`).
+- Use `FutureProvider` for straightforward asynchronous data fetching to naturally yield `AsyncValue` (data, loading, error).
+- Use `NotifierProvider` / `AsyncNotifierProvider` for state that requires complex modifications.
+- UI components accessing providers MUST extend `ConsumerWidget` or `ConsumerStatefulWidget` to access state via `ref.watch()` or `ref.read()`.
+- Always handle the three stages of asynchronous state explicitly using `.when(data: ..., loading: ..., error: ...)`. NEVER display a blank screen or raw unhandled error to the user.
 
 # DEPENDENCY INJECTION (lib/core/di/)
 - Use a simple **Service Locator** pattern in `service_locator.dart`.

@@ -6,6 +6,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'package:intl/intl.dart';
 
 /// Vertical event card used in Discovery screen.
 /// Full-width image with date badge, title, location, and time info.
@@ -103,10 +104,11 @@ class EventCardVertical extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(Icons.location_on, event.location),
-                  if (event.timeRange != null) ...[
-                    const SizedBox(height: 6),
-                    _buildInfoRow(Icons.schedule, event.timeRange!),
-                  ],
+                  const SizedBox(height: 6),
+                  _buildInfoRow(
+                    Icons.schedule,
+                    event.timeRange ?? '${DateFormat('HH:mm').format(event.startDate)} - ${DateFormat('HH:mm').format(event.endDate ?? event.startDate)}',
+                  ),
                 ],
               ),
             ),

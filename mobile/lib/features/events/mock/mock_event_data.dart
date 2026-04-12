@@ -1,66 +1,63 @@
-import 'package:frontend/features/events/models/event_dto.dart';
+import 'package:intl/intl.dart';
+import 'package:frontend/features/events/models/event_model.dart';
 
 class MockEventData {
-  static const CategoryDTO mockMusicCategory = CategoryDTO(
-    id: 'cat-001',
-    name: 'Âm nhạc',
-    slug: 'am-nhac',
-    icon: 'music_note',
-    color: '#FF5733',
-  );
-
-  static const CategoryDTO mockTechCategory = CategoryDTO(
-    id: 'cat-002',
-    name: 'Technology',
-    slug: 'tech',
-    icon: 'computer',
-    color: '#3388FF',
-  );
-
-  static const LocationDTO mockLocation = LocationDTO(
-    id: 'loc-001',
-    type: 'room',
-    name: 'Hội trường C',
-    address: 'Khu trung tâm, Cơ sở Quận 9',
-    capacity: 500,
-  );
-
-  static final EventDTO mockEventLaunchParty = EventDTO(
+  static final EventModel mockEventLaunchParty = EventModel(
     id: 'event-001',
     title: 'UEvent Launch Party 2026',
-    slug: 'uevent-launch-party',
     description: 'Bữa tiệc ra mắt nền tảng UEvent hoành tráng.',
-    status: 'active',
-    category: mockMusicCategory,
-    startAt: DateTime.now().add(const Duration(days: 7)),
-    endAt: DateTime.now().add(const Duration(days: 7, hours: 3)),
-    location: mockLocation,
-    maxCapacity: 500,
-    coverImageUrl: 'https://picsum.photos/800/400',
-    registrationOpenAt: DateTime.now().subtract(const Duration(days: 1)),
-    registrationCloseAt: DateTime.now().add(const Duration(days: 6)),
-    cancellationDeadlineAt: DateTime.now().add(const Duration(days: 5)),
+    category: 'Âm nhạc',
+    startDate: DateTime.now().add(const Duration(days: 7)),
+    endDate: DateTime.now().add(const Duration(days: 7, hours: 3)),
+    location: 'Hội trường C - Cơ sở Quận 9',
+    guestCount: 500,
+    imageUrl: 'https://picsum.photos/800/400',
+    isOrganizer: true,
+    timeRange: '18:00 - 21:00',
   );
 
-  static final EventDTO mockEventTechSummit = EventDTO(
+  static final EventModel mockEventTechSummit = EventModel(
     id: 'event-002',
     title: 'Future Tech Summit 2024: The AI Revolution',
-    slug: 'future-tech-summit-2024',
     description: 'Join global leaders in artificial intelligence...',
-    status: 'active',
-    category: mockTechCategory,
-    startAt: DateTime(2024, 10, 24, 9),
-    endAt: DateTime(2024, 10, 24, 18),
-    location: const LocationDTO(
-      id: 'loc-002', type: 'string', name: 'Convention Center, San Francisco'
-    ),
-    maxCapacity: 2000,
-    coverImageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC7nwgVPoexpc...LdQ',
-    registrationOpenAt: DateTime(2024, 9, 24),
-    registrationCloseAt: DateTime(2024, 10, 20),
+    category: 'Technology',
+    startDate: DateTime(2024, 10, 24, 9),
+    endDate: DateTime(2024, 10, 24, 18),
+    location: 'Convention Center, San Francisco',
+    guestCount: 2000,
+    imageUrl: 'https://picsum.photos/900/420',
+    isOrganizer: false,
+    timeRange: '09:00 - 18:00',
   );
 
-  static final List<EventDTO> list = [
+  static final EventModel eventDetailOrganizer = mockEventLaunchParty;
+
+  static const List<String> discoveryCategories = [
+    'All',
+    'Technology',
+    'Music',
+    'Workshop',
+  ];
+
+  static final List<EventModel> discoveryEvents = [
+    mockEventTechSummit,
+    mockEventLaunchParty,
+  ];
+
+  static final List<String> discoveryDateBadges = discoveryEvents
+      .map((e) => DateFormat('MMM d').format(e.startDate))
+      .toList();
+
+  static final List<EventModel> myEvents = [
+    mockEventLaunchParty,
+    mockEventTechSummit.copyWith(isOrganizer: true),
+  ];
+
+  static final List<String> myEventDates = myEvents
+      .map((e) => DateFormat('EEE, d MMM').format(e.startDate))
+      .toList();
+
+  static final List<EventModel> list = [
     mockEventLaunchParty,
     mockEventTechSummit,
   ];

@@ -1,18 +1,22 @@
 // File: lib/views/discovery_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/models/event_model.dart';
 import 'package:frontend/features/events/mock/mock_event_data.dart';
+import 'package:frontend/features/events/providers/event_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/features/events/widgets/event_card_vertical.dart';
 import 'package:frontend/features/events/widgets/category_filter_chip.dart';
 import 'package:frontend/core/widgets/section_header.dart';
+import 'package:frontend/core/widgets/async_state_slivers.dart';
 
-class DiscoveryView extends StatefulWidget {
+class DiscoveryView extends ConsumerStatefulWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback? onNotificationsTap;
@@ -31,14 +35,16 @@ class DiscoveryView extends StatefulWidget {
   });
 
   @override
-  State<DiscoveryView> createState() => _DiscoveryViewState();
+  ConsumerState<DiscoveryView> createState() => _DiscoveryViewState();
 }
 
-class _DiscoveryViewState extends State<DiscoveryView> {
+class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
   int _selectedCategoryIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(discoveryEventsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -97,26 +103,51 @@ class _DiscoveryViewState extends State<DiscoveryView> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               // Event cards
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final event = MockEventData.discoveryEvents[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.pagePaddingH,
-                        vertical: 12,
-                      ),
-                      child: EventCardVertical(
-                        event: event,
-                        dateBadge: MockEventData.discoveryDateBadges[index],
-                        onTap: widget.onEventTap != null
-                            ? () => widget.onEventTap!(event)
-                            : null,
-                      ),
-                    );
-                  },
-                  childCount: MockEventData.discoveryEvents.length,
-                ),
+              ...eventsAsync.when(
+                data: (events) {
+                  return [
+                    AppSuccessSliver(
+                      isEmpty: events.isEmpty,
+                      emptyIcon: Icons.explore_off,
+                      emptyTitle: 'Khong co su kien',
+                      emptyDescription: 'Khong tim thay su kien phu hop hien tai.',
+                      contentSlivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final event = events[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppConstants.pagePaddingH,
+                                  vertical: 12,
+                                ),
+                                child: EventCardVertical(
+                                  event: event,
+                                  dateBadge: DateFormat('MMM d').format(event.startDate),
+                                  onTap: widget.onEventTap != null
+                                      ? () => widget.onEventTap!(event)
+                                      : null,
+                                ),
+                              );
+                            },
+                            childCount: events.length,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ];
+                },
+                loading: () => const [
+                  AppLoadingSliver(),
+                ],
+                error: (_, __) => [
+                  AppErrorSliver(
+                    icon: Icons.wifi_off,
+                    title: 'Khong tai du lieu duoc',
+                    description: 'Vui long thu lai sau.',
+                    onRetry: () => ref.refresh(discoveryEventsProvider),
+                  ),
+                ],
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
             ],
