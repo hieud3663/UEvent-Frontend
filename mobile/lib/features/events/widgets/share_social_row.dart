@@ -44,7 +44,6 @@ class ShareSocialRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
-      shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       itemCount: _socials.length,
       separatorBuilder: (_, _) => const SizedBox(width: 16),
@@ -104,6 +103,7 @@ class _SocialItem extends StatelessWidget {
             child: Image.network(
               app.iconUrl,
               fit: BoxFit.contain,
+              cacheWidth: 128,
               errorBuilder: (_, _, _) => const SizedBox(),
             ),
           ),

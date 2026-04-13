@@ -32,66 +32,72 @@ class GlassTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+
+    final content = Container(
+      height: AppConstants.topBarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowNav,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Leading
+          if (leadingWidget != null)
+            leadingWidget!
+          else if (leadingIcon != null)
+            _buildIconButton(leadingIcon!, onLeadingTap)
+          else
+            const SizedBox(width: 40),
+
+          // Title
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: titleStyle ?? AppTextStyles.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Trailing
+          if (trailingWidget != null)
+            trailingWidget!
+          else if (trailingIcon != null)
+            _buildIconButton(trailingIcon!, onTrailingTap)
+          else
+            const SizedBox(width: 40),
+        ],
+      ),
+    );
+
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: AppConstants.glassNavBlur,
-              sigmaY: AppConstants.glassNavBlur,
-            ),
-            child: Container(
-              height: AppConstants.topBarHeight,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 0.5,
+          child: isAndroid
+              ? content
+              : BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: AppConstants.glassNavBlur,
+                    sigmaY: AppConstants.glassNavBlur,
+                  ),
+                  child: content,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.shadowNav,
-                    blurRadius: 32,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Leading
-                  if (leadingWidget != null)
-                    leadingWidget!
-                  else if (leadingIcon != null)
-                    _buildIconButton(leadingIcon!, onLeadingTap)
-                  else
-                    const SizedBox(width: 40),
-
-                  // Title
-                  Expanded(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: titleStyle ?? AppTextStyles.titleMedium,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-
-                  // Trailing
-                  if (trailingWidget != null)
-                    trailingWidget!
-                  else if (trailingIcon != null)
-                    _buildIconButton(trailingIcon!, onTrailingTap)
-                  else
-                    const SizedBox(width: 40),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

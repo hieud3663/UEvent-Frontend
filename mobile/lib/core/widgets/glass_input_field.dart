@@ -36,86 +36,92 @@ class GlassInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 32,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+
+    final content = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 32,
+            offset: const Offset(0, 8),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Label Row
-              if (labelTrailing != null)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      style: AppTextStyles.inputLabel,
-                    ),
-                    labelTrailing!,
-                  ],
-                )
-              else
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label Row
+          if (labelTrailing != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
                   label.toUpperCase(),
                   style: AppTextStyles.inputLabel,
                 ),
-              const SizedBox(height: 4),
+                labelTrailing!,
+              ],
+            )
+          else
+            Text(
+              label.toUpperCase(),
+              style: AppTextStyles.inputLabel,
+            ),
+          const SizedBox(height: 4),
 
-              // Input or child
-              if (child != null)
-                child!
-              else
-                Row(
-                  children: [
-                    if (leadingIcon != null) ...[
-                      Icon(
-                        leadingIcon,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        keyboardType: keyboardType,
-                        obscureText: obscureText,
-                        maxLines: maxLines,
-                        style: AppTextStyles.bodyLarge,
-                        decoration: InputDecoration(
-                          hintText: placeholder,
-                          hintStyle: AppTextStyles.inputHint,
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
+          // Input or child
+          if (child != null)
+            child!
+          else
+            Row(
+              children: [
+                if (leadingIcon != null) ...[
+                  Icon(
+                    leadingIcon,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: keyboardType,
+                    obscureText: obscureText,
+                    maxLines: maxLines,
+                    style: AppTextStyles.bodyLarge,
+                    decoration: InputDecoration(
+                      hintText: placeholder,
+                      hintStyle: AppTextStyles.inputHint,
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
-                    ?trailing,
-                  ],
+                  ),
                 ),
-            ],
-          ),
-        ),
+                ?trailing,
+              ],
+            ),
+        ],
       ),
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+      child: isAndroid
+          ? content
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+              child: content,
+            ),
     );
   }
 }

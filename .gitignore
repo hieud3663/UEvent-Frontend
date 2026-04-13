@@ -57,3 +57,5 @@ mobile/macos/Flutter/
 mobile/ios/
 mobile/linux/
 mobile/windows/
+.claude/rules/code-style-guide.md
+mobile/pubspec.yaml

@@ -1,6 +1,7 @@
 // File: lib/features/events/widgets/guest_invitation_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 
@@ -59,16 +60,18 @@ class GuestInvitationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  clipBehavior: Clip.antiAlias,
+                  clipBehavior: Clip.hardEdge,
                   child: imageUrl.isEmpty
                       ? Container(
                           color: AppColors.surfaceContainer,
                           child: const Icon(Icons.person, color: AppColors.navInactive, size: 32),
                         )
-                      : Image.network(
-                          imageUrl,
+                      : CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
+                          memCacheWidth: 112,
+                          maxWidthDiskCache: 224,
+                          errorWidget: (_, _, _) => Container(
                             color: AppColors.surfaceContainer,
                             child: const Icon(Icons.person, color: AppColors.navInactive, size: 32),
                           ),

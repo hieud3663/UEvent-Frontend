@@ -1,6 +1,7 @@
 // File: lib/features/events/widgets/event_organizer_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/theme/app_constants.dart';
@@ -113,8 +114,12 @@ class EventOrganizerCard extends StatelessWidget {
       ),
       child: ClipOval(
         child: url != null
-            ? Image.network(url, fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
+          ? CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            memCacheWidth: 96,
+            maxWidthDiskCache: 192,
+            errorWidget: (_, _, _) =>
                     Container(color: AppColors.surfaceVariant))
             : Center(
                 child: Text(

@@ -32,9 +32,8 @@ class SettingsGroup extends StatelessWidget {
         GlassContainer(
           padding: EdgeInsets.zero,
           child: ListView.separated(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: children.length,
             itemBuilder: (context, index) => children[index],
             separatorBuilder: (context, index) => Divider(

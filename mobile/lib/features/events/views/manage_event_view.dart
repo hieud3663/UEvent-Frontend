@@ -1,6 +1,7 @@
 // File: lib/features/events/views/manage_event_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -216,21 +217,23 @@ class ManageEventView extends StatelessWidget {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 16,
+                          blurRadius: 10,
                           offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    clipBehavior: Clip.antiAlias,
+                    clipBehavior: Clip.hardEdge,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.network(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuBUJVgZCTaUwZWXG4b0RxtqsleC0adPsFZj9GGNgRsIkK3YgWl6kUwR7wm0ZP08JnZJrpAHOFVKuqaUF-98-eM3X5csZt8K9KpDvIS9QbaO_hlM6tllod3ldRVzFyp5xMn8YEwkYmXxfRfZE1HQw8R3pgOcLQawRMN5JPxRpTYY27FIlVySseel7bwS6-Thl1fHUz54suHTsmnsWrqIYVZQmd2ZY5VeWqtvdw_fuCDsYl0K0OG2zk5iBTdxeOU5IiDVGmJ0z4H_vVw',
+                        CachedNetworkImage(
+                          imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBUJVgZCTaUwZWXG4b0RxtqsleC0adPsFZj9GGNgRsIkK3YgWl6kUwR7wm0ZP08JnZJrpAHOFVKuqaUF-98-eM3X5csZt8K9KpDvIS9QbaO_hlM6tllod3ldRVzFyp5xMn8YEwkYmXxfRfZE1HQw8R3pgOcLQawRMN5JPxRpTYY27FIlVySseel7bwS6-Thl1fHUz54suHTsmnsWrqIYVZQmd2ZY5VeWqtvdw_fuCDsYl0K0OG2zk5iBTdxeOU5IiDVGmJ0z4H_vVw',
                           fit: BoxFit.cover,
+                          memCacheWidth: 1200,
+                          maxWidthDiskCache: 1800,
                           color: Colors.black.withValues(alpha: 0.25), // Grayscale brightness equivalent roughly
                           colorBlendMode: BlendMode.darken,
-                          errorBuilder: (_, _, _) => Container(color: AppColors.surfaceVariant),
+                          errorWidget: (_, _, _) => Container(color: AppColors.surfaceVariant),
                         ),
                         // Overlay Gradient
                         Container(

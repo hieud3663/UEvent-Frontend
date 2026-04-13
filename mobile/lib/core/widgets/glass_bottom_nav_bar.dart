@@ -45,48 +45,54 @@ class GlassBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+
+    final content = Container(
+      height: AppConstants.bottomNavHeight,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(AppConstants.radiusNav),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowNav,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isActive = index == currentIndex;
+          return _NavBarItem(
+            item: item,
+            isActive: isActive,
+            onTap: () => onTap(index),
+          );
+        }),
+      ),
+    );
+
     return Positioned(
       left: 24,
       right: 24,
       bottom: AppConstants.bottomNavOffset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppConstants.radiusNav),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: AppConstants.glassNavBlur,
-            sigmaY: AppConstants.glassNavBlur,
-          ),
-          child: Container(
-            height: AppConstants.bottomNavHeight,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(AppConstants.radiusNav),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.4),
-                width: 0.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadowNav,
-                  blurRadius: 32,
-                  offset: const Offset(0, 8),
+        child: isAndroid
+            ? content
+            : BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: AppConstants.glassNavBlur,
+                  sigmaY: AppConstants.glassNavBlur,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(items.length, (index) {
-                final item = items[index];
-                final isActive = index == currentIndex;
-                return _NavBarItem(
-                  item: item,
-                  isActive: isActive,
-                  onTap: () => onTap(index),
-                );
-              }),
-            ),
-          ),
-        ),
+                child: content,
+              ),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -52,7 +51,7 @@ class _SplashViewState extends State<SplashView> {
         ),
         child: Stack(
           children: [
-            // Ambient glow / blur effects simulating the HTML background elements
+            // Ambient glow shapes without runtime blur to keep startup smooth.
             Positioned(
               top: -50,
               right: -50,
@@ -62,10 +61,6 @@ class _SplashViewState extends State<SplashView> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: 0.3),
-                ),
-                child: BackdropFilter(
-                   filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                   child: const SizedBox(),
                 ),
               ),
             ),
@@ -78,10 +73,6 @@ class _SplashViewState extends State<SplashView> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.05),
-                ),
-                child: BackdropFilter(
-                   filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                   child: const SizedBox(),
                 ),
               ),
             ),
@@ -112,17 +103,11 @@ class _SplashViewState extends State<SplashView> {
                           )
                         ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                          child: const Center(
-                            child: Icon(
-                              Icons.event_available,
-                              size: 60,
-                              color: Colors.black87,
-                            ),
-                          ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.event_available,
+                          size: 60,
+                          color: Colors.black87,
                         ),
                       ),
                     ),
@@ -181,22 +166,17 @@ class _SplashViewState extends State<SplashView> {
                       height: 6,
                       width: double.infinity,
                       color: Colors.black.withValues(alpha: 0.05),
-                      child: Stack(
-                        children: [
-                          BackdropFilter(
-                             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                             child: const SizedBox(),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 700),
+                          curve: Curves.easeOut,
+                          width: MediaQuery.of(context).size.width * _progress,
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 700),
-                            curve: Curves.easeOut,
-                            width: MediaQuery.of(context).size.width * _progress,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

@@ -1,18 +1,23 @@
 // File: lib/views/discovery_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/models/event_model.dart';
 import 'package:frontend/features/events/mock/mock_event_data.dart';
+import 'package:frontend/features/events/providers/event_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/features/events/widgets/event_card_vertical.dart';
 import 'package:frontend/features/events/widgets/category_filter_chip.dart';
 import 'package:frontend/core/widgets/section_header.dart';
+import 'package:frontend/core/widgets/async_state_slivers.dart';
 
-class DiscoveryView extends StatefulWidget {
+class DiscoveryView extends ConsumerStatefulWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback? onNotificationsTap;
@@ -31,14 +36,16 @@ class DiscoveryView extends StatefulWidget {
   });
 
   @override
-  State<DiscoveryView> createState() => _DiscoveryViewState();
+  ConsumerState<DiscoveryView> createState() => _DiscoveryViewState();
 }
 
-class _DiscoveryViewState extends State<DiscoveryView> {
+class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
   int _selectedCategoryIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(discoveryEventsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -97,26 +104,51 @@ class _DiscoveryViewState extends State<DiscoveryView> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               // Event cards
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final event = MockEventData.discoveryEvents[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.pagePaddingH,
-                        vertical: 12,
-                      ),
-                      child: EventCardVertical(
-                        event: event,
-                        dateBadge: MockEventData.discoveryDateBadges[index],
-                        onTap: widget.onEventTap != null
-                            ? () => widget.onEventTap!(event)
-                            : null,
-                      ),
-                    );
-                  },
-                  childCount: MockEventData.discoveryEvents.length,
-                ),
+              ...eventsAsync.when(
+                data: (events) {
+                  return [
+                    AppSuccessSliver(
+                      isEmpty: events.isEmpty,
+                      emptyIcon: Icons.explore_off,
+                      emptyTitle: 'Không có sự kiện',
+                      emptyDescription: 'Không tìm thấy sự kiện phù hợp hiện tại.',
+                      contentSlivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final event = events[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppConstants.pagePaddingH,
+                                  vertical: 12,
+                                ),
+                                child: EventCardVertical(
+                                  event: event,
+                                  dateBadge: DateFormat('MMM d').format(event.startDate),
+                                  onTap: widget.onEventTap != null
+                                      ? () => widget.onEventTap!(event)
+                                      : null,
+                                ),
+                              );
+                            },
+                            childCount: events.length,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ];
+                },
+                loading: () => const [
+                  AppLoadingSliver(),
+                ],
+                error: (_, __) => [
+                  AppErrorSliver(
+                    icon: Icons.wifi_off,
+                    title: 'Không tải dữ liệu được',
+                    description: 'Vui lòng thử lại sau.',
+                    onRetry: () => ref.refresh(discoveryEventsProvider),
+                  ),
+                ],
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
             ],
@@ -159,11 +191,13 @@ class _DiscoveryViewState extends State<DiscoveryView> {
         ),
       ),
       child: ClipOval(
-        child: Image.network(
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
+        child: CachedNetworkImage(
+          imageUrl:
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              Container(color: AppColors.surfaceVariant),
+          memCacheWidth: 96,
+          maxWidthDiskCache: 192,
+          errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant),
         ),
       ),
     );
@@ -176,7 +210,7 @@ class _DiscoveryViewState extends State<DiscoveryView> {
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowSubtle, blurRadius: 8),
+          BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4),
         ],
       ),
       child: Row(

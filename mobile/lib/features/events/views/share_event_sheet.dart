@@ -4,6 +4,7 @@
 // Present via showModalBottomSheet.
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/widgets/share_action_grid.dart';
@@ -63,7 +64,7 @@ class ShareEventSheet extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 32,
+            blurRadius: 20,
             offset: const Offset(0, -8),
           ),
         ],
@@ -165,10 +166,12 @@ class ShareEventSheet extends StatelessWidget {
           child: SizedBox(
             width: 60,
             height: 60,
-            child: Image.network(
-              eventImageUrl,
+            child: CachedNetworkImage(
+              imageUrl: eventImageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              memCacheWidth: 180,
+              maxWidthDiskCache: 320,
+              errorWidget: (_, __, ___) =>
                   Container(color: AppColors.surfaceVariant),
             ),
           ),
@@ -245,10 +248,12 @@ class _ContactItem extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(2),
             child: ClipOval(
-              child: Image.network(
-                imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                memCacheWidth: 96,
+                maxWidthDiskCache: 192,
+                errorWidget: (_, __, ___) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),

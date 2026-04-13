@@ -1,6 +1,7 @@
 // File: lib/widgets/event_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -34,12 +35,14 @@ class EventCard extends StatelessWidget {
             // Thumbnail
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: Image.network(
-                event.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: event.imageUrl,
                 width: AppConstants.eventThumbnailSize,
                 height: AppConstants.eventThumbnailSize,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                memCacheWidth: 160,
+                maxWidthDiskCache: 320,
+                errorWidget: (_, __, ___) => Container(
                   width: AppConstants.eventThumbnailSize,
                   height: AppConstants.eventThumbnailSize,
                   decoration: BoxDecoration(

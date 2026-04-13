@@ -15,14 +15,19 @@ Every piece of code you generate MUST be placed in its designated directory. NEV
    - `lib/core/theme/`: Extract design tokens from Stitch (Colors, Typography, Spacing, Shadows). Files: `app_colors.dart`, `app_text_styles.dart`, `app_theme.dart`, `app_constants.dart`.
    - `lib/core/widgets/`: Highly reusable, "dumb" widgets used across MULTIPLE features (e.g., `PrimaryButton`, `GlassTopBar`).
    - `lib/core/models/`: Models used globally across the app.
+   - `lib/core/network/`: API client, response wrapper, endpoint definitions.
+   - `lib/core/database/`: SQLite database helper, DAO interfaces, migration scripts.
+   - `lib/core/di/`: Dependency injection / Service Locator.
 
 2. `lib/features/{feature_name}/` (Feature Modules)
-   - Code must be grouped by feature (e.g., `events`, `profile`, `ticketing`, `notifications`).
+   - Code must be grouped by feature (e.g., `events`, `profile`, `ticketing`, `notifications`, `auth`).
    - Inside each feature, organize by layer:
      - `.../views/`: Assemble screens for this specific feature.
      - `.../widgets/`: UI components that are ONLY used within this feature.
      - `.../models/`: Data structures specific to this feature.
-     - `.../mock/` or `.../services/`: Specific mock data or API calls for this feature.
+     - `.../services/`: Abstract service interface + implementations (Mock, API).
+     - `.../state/`: ChangeNotifier classes for state management.
+     - `.../mock/`: Mock data files for development/testing.
 
 3. Import Convention:
    - Use absolute package imports (e.g., `import 'package:frontend/...';`) instead of relative imports where possible, particularly for cross-feature or core imports.
@@ -57,6 +62,75 @@ You must strictly follow these 5 steps in order:
 - Views MUST receive data through constructor parameters or a state management solution — they should NOT generate or own their own data.
 - Mock data files should follow the naming pattern: `mock_[entity]_data.dart` (e.g., `mock_event_data.dart`, `mock_user_data.dart`).
 
+# SERVICE LAYER ARCHITECTURE
+Every feature that interacts with data MUST follow the **Service Interface Pattern**:
+
+1. **Abstract Service** (`lib/features/{feature}/services/{feature}_service.dart`):
+   - Define all data operations as an abstract class.
+   - Methods MUST return `Future<ApiResponse<T>>` for consistency.
+   - Example: `abstract class EventService { Future<ApiResponse<List<EventModel>>> getMyEvents(); }`
+
+2. **Mock Implementation** (`lib/features/{feature}/services/mock_{feature}_service.dart`):
+   - Implements the abstract class with local mock data + `Future.delayed` to simulate network latency.
+   - Used during development when API is not ready.
+
+3. **API Implementation** (`lib/features/{feature}/services/api_{feature}_service.dart`):
+   - Implements the abstract class by calling `ApiClient` with real endpoints.
+   - Created when backend API is available.
+
+4. **Switching Mock ↔ API**:
+   - Controlled by a single `useMock` flag in `lib/core/di/service_locator.dart`.
+   - Views and Notifiers NEVER import Mock or API implementations directly — they only depend on the abstract interface.
+   - NEVER use `if/else` inside Views to decide data source. That logic belongs in the Service Locator.
+
+# NETWORK LAYER (lib/core/network/)
+- **HTTP Client:** Use `dio` package for all network requests. NEVER use `http` or raw `HttpClient`.
+- **ApiClient** (`api_client.dart`): Singleton wrapper around `Dio` with:
+  - Centralized `baseUrl` configuration.
+  - Automatic JWT token injection from `AuthService` into `Authorization` header.
+  - Interceptors for: logging (debug), 401 handling (auto-redirect to login), error formatting.
+  - Timeout configuration (connect: 15s, receive: 30s).
+- **ApiResponse<T>** (`api_response.dart`): Generic wrapper for all API responses containing `data`, `error`, `statusCode`, and `isSuccess` getter.
+- **ApiEndpoints** (`api_endpoints.dart`): ALL endpoint URLs centralized in one file as static constants. When backend provides API specs, fill in this file — no other file should contain raw URL strings.
+
+# SECURE STORAGE
+- Use `flutter_secure_storage` for storing sensitive data (auth tokens, refresh tokens, user credentials).
+- NEVER store tokens in `SharedPreferences` or plain text files.
+- Access tokens MUST be read through `AuthService`, not directly from storage in Views or other services.
+
+# LOCAL DATABASE (SQLite)
+- Use `sqflite` package for local SQLite database.
+- Database helper class goes in `lib/core/database/database_helper.dart`.
+- Purpose: **Offline cache** of API data, complex local queries, and persistent user data.
+- Each feature that needs caching should have a DAO (Data Access Object) in `lib/features/{feature}/services/` or `lib/core/database/`.
+- **Cache strategy**: API response → save to SQLite → read from SQLite for display → refresh from API in background.
+- Database migrations MUST be versioned and handled in `database_helper.dart` using `onUpgrade`.
+
+# STATE MANAGEMENT
+- Use **Riverpod** for state management and dependency injection into the UI.
+- Organize providers either functionally (`lib/core/providers/service_providers.dart` for global services) or by feature (`lib/features/{feature}/providers/`):
+  - File naming: `{feature}_providers.dart` (e.g., `event_providers.dart`, `auth_providers.dart`).
+- Use `FutureProvider` for straightforward asynchronous data fetching to naturally yield `AsyncValue` (data, loading, error).
+- Use `NotifierProvider` / `AsyncNotifierProvider` for state that requires complex modifications.
+- UI components accessing providers MUST extend `ConsumerWidget` or `ConsumerStatefulWidget` to access state via `ref.watch()` or `ref.read()`.
+- Always handle the three stages of asynchronous state explicitly using `.when(data: ..., loading: ..., error: ...)`. NEVER display a blank screen or raw unhandled error to the user.
+
+# DEPENDENCY INJECTION (lib/core/di/)
+- Use a simple **Service Locator** pattern in `service_locator.dart`.
+- The Service Locator:
+  - Contains a single `useMock` boolean flag.
+  - Instantiates ALL services and notifiers.
+  - When `useMock = true` → uses `Mock*Service` implementations.
+  - When `useMock = false` → uses `Api*Service` implementations.
+- Access via `ServiceLocator()` singleton (factory constructor).
+- `main.dart` initializes `ServiceLocator` ONCE at app startup.
+
+# MODEL CONVENTIONS
+- Frontend models MUST match backend models exactly (field names, types).
+- Every model that comes from API MUST have `factory fromJson(Map<String, dynamic> json)` and `Map<String, dynamic> toJson()`.
+- If backend adds new fields, update the frontend model immediately — do NOT create a separate DTO/mapping layer.
+- Enums MUST handle unknown values gracefully with `orElse` in `fromJson`.
+
 # VALIDATION AFTER BUILD
 - After creating or modifying ANY screen, widget, or model, you MUST run `flutter analyze` immediately.
 - ALL **errors** and **warnings** MUST be fixed before moving on to the next file or screen. Only `info`-level hints may be deferred.
@@ -73,7 +147,7 @@ You must strictly follow these 5 steps in order:
 - Instead, use a `Stack` where the `CustomScrollView` is the first child, and `Positioned(top: 0, left: 0, right: 0, child: GlassTopBar(...))` is placed *after* the scroll view so it floats above.
 - Add an initial spacing element (e.g., `SliverToBoxAdapter(child: SizedBox(height: 100))`) at the top of the scroll view so the first items are not hidden behind the fixed top bar.
 
-# STATE HANDLING
+# STATE HANDLING (UI)
 - Every View that displays data MUST handle 3 states:
   1. **Loading**: Show a skeleton/shimmer placeholder while data is being fetched. Reuse a shared `ShimmerPlaceholder` widget if available.
   2. **Error**: Show an error message with a retry action button. Reuse the existing `EmptyStateView` widget with appropriate icon/text.

@@ -9,6 +9,8 @@ class NotificationModel {
   final DateTime timestamp;
   final String? actionLabel;
   final String? actionRoute;
+  final bool isRead;
+  final String? relatedEventId;
 
   const NotificationModel({
     required this.id,
@@ -18,20 +20,24 @@ class NotificationModel {
     required this.timestamp,
     this.actionLabel,
     this.actionRoute,
+    this.isRead = false,
+    this.relatedEventId,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id'] as String,
       title: json['title'] as String,
-      description: json['description'] as String,
+      description: (json['description'] ?? json['message'] ?? '') as String,
       type: NotificationType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => NotificationType.announcement,
       ),
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      timestamp: DateTime.tryParse((json['timestamp'] ?? json['createdAt'] ?? '').toString()) ?? DateTime.now(),
       actionLabel: json['actionLabel'] as String?,
       actionRoute: json['actionRoute'] as String?,
+      isRead: json['isRead'] as bool? ?? false,
+      relatedEventId: json['relatedEventId'] as String?,
     );
   }
 
@@ -44,6 +50,8 @@ class NotificationModel {
       'timestamp': timestamp.toIso8601String(),
       'actionLabel': actionLabel,
       'actionRoute': actionRoute,
+      'isRead': isRead,
+      'relatedEventId': relatedEventId,
     };
   }
 }

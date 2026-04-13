@@ -1,7 +1,12 @@
 // File: lib/main.dart
 
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 
 // Auth Flow
@@ -58,15 +63,29 @@ import 'package:frontend/features/events/views/registration_questions_view.dart'
 import 'package:frontend/features/events/views/question_detail_view.dart';
 import 'package:frontend/features/events/models/event_model.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _configureDisplayMode();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const UEventsApp());
+  runApp(const ProviderScope(child: UEventsApp()));
+}
+
+Future<void> _configureDisplayMode() async {
+  if (kIsWeb || !Platform.isAndroid) return;
+  try {
+    await FlutterDisplayMode.setHighRefreshRate();
+  } catch (_) {
+    // Ignore device-specific failures and continue app startup.
+  }
+}
+
+PageRoute<T> _fastRoute<T>({required WidgetBuilder builder}) {
+  return MaterialPageRoute<T>(builder: builder);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -77,7 +96,7 @@ void main() {
 
 void _navigateToLogin(BuildContext context) {
   Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
+    _fastRoute(
       builder: (ctx) => LoginView(
         onLoginWithEmail: () => _navigateToOtp(ctx),
         onLoginWithGoogle: () => _navigateToAppShell(ctx),
@@ -89,7 +108,7 @@ void _navigateToLogin(BuildContext context) {
 }
 
 void _navigateToOtp(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute(
+  Navigator.of(context).push(_fastRoute(
     builder: (ctx) => OtpVerificationView(
       onVerify: () => _navigateToProfileSetup(ctx),
       onBack: () => Navigator.of(ctx).pop(),
@@ -99,7 +118,7 @@ void _navigateToOtp(BuildContext context) {
 }
 
 void _navigateToProfileSetup(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute(
+  Navigator.of(context).push(_fastRoute(
     builder: (ctx) => ProfileSetupView(
       onComplete: () => _navigateToAppShell(ctx),
       onBack: () => Navigator.of(ctx).pop(),
@@ -108,7 +127,7 @@ void _navigateToProfileSetup(BuildContext context) {
 }
 
 void _navigateToPasskeySetup(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute(
+  Navigator.of(context).push(_fastRoute(
     builder: (ctx) => PasskeySetupView(
       onBack: () => Navigator.of(ctx).pop(),
       onCreatePasskey: () => _navigateToAppShell(ctx),
@@ -118,7 +137,7 @@ void _navigateToPasskeySetup(BuildContext context) {
 
 void _navigateToAppShell(BuildContext context) {
   Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => const AppShell()),
+    _fastRoute(builder: (_) => const AppShell()),
     (route) => false,
   );
 }
@@ -168,7 +187,7 @@ class _AppShellState extends State<AppShell> {
   // ── Push Navigation (General) ──
 
   void _pushNotifications() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => NotificationsView(
         currentNavIndex: _currentIndex,
         onNavTap: (i) {
@@ -181,7 +200,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushProfile() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => UserProfileView(
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -189,7 +208,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushEmptySearch() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => EmptySearchView(
         currentNavIndex: _currentIndex,
         onNavTap: (i) {
@@ -210,7 +229,7 @@ class _AppShellState extends State<AppShell> {
   void _pushEventDetail(EventModel event) {
     if (event.isOrganizer) {
       // User is the organizer - show organizer view
-      Navigator.of(context).push(MaterialPageRoute(
+      Navigator.of(context).push(_fastRoute(
         builder: (ctx) => EventDetailOrganizerView(
           onBack: () => Navigator.of(ctx).pop(),
           onCheckIn: _pushQrScanner,
@@ -222,7 +241,7 @@ class _AppShellState extends State<AppShell> {
       ));
     } else {
       // User is attendee/discovering - show attendee view
-      Navigator.of(context).push(MaterialPageRoute(
+      Navigator.of(context).push(_fastRoute(
         builder: (ctx) => EventDetailScreen(
           onBack: () => Navigator.of(ctx).pop(),
           onShare: () => ShareEventSheet.show(ctx),
@@ -245,7 +264,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushRegistrationSuccess(BuildContext ctx) {
-    Navigator.of(ctx).push(MaterialPageRoute(
+    Navigator.of(ctx).push(_fastRoute(
       builder: (_) => RegistrationSuccessScreen(
         eventName: 'Global Developer Summit 2024',
         ticketId: '#UE-98210',
@@ -256,7 +275,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushAskQuestion(BuildContext ctx) {
-    Navigator.of(ctx).push(MaterialPageRoute(
+    Navigator.of(ctx).push(_fastRoute(
       builder: (_) => AskQuestionScreen(
         onBack: () => Navigator.of(ctx).pop(),
         onSend: (q, anon, notify) {},
@@ -267,7 +286,7 @@ class _AppShellState extends State<AppShell> {
   // ── Ticketing Flow ──
 
   void _pushTicketDetail(TicketModel ticket) {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => TicketDetailView(
         ticket: ticket,
         onBack: () => Navigator.of(ctx).pop(),
@@ -288,7 +307,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushPastEventDetail(TicketModel ticket) {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => PastEventDetailView(
         ticket: ticket,
         onBack: () => Navigator.of(ctx).pop(),
@@ -299,7 +318,7 @@ class _AppShellState extends State<AppShell> {
   // ── Organizer Flow ──
 
   void _pushCreateEvent() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => CreateEventView(
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -307,7 +326,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushInviteGuests(EventModel event) {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => InviteGuestsView(
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -315,7 +334,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushSendNotification(EventModel event) {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => SendNotificationView(
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -324,7 +343,7 @@ class _AppShellState extends State<AppShell> {
 
 
   void _pushManageEventHub() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (_) => ManageEventHubView(
         onBack: () => Navigator.of(context).pop(),
         onEditDetailsTap: _pushEditEventDetails,
@@ -339,7 +358,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushEditEventDetails() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => EditEventDetailsView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -347,7 +366,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushManageTeam() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => ManageTeamView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -355,7 +374,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushArchiveEvent() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => ArchiveEventView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -363,7 +382,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushAttendeeList() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => AttendeeListView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -371,7 +390,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushExportAttendeeList() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => ExportAttendeeListView(
         onClose: () => Navigator.of(ctx).pop(),
       ),
@@ -379,7 +398,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushRegistrationQuestions() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => RegistrationQuestionsView(
         onBack: () => Navigator.of(ctx).pop(),
         onQuestionTap: () => _pushQuestionDetail(),
@@ -388,7 +407,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushQuestionDetail() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => QuestionDetailView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -396,7 +415,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushQrScanner() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => QrScannerView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -406,7 +425,7 @@ class _AppShellState extends State<AppShell> {
   // ── Profile / Settings Sub-Navigation ──
 
   void _pushEditProfile() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => EditProfileView(
         onBack: () => Navigator.of(ctx).pop(),
         onSave: () => Navigator.of(ctx).pop(),
@@ -415,7 +434,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushChangeEmail() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => ChangeEmailView(
         onBack: () => Navigator.of(ctx).pop(),
         onSave: () => Navigator.of(ctx).pop(),
@@ -424,7 +443,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushPasskeyLogin() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => PasskeySetupView(
         onBack: () => Navigator.of(ctx).pop(),
         onCreatePasskey: () => Navigator.of(ctx).pop(),
@@ -433,7 +452,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushHelpCenter() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => HelpCenterView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -441,7 +460,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushSendFeedback() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => SendFeedbackView(
         onBack: () => Navigator.of(ctx).pop(),
         onSubmit: () => Navigator.of(ctx).pop(),
@@ -450,7 +469,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushPrivacyPolicy() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => PrivacyPolicyView(
         onBack: () => Navigator.of(ctx).pop(),
       ),
@@ -458,7 +477,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushSyncContacts() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(_fastRoute(
       builder: (ctx) => SyncContactsView(
         onBack: () => Navigator.of(ctx).pop(),
         onSync: () => Navigator.of(ctx).pop(),
@@ -522,3 +541,4 @@ class _AppShellState extends State<AppShell> {
     );
   }
 }
+

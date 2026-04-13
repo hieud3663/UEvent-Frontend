@@ -1,6 +1,7 @@
 // File: lib/features/ticketing/widgets/ticket_list_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -41,10 +42,12 @@ class TicketListCard extends StatelessWidget {
             SizedBox(
               width: 100,
               height: 110,
-              child: Image.network(
-                ticket.eventImageUrl,
+              child: CachedNetworkImage(
+                imageUrl: ticket.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                memCacheWidth: 220,
+                maxWidthDiskCache: 420,
+                errorWidget: (_, __, ___) => Container(
                   color: AppColors.surfaceVariant,
                   child: const Icon(
                     Icons.event,

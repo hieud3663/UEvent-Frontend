@@ -28,84 +28,90 @@ class GlassDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+
     // Find displayed text from selected value
     final selectedItem = items.cast<GlassDropdownItem<T>?>().firstWhere(
           (item) => item?.value == value,
           orElse: () => null,
         );
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-        child: GestureDetector(
-          onTap: () => _showBottomSheet(context),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.5),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 32,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+    final content = GestureDetector(
+      onTap: () => _showBottomSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 32,
+              offset: const Offset(0, 8),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Label Row
-                if (labelTrailing != null)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        label.toUpperCase(),
-                        style: AppTextStyles.inputLabel,
-                      ),
-                      labelTrailing!,
-                    ],
-                  )
-                else
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Label Row
+            if (labelTrailing != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Text(
                     label.toUpperCase(),
                     style: AppTextStyles.inputLabel,
                   ),
-                const SizedBox(height: 4),
+                  labelTrailing!,
+                ],
+              )
+            else
+              Text(
+                label.toUpperCase(),
+                style: AppTextStyles.inputLabel,
+              ),
+            const SizedBox(height: 4),
 
-                // Value / Placeholder row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        selectedItem?.label ?? placeholder ?? '',
-                        style: selectedItem != null
-                            ? AppTextStyles.bodyLarge
-                            : AppTextStyles.inputHint,
-                      ),
-                    ),
-                    AnimatedRotation(
-                      turns: 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: const Icon(
-                        Icons.expand_more,
-                        color: AppColors.outline,
-                        size: 22,
-                      ),
-                    ),
-                  ],
+            // Value / Placeholder row
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    selectedItem?.label ?? placeholder ?? '',
+                    style: selectedItem != null
+                        ? AppTextStyles.bodyLarge
+                        : AppTextStyles.inputHint,
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(
+                    Icons.expand_more,
+                    color: AppColors.outline,
+                    size: 22,
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+      child: isAndroid
+          ? content
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+              child: content,
+            ),
     );
   }
 
@@ -156,136 +162,140 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.55,
+    final content = Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.55,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 40,
+            offset: const Offset(0, -8),
           ),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.85),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.6),
-              width: 1,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 40,
-                offset: const Offset(0, -8),
-              ),
-            ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 8),
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
+
+          // Title
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Text(
+              label.toUpperCase(),
+              style: AppTextStyles.labelSmall.copyWith(
+                letterSpacing: 1.5,
+                color: AppColors.onSurfaceVariant,
               ),
+            ),
+          ),
 
-              // Title
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                child: Text(
-                  label.toUpperCase(),
-                  style: AppTextStyles.labelSmall.copyWith(
-                    letterSpacing: 1.5,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ),
+          Divider(
+            height: 1,
+            color: Colors.black.withValues(alpha: 0.06),
+          ),
 
-              Divider(
-                height: 1,
-                color: Colors.black.withValues(alpha: 0.06),
-              ),
+          // Items list
+          Flexible(
+            child: ListView.builder(
+              padding: EdgeInsets.only(bottom: bottomPadding + 16),
+              itemCount: items.length,
+              itemBuilder: (_, index) {
+                final item = items[index];
+                final isSelected = item.value == selectedValue;
 
-              // Items list
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.only(bottom: bottomPadding + 16),
-                  itemCount: items.length,
-                  itemBuilder: (_, index) {
-                    final item = items[index];
-                    final isSelected = item.value == selectedValue;
-
-                    return GestureDetector(
-                      onTap: () => onSelected(item.value),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
+                return GestureDetector(
+                  onTap: () => onSelected(item.value),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withValues(alpha: 0.08)
+                          : Colors.transparent,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.black.withValues(alpha: 0.04),
                         ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.08)
-                              : Colors.transparent,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.black.withValues(alpha: 0.04),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        if (item.icon != null) ...[
+                          Icon(
+                            item.icon,
+                            size: 20,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        Expanded(
+                          child: Text(
+                            item.label,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.onSurface,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            if (item.icon != null) ...[
-                              Icon(
-                                item.icon,
-                                size: 20,
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 16),
-                            ],
-                            Expanded(
-                              child: Text(
-                                item.label,
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.onSurface,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              const Icon(
-                                Icons.check_circle,
-                                color: AppColors.primary,
-                                size: 22,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+                        if (isSelected)
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
+    );
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: isAndroid
+          ? content
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: content,
+            ),
     );
   }
 }
