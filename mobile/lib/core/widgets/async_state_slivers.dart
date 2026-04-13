@@ -117,6 +117,8 @@ class AppSuccessSliver extends StatelessWidget {
       );
     }
 
+    // `SliverMainAxisGroup` requires Flutter 3.16+.
+    // If supporting older Flutter versions, replace this with a compatible sliver composition.
     return SliverMainAxisGroup(slivers: contentSlivers);
   }
 }

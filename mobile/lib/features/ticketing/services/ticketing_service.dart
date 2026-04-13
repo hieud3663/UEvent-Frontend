@@ -41,7 +41,7 @@ class TicketingService {
     }
 
     try {
-      final response = await _apiClient.dio.post('/events/\$eventId/register', data: answers);
+      final response = await _apiClient.dio.post('/events/$eventId/register', data: answers);
       return UserRegistrationModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException {
       rethrow;
@@ -55,7 +55,7 @@ class TicketingService {
     }
 
     try {
-      final response = await _apiClient.dio.get('/events/\$eventId/ticket');
+      final response = await _apiClient.dio.get('/events/$eventId/ticket');
       return TicketModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException {
       rethrow;
@@ -70,7 +70,7 @@ class TicketingService {
     }
 
     try {
-      final response = await _apiClient.dio.post('/tickets/\$ticketCode/rotate_qr');
+      final response = await _apiClient.dio.post('/tickets/$ticketCode/rotate_qr');
       return TicketModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException {
       rethrow;

@@ -144,8 +144,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                 error: (_, __) => [
                   AppErrorSliver(
                     icon: Icons.wifi_off,
-                    title: 'Khong tai du lieu duoc',
-                    description: 'Vui long thu lai sau.',
+                    title: 'Không tải dữ liệu được',
+                    description: 'Vui lòng thử lại sau.',
                     onRetry: () => ref.refresh(discoveryEventsProvider),
                   ),
                 ],
