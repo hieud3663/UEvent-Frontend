@@ -34,7 +34,7 @@ class EventService {
     }
 
     try {
-      final response = await _apiClient.dio.get('/events/\$eventId');
+      final response = await _apiClient.dio.get('/events/$eventId');
       return EventModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException {
       rethrow;

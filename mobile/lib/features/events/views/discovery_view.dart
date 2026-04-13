@@ -110,8 +110,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                     AppSuccessSliver(
                       isEmpty: events.isEmpty,
                       emptyIcon: Icons.explore_off,
-                      emptyTitle: 'Khong co su kien',
-                      emptyDescription: 'Khong tim thay su kien phu hop hien tai.',
+                      emptyTitle: 'Không có sự kiện',
+                      emptyDescription: 'Không tìm thấy sự kiện phù hợp hiện tại.',
                       contentSlivers: [
                         SliverList(
                           delegate: SliverChildBuilderDelegate(

@@ -34,7 +34,7 @@ class NotificationService {
     }
 
     try {
-      await _apiClient.dio.post('/notifications/\$id/read');
+      await _apiClient.dio.post('/notifications/$id/read');
     } on DioException {
       rethrow;
     }

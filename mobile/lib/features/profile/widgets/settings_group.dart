@@ -31,19 +31,17 @@ class SettingsGroup extends StatelessWidget {
         ),
         GlassContainer(
           padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (int i = 0; i < children.length; i++) ...[
-                children[i],
-                if (i < children.length - 1)
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Colors.black.withValues(alpha: 0.05),
-                    indent: 56, // Align with text
-                  ),
-              ],
-            ],
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: children.length,
+            itemBuilder: (context, index) => children[index],
+            separatorBuilder: (context, index) => Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.black.withValues(alpha: 0.05),
+              indent: 56, // Align with text
+            ),
           ),
         ),
         const SizedBox(height: 24),

@@ -40,7 +40,7 @@ class AppErrorState extends StatelessWidget {
     required this.title,
     required this.description,
     this.onRetry,
-    this.retryText = 'Thu lai',
+    this.retryText = 'Thử lại',
     this.padding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
   });
 
