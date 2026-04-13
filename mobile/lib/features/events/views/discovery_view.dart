@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
@@ -190,11 +191,13 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
         ),
       ),
       child: ClipOval(
-        child: Image.network(
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
+        child: CachedNetworkImage(
+          imageUrl:
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              Container(color: AppColors.surfaceVariant),
+          memCacheWidth: 96,
+          maxWidthDiskCache: 192,
+          errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant),
         ),
       ),
     );
@@ -207,7 +210,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowSubtle, blurRadius: 8),
+          BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4),
         ],
       ),
       child: Row(

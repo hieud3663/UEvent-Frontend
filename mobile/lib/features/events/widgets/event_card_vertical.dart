@@ -1,7 +1,7 @@
 // File: lib/widgets/event_card_vertical.dart
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -48,10 +48,12 @@ class EventCardVertical extends StatelessWidget {
                 SizedBox(
                   height: AppConstants.eventCardImageHeight,
                   width: double.infinity,
-                  child: Image.network(
-                    event.imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: event.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    memCacheWidth: 900,
+                    maxWidthDiskCache: 1400,
+                    errorWidget: (_, __, ___) => Container(
                       color: AppColors.surfaceVariant,
                       child: const Center(
                         child: Icon(Icons.image, size: 48, color: AppColors.outline),
@@ -63,26 +65,20 @@ class EventCardVertical extends StatelessWidget {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                        ),
-                        child: Text(
-                          dateBadge,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.onSurface,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                    ),
+                    child: Text(
+                      dateBadge,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.onSurface,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),

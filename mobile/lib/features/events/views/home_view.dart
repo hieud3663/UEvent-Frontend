@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
@@ -200,10 +201,13 @@ class HomeView extends ConsumerWidget {
         ),
       ),
       child: ClipOval(
-        child: Image.network(
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
+        child: CachedNetworkImage(
+          imageUrl:
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuAyErzTlXp9zTUqK8e5HiJWesNTOfm10_r_PwBXepemKvp1azWgTJAsFJJ7snljJsrTQulkOtMR9kLjkqonSvAXShUrveuMti8KGM5D-f6OVJouUop9N2kaqC5W_37NT0ujje2mjYinxeiOmIA1h6bBYsST_0xbefLJ6Fy7tWlS1OL1t5CFyCJZ5_vNtl2jJTv53homf79hhU0pUjNet7E-O1x01Cqh2Rm16YoGnZsETeXS4e1oJI4IkqzfhaISEsjxeBlSTJgL8NQ',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
+          memCacheWidth: 96,
+          maxWidthDiskCache: 192,
+          errorWidget: (_, __, ___) => Container(
             color: AppColors.surfaceVariant,
             child: const Icon(Icons.person, color: AppColors.primary),
           ),
@@ -251,16 +255,19 @@ class HomeView extends ConsumerWidget {
       height: AppConstants.featuredCardHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 8)],
+        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior: Clip.hardEdge,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBKAOqXIg7Fd-ODNI2iA-TbQTc1BJoSEy4yKngPaqNEVxf3-y916SQLxrQaH4NvTthP_Db5oGhPTM5O8wBw7pJ33gXb0nj_X2rfVGKNFZ-zn56VtMOTnAT36BCXD2NK36mTB_zpIUB5g0k0B3zD_7uQXqXbD_w-If67-TtSBs-SFVkTUDlaz_AeItZgnTjdE2ZYNeju9jAaUKozQEAG65aVzZ5Zsq0k521yuugQN2V0EjEy70Vb1_CgLsyivemWIl_GoBQJ9YQz0qs',
+          CachedNetworkImage(
+            imageUrl:
+                'https://lh3.googleusercontent.com/aida-public/AB6AXuBKAOqXIg7Fd-ODNI2iA-TbQTc1BJoSEy4yKngPaqNEVxf3-y916SQLxrQaH4NvTthP_Db5oGhPTM5O8wBw7pJ33gXb0nj_X2rfVGKNFZ-zn56VtMOTnAT36BCXD2NK36mTB_zpIUB5g0k0B3zD_7uQXqXbD_w-If67-TtSBs-SFVkTUDlaz_AeItZgnTjdE2ZYNeju9jAaUKozQEAG65aVzZ5Zsq0k521yuugQN2V0EjEy70Vb1_CgLsyivemWIl_GoBQJ9YQz0qs',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(color: AppColors.onSurface),
+            memCacheWidth: 1280,
+            maxWidthDiskCache: 1920,
+            errorWidget: (_, __, ___) => Container(color: AppColors.onSurface),
           ),
           // Gradient overlay
           Container(
@@ -408,8 +415,13 @@ class HomeView extends ConsumerWidget {
         border: Border.all(color: Colors.white, width: 2),
       ),
       child: ClipOval(
-        child: Image.network(url, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceVariant)),
+        child: CachedNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.cover,
+          memCacheWidth: 72,
+          maxWidthDiskCache: 160,
+          errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant),
+        ),
       ),
     );
   }
@@ -466,8 +478,8 @@ class HomeView extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: AppColors.shadowPrimary,
-            blurRadius: 25,
-            offset: const Offset(0, 8),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

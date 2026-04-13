@@ -1,6 +1,7 @@
 // File: lib/features/events/widgets/event_hero_header.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 
 /// Full-bleed hero image with gradient overlay + back/share/favourite overlay buttons.
@@ -29,10 +30,12 @@ class EventHeroHeader extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Hero image
-          Image.network(
-            imageUrl,
+          CachedNetworkImage(
+            imageUrl: imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
+            memCacheWidth: 1400,
+            maxWidthDiskCache: 1920,
+            errorWidget: (_, __, ___) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // Gradient fade to background at bottom

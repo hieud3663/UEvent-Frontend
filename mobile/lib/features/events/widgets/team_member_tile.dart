@@ -1,6 +1,7 @@
 // File: lib/features/events/widgets/team_member_tile.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/events/models/team_member_model.dart';
@@ -32,11 +33,13 @@ class TeamMemberTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: const BoxDecoration(shape: BoxShape.circle),
-              clipBehavior: Clip.antiAlias,
-              child: Image.network(
-                member.avatarUrl,
+              clipBehavior: Clip.hardEdge,
+              child: CachedNetworkImage(
+                imageUrl: member.avatarUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                memCacheWidth: 96,
+                maxWidthDiskCache: 192,
+                errorWidget: (_, __, ___) => Container(
                   color: AppColors.surfaceVariant,
                   child: const Icon(Icons.person, color: AppColors.primary),
                 ),

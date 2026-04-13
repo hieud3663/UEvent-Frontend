@@ -32,31 +32,38 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+    final shouldBlur = !isAndroid && blur > 0;
+
+    final content = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white.withValues(alpha: opacity),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: border ?? Border.all(
+          color: Colors.white.withValues(alpha: borderOpacity),
+          width: 0.5,
+        ),
+        boxShadow: boxShadow ??
+            [
+              BoxShadow(
+                color: AppColors.shadowSubtle,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+      ),
+      child: child,
+    );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: backgroundColor ?? Colors.white.withValues(alpha: opacity),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: border ?? Border.all(
-              color: Colors.white.withValues(alpha: borderOpacity),
-              width: 0.5,
-            ),
-            boxShadow: boxShadow ??
-                [
-                  BoxShadow(
-                    color: AppColors.shadowSubtle,
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-          ),
-          child: child,
-        ),
-      ),
+      child: shouldBlur
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+              child: content,
+            )
+          : content,
     );
   }
 }

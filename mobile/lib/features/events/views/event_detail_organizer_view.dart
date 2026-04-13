@@ -1,6 +1,7 @@
 // File: lib/views/event_detail_organizer_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -187,16 +188,18 @@ class EventDetailOrganizerView extends StatelessWidget {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 8)],
+        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior: Clip.hardEdge,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            _event.imageUrl,
+          CachedNetworkImage(
+            imageUrl: _event.imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
+            memCacheWidth: 1200,
+            maxWidthDiskCache: 1800,
+            errorWidget: (_, __, ___) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // "Live Now" badge
@@ -308,7 +311,7 @@ class EventDetailOrganizerView extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowPrimary.withValues(alpha: 0.2),
-              blurRadius: 16,
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -467,10 +470,12 @@ class EventDetailOrganizerView extends StatelessWidget {
         border: Border.all(color: AppColors.background, width: 2),
       ),
       child: ClipOval(
-        child: Image.network(
-          url,
+        child: CachedNetworkImage(
+          imageUrl: url,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
+          memCacheWidth: 96,
+          maxWidthDiskCache: 192,
+          errorWidget: (_, __, ___) =>
               Container(color: AppColors.surfaceVariant),
         ),
       ),

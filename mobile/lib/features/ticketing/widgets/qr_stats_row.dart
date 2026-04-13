@@ -27,19 +27,18 @@ class QrStatsRow extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _StatColumn(label: 'CHECKED IN', value: checkedIn),
-            VerticalDivider(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 32,
-              thickness: 1,
-            ),
-            _StatColumn(label: 'REMAINING', value: remaining),
-          ],
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _StatColumn(label: 'CHECKED IN', value: checkedIn),
+          Container(
+            height: 42,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
+          _StatColumn(label: 'REMAINING', value: remaining),
+        ],
       ),
     );
   }

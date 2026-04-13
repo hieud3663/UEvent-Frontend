@@ -36,8 +36,8 @@ class AppConstants {
   static const double fabHeight = 56.0;
 
   // ── Glass Effects ──
-  static const double glassBlur = 20.0;
-  static const double glassNavBlur = 25.0;
+  static const double glassBlur = 12.0;
+  static const double glassNavBlur = 14.0;
   static const double glassNavSaturation = 2.0;
   static const double glassOpacity = 0.7;
   static const double glassNavOpacity = 0.4;

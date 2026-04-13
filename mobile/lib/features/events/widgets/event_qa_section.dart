@@ -110,17 +110,18 @@ class _QuestionTile extends StatelessWidget {
           ),
           if (question.isAnswered) ...[
             const SizedBox(height: 10),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(width: 24),
-                  Container(
-                    width: 2,
-                    color: AppColors.outline,
-                    margin: const EdgeInsets.only(right: 10),
-                  ),
-                  Expanded(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(left: 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: AppColors.outline, width: 2),
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -144,8 +145,8 @@ class _QuestionTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ] else ...[
             const SizedBox(height: 8),
