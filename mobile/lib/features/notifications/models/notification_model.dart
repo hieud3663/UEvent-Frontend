@@ -1,59 +1,57 @@
 // File: lib/models/notification_model.dart
 
+import 'package:json_annotation/json_annotation.dart';
+
+part 'notification_model.g.dart';
+
 /// Data class representing a Notification item.
+@JsonSerializable(fieldRename: FieldRename.snake)
 class NotificationModel {
   final String id;
+  final String? eventId;
   final String title;
-  final String description;
+  final String message;
+  @JsonKey(unknownEnumValue: NotificationType.announcement)
   final NotificationType type;
-  final DateTime timestamp;
+  final DateTime? readAt;
+  final DateTime? deliveredAt;
   final String? actionLabel;
   final String? actionRoute;
-  final bool isRead;
-  final String? relatedEventId;
 
   const NotificationModel({
     required this.id,
+    this.eventId,
     required this.title,
-    required this.description,
+    required this.message,
     required this.type,
-    required this.timestamp,
+    this.readAt,
+    this.deliveredAt,
     this.actionLabel,
     this.actionRoute,
-    this.isRead = false,
-    this.relatedEventId,
   });
 
+  String get description => message;
+
+  DateTime get timestamp => deliveredAt ?? readAt ?? DateTime.now();
+
+  bool get isRead => readAt != null;
+
+  String? get relatedEventId => eventId;
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    return NotificationModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: (json['description'] ?? json['message'] ?? '') as String,
-      type: NotificationType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => NotificationType.announcement,
-      ),
-      timestamp: DateTime.tryParse((json['timestamp'] ?? json['createdAt'] ?? '').toString()) ?? DateTime.now(),
-      actionLabel: json['actionLabel'] as String?,
-      actionRoute: json['actionRoute'] as String?,
-      isRead: json['isRead'] as bool? ?? false,
-      relatedEventId: json['relatedEventId'] as String?,
-    );
+    final normalized = Map<String, dynamic>.from(json);
+    normalized['event_id'] ??= normalized['eventId'];
+    normalized['message'] ??= normalized['description'];
+    normalized['read_at'] ??= normalized['readAt'];
+    normalized['delivered_at'] ??=
+        normalized['deliveredAt'] ?? normalized['timestamp'] ?? normalized['createdAt'];
+    normalized['action_label'] ??= normalized['actionLabel'];
+    normalized['action_route'] ??= normalized['actionRoute'];
+
+    return _$NotificationModelFromJson(normalized);
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'type': type.name,
-      'timestamp': timestamp.toIso8601String(),
-      'actionLabel': actionLabel,
-      'actionRoute': actionRoute,
-      'isRead': isRead,
-      'relatedEventId': relatedEventId,
-    };
-  }
+  Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 }
 
 enum NotificationType {
