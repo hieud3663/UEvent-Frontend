@@ -1,14 +1,18 @@
 // File: lib/views/notifications_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/async_state_slivers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
+import 'package:frontend/features/notifications/models/notification_model.dart';
+import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/notifications/widgets/notification_tile.dart';
 
-class NotificationsView extends StatelessWidget {
+class NotificationsView extends ConsumerWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback? onBack;
@@ -21,7 +25,9 @@ class NotificationsView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notificationsAsync = ref.watch(notificationsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -30,107 +36,62 @@ class NotificationsView extends StatelessWidget {
             slivers: [
               // Spacing for fixed top bar
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ...notificationsAsync.when(
+                data: (notifications) => [
+                  AppSuccessSliver(
+                    isEmpty: notifications.isEmpty,
+                    emptyIcon: Icons.notifications_off_outlined,
+                    emptyTitle: 'Chua co thong bao',
+                    emptyDescription: 'Thong bao moi se xuat hien tai day.',
+                    emptyFillRemaining: true,
+                    contentSlivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.pagePaddingH + 8,
+                          ),
+                          child: Text('ALL', style: AppTextStyles.labelSmall),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final notification = notifications[index];
+                            final iconConfig = _iconConfig(notification.type);
 
-              // ── Today ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH + 8,
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppConstants.pagePaddingH,
+                                vertical: 4,
+                              ),
+                              child: NotificationTile(
+                                icon: iconConfig.icon,
+                                iconBgColor: iconConfig.bgColor,
+                                iconColor: iconConfig.iconColor,
+                                title: notification.title,
+                                timestamp: _relativeTime(notification.timestamp),
+                                description: notification.description,
+                                actionLabel: notification.actionLabel,
+                                opacity: notification.isRead ? 0.9 : 1,
+                              ),
+                            );
+                          },
+                          childCount: notifications.length,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text('TODAY', style: AppTextStyles.labelSmall),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                    vertical: 4,
+                ],
+                loading: () => [const AppLoadingSliver()],
+                error: (_, __) => [
+                  AppErrorSliver(
+                    icon: Icons.wifi_off,
+                    title: 'Khong tai du lieu duoc',
+                    description: 'Vui long thu lai sau.',
+                    onRetry: () => ref.refresh(notificationsProvider),
                   ),
-                  child: NotificationTile(
-                    icon: Icons.event,
-                    iconBgColor: AppColors.primaryFixed,
-                    iconColor: AppColors.primary,
-                    title: 'New Event Invite',
-                    timestamp: '2m ago',
-                    description:
-                        'Sarah Jenkins invited you to "Neon Nights: Underground Jazz" this Friday at 8:00 PM.',
-                    actionLabel: 'Add to Calendar',
-                    onActionTap: () {},
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                    vertical: 4,
-                  ),
-                  child: NotificationTile(
-                    icon: Icons.campaign,
-                    iconBgColor: AppColors.secondaryContainer,
-                    iconColor: AppColors.secondary,
-                    title: 'Venue Update',
-                    timestamp: '1h ago',
-                    description:
-                        'The workshop "Creative Coding 101" has been moved to Studio B on the 3rd floor.',
-                  ),
-                ),
-              ),
-
-              // ── Yesterday ──
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH + 8,
-                  ),
-                  child: Text('YESTERDAY', style: AppTextStyles.labelSmall),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                    vertical: 4,
-                  ),
-                  child: NotificationTile(
-                    icon: Icons.alarm,
-                    iconBgColor: AppColors.errorContainer,
-                    iconColor: AppColors.error,
-                    title: 'Upcoming Workshop',
-                    timestamp: '24h ago',
-                    description:
-                        'Reminder: "Digital Portraiture Masterclass" starts in 1 hour. Don\'t forget your tablet!',
-                    opacity: 0.9,
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                    vertical: 4,
-                  ),
-                  child: NotificationTile(
-                    icon: Icons.confirmation_number,
-                    iconBgColor: AppColors.primaryFixed,
-                    iconColor: AppColors.primary,
-                    title: 'Tickets Confirmed',
-                    timestamp: '1d ago',
-                    description:
-                        'Your order #UE-9021 for "Summer Solstice Gala" is confirmed. See you there!',
-                    actionLabel: 'View Receipt',
-                    opacity: 0.9,
-                  ),
-                ),
+                ],
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
@@ -157,4 +118,53 @@ class NotificationsView extends StatelessWidget {
       ),
     );
   }
+
+  _NotificationIconConfig _iconConfig(NotificationType type) {
+    switch (type) {
+      case NotificationType.eventInvite:
+        return const _NotificationIconConfig(
+          icon: Icons.event,
+          bgColor: AppColors.primaryFixed,
+          iconColor: AppColors.primary,
+        );
+      case NotificationType.announcement:
+        return const _NotificationIconConfig(
+          icon: Icons.campaign,
+          bgColor: AppColors.secondaryContainer,
+          iconColor: AppColors.secondary,
+        );
+      case NotificationType.reminder:
+        return const _NotificationIconConfig(
+          icon: Icons.alarm,
+          bgColor: AppColors.errorContainer,
+          iconColor: AppColors.error,
+        );
+      case NotificationType.ticketConfirm:
+        return const _NotificationIconConfig(
+          icon: Icons.confirmation_number,
+          bgColor: AppColors.primaryFixed,
+          iconColor: AppColors.primary,
+        );
+    }
+  }
+
+  String _relativeTime(DateTime timestamp) {
+    final diff = DateTime.now().difference(timestamp);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+}
+
+class _NotificationIconConfig {
+  final IconData icon;
+  final Color bgColor;
+  final Color iconColor;
+
+  const _NotificationIconConfig({
+    required this.icon,
+    required this.bgColor,
+    required this.iconColor,
+  });
 }
