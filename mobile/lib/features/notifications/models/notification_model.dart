@@ -38,18 +38,8 @@ class NotificationModel {
 
   String? get relatedEventId => eventId;
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['event_id'] ??= normalized['eventId'];
-    normalized['message'] ??= normalized['description'];
-    normalized['read_at'] ??= normalized['readAt'];
-    normalized['delivered_at'] ??=
-        normalized['deliveredAt'] ?? normalized['timestamp'] ?? normalized['createdAt'];
-    normalized['action_label'] ??= normalized['actionLabel'];
-    normalized['action_route'] ??= normalized['actionRoute'];
-
-    return _$NotificationModelFromJson(normalized);
-  }
+  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
+      _$NotificationModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 }

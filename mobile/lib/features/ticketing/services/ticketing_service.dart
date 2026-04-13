@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/config/env_config.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/ticketing/mock/mock_ticket_data.dart';
 import 'package:frontend/features/ticketing/models/ticket_model.dart';
 
@@ -24,11 +25,8 @@ class TicketingService {
         queryParameters: status == null ? null : {'status': status},
       );
 
-      final List<dynamic> data = response.data['results'] ?? response.data;
-      return data
-          .whereType<Map<String, dynamic>>()
-          .map(TicketModel.fromJson)
-          .toList();
+      final data = extractListData(response.data);
+      return data.map(TicketModel.fromJson).toList();
     } on DioException {
       rethrow;
     }
@@ -42,7 +40,7 @@ class TicketingService {
 
     try {
       final response = await _apiClient.dio.post('/events/$eventId/register', data: answers);
-      return UserRegistrationModel.fromJson(response.data as Map<String, dynamic>);
+      return UserRegistrationModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }
@@ -56,7 +54,7 @@ class TicketingService {
 
     try {
       final response = await _apiClient.dio.get('/events/$eventId/ticket');
-      return TicketModel.fromJson(response.data as Map<String, dynamic>);
+      return TicketModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }
@@ -71,7 +69,7 @@ class TicketingService {
 
     try {
       final response = await _apiClient.dio.post('/tickets/$ticketCode/rotate_qr');
-      return TicketModel.fromJson(response.data as Map<String, dynamic>);
+      return TicketModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

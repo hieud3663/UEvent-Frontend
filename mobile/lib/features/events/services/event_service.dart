@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/config/env_config.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/events/mock/mock_event_data.dart';
 import 'package:frontend/features/events/models/event_model.dart';
 
@@ -17,11 +18,8 @@ class EventService {
 
     try {
       final response = await _apiClient.dio.get('/events', queryParameters: queryParams);
-      final List<dynamic> dataList = response.data['results'] ?? response.data;
-      return dataList
-          .whereType<Map<String, dynamic>>()
-          .map(EventModel.fromJson)
-          .toList();
+      final dataList = extractListData(response.data);
+      return dataList.map(EventModel.fromJson).toList();
     } on DioException {
       rethrow;
     }
@@ -35,7 +33,7 @@ class EventService {
 
     try {
       final response = await _apiClient.dio.get('/events/$eventId');
-      return EventModel.fromJson(response.data as Map<String, dynamic>);
+      return EventModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

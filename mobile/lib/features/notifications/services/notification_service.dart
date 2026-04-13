@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/config/env_config.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/notifications/mock/mock_notification_data.dart';
 import 'package:frontend/features/notifications/models/notification_model.dart';
 
@@ -17,11 +18,8 @@ class NotificationService {
 
     try {
       final response = await _apiClient.dio.get('/notifications');
-      final List<dynamic> data = response.data['results'] ?? response.data;
-      return data
-          .whereType<Map<String, dynamic>>()
-          .map(NotificationModel.fromJson)
-          .toList();
+      final data = extractListData(response.data);
+      return data.map(NotificationModel.fromJson).toList();
     } on DioException {
       rethrow;
     }

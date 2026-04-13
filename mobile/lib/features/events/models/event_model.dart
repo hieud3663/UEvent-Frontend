@@ -102,39 +102,7 @@ class EventModel {
     );
   }
 
-  factory EventModel.fromJson(Map<String, dynamic> json) {
-    final dynamic locationRaw = json['location'];
-    final String resolvedLocation =
-      locationRaw is String
-        ? locationRaw
-        : (locationRaw?['name'] as String? ??
-          (json['locationSnapshot'] as String? ??
-            json['location_snapshot'] as String? ??
-            'Unknown location'));
-
-    final dynamic categoryRaw = json['category'];
-    final String? categoryName = categoryRaw is String
-        ? categoryRaw
-        : categoryRaw?['name']?.toString();
-
-    final String? imageUrl =
-      (json['imageUrl'] ?? json['coverImageUrl'] ?? json['cover_image_url'])
-        as String?;
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['cover_image_url'] ??= imageUrl;
-    normalized['location'] = resolvedLocation;
-    normalized['category'] = categoryName;
-    normalized['start_at'] ??= normalized['startDate'] ?? normalized['startAt'];
-    normalized['end_at'] ??= normalized['endDate'] ?? normalized['endAt'];
-    normalized['registration_open_at'] ??= normalized['registrationOpenAt'];
-    normalized['registration_close_at'] ??= normalized['registrationCloseAt'];
-    normalized['cancellation_deadline_at'] ??= normalized['cancellationDeadlineAt'];
-    normalized['max_capacity'] ??= normalized['guestCount'] ?? normalized['maxCapacity'];
-    normalized['deep_link'] ??= normalized['deepLink'];
-    normalized['is_organizer'] ??= normalized['isOrganizer'];
-
-    return _$EventModelFromJson(normalized);
-  }
+  factory EventModel.fromJson(Map<String, dynamic> json) => _$EventModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$EventModelToJson(this);
 }

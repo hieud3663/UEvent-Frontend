@@ -1,6 +1,11 @@
 // File: lib/models/user_profile_model.dart
 
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user_profile_model.g.dart';
+
 /// Data class representing a User Profile.
+@JsonSerializable(fieldRename: FieldRename.snake)
 class UserProfileModel {
   final String name;
   final String studentId;
@@ -20,27 +25,8 @@ class UserProfileModel {
     required this.clubCount,
   });
 
-  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    return UserProfileModel(
-      name: json['name'] as String,
-      studentId: json['studentId'] as String,
-      faculty: json['faculty'] as String,
-      className: json['className'] as String,
-      avatarUrl: json['avatarUrl'] as String,
-      eventCount: json['eventCount'] as int,
-      clubCount: json['clubCount'] as int,
-    );
-  }
+  factory UserProfileModel.fromJson(Map<String, dynamic> json) =>
+      _$UserProfileModelFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'studentId': studentId,
-      'faculty': faculty,
-      'className': className,
-      'avatarUrl': avatarUrl,
-      'eventCount': eventCount,
-      'clubCount': clubCount,
-    };
-  }
+  Map<String, dynamic> toJson() => _$UserProfileModelToJson(this);
 }

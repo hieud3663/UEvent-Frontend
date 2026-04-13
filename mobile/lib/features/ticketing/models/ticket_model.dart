@@ -86,24 +86,8 @@ class TicketModel {
     );
   }
 
-  factory TicketModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['id'] ??= normalized['ticketCode'] ?? normalized['ticket_code'];
-    normalized['event_id'] ??= normalized['eventId'];
-    normalized['event_name'] ??= normalized['eventName'];
-    normalized['event_image_url'] ??= normalized['eventImageUrl'];
-    normalized['qr_payload'] ??= normalized['qrPayload'];
-    normalized['valid_from'] ??= normalized['validFrom'];
-    normalized['valid_to'] ??= normalized['validTo'];
-    normalized['time_range'] ??= normalized['timeRange'];
-    normalized['ticket_code'] ??= normalized['ticketCode'];
-    normalized['order_id'] ??= normalized['orderId'];
-    normalized['guest_type'] ??= normalized['guestType'];
-    normalized['event_name'] ??= 'Untitled event';
-    normalized['section'] ??= 'General';
-
-    return _$TicketModelFromJson(normalized);
-  }
+  factory TicketModel.fromJson(Map<String, dynamic> json) =>
+      _$TicketModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$TicketModelToJson(this);
 }
@@ -126,13 +110,8 @@ class UserRegistrationModel {
     required this.registeredAt,
   });
 
-  factory UserRegistrationModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['event_id'] ??= normalized['eventId'];
-    normalized['answers_locked'] ??= normalized['answersLocked'];
-    normalized['registered_at'] ??= normalized['registeredAt'];
-    return _$UserRegistrationModelFromJson(normalized);
-  }
+  factory UserRegistrationModel.fromJson(Map<String, dynamic> json) =>
+      _$UserRegistrationModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserRegistrationModelToJson(this);
 }
@@ -153,19 +132,8 @@ class RegistrationFormFieldModel {
     this.options,
   });
 
-  factory RegistrationFormFieldModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['field_key'] ??= normalized['fieldKey'];
-    normalized['field_type'] ??= normalized['fieldType'] ?? 'text';
-    normalized['is_required'] ??= normalized['isRequired'];
-
-    final dynamic rawOptions = normalized['options'] ?? normalized['options_json'];
-    if (rawOptions is List) {
-      normalized['options'] = rawOptions.map((item) => item.toString()).toList();
-    }
-
-    return _$RegistrationFormFieldModelFromJson(normalized);
-  }
+  factory RegistrationFormFieldModel.fromJson(Map<String, dynamic> json) =>
+      _$RegistrationFormFieldModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$RegistrationFormFieldModelToJson(this);
 }

@@ -28,18 +28,7 @@ class UserModel {
     this.avatarUrl,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['full_name'] ??= normalized['fullName'];
-    normalized['account_status'] ??= normalized['accountStatus'];
-    normalized['primary_role'] ??= normalized['primaryRole'];
-    normalized['phone_number'] ??= normalized['phoneNumber'];
-    normalized['student_code'] ??= normalized['studentCode'];
-    normalized['class_name'] ??= normalized['className'];
-    normalized['avatar_url'] ??= normalized['avatarUrl'];
-
-    return _$UserModelFromJson(normalized);
-  }
+  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }
@@ -56,12 +45,8 @@ class AuthResponseModel {
     required this.user,
   });
 
-  factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-    normalized['access_token'] ??= normalized['accessToken'];
-    normalized['expires_in'] ??= normalized['expiresIn'];
-    return _$AuthResponseModelFromJson(normalized);
-  }
+  factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$AuthResponseModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AuthResponseModelToJson(this);
 }
