@@ -29,3 +29,56 @@ List<Map<String, dynamic>> extractListData(dynamic responseData) {
 
   return const [];
 }
+
+T mapObjectData<T>(
+  dynamic responseData,
+  T Function(Map<String, dynamic>) mapper,
+) {
+  return mapper(extractObjectData(responseData));
+}
+
+List<T> mapListData<T>(
+  dynamic responseData,
+  T Function(Map<String, dynamic>) mapper,
+) {
+  return extractListData(responseData).map(mapper).toList();
+}
+
+TModel mapDtoToModel<TDto, TModel>(
+  Map<String, dynamic> raw, {
+  required TDto Function(Map<String, dynamic>) dtoFromMap,
+  required TModel Function(TDto) toModel,
+}) {
+  final dto = dtoFromMap(raw);
+  return toModel(dto);
+}
+
+TModel mapObjectResponseToModel<TDto, TModel>(
+  dynamic responseData, {
+  required TDto Function(Map<String, dynamic>) dtoFromMap,
+  required TModel Function(TDto) toModel,
+}) {
+  return mapObjectData(
+    responseData,
+    (raw) => mapDtoToModel(
+      raw,
+      dtoFromMap: dtoFromMap,
+      toModel: toModel,
+    ),
+  );
+}
+
+List<TModel> mapListResponse<TDto, TModel>(
+  dynamic responseData, {
+  required TDto Function(Map<String, dynamic>) dtoFromMap,
+  required TModel Function(TDto) toModel,
+}) {
+  return mapListData(
+    responseData,
+    (raw) => mapDtoToModel(
+      raw,
+    dtoFromMap: dtoFromMap,
+    toModel: toModel,
+    ),
+  );
+}

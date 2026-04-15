@@ -279,10 +279,7 @@ class _SettingsViewState extends State<SettingsView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Settings',
-              leadingIcon: Icons.close,
-              onLeadingTap: widget.onBack,
-              trailingIcon: Icons.more_vert,
+              title: 'Settings'
             ),
           ),
           

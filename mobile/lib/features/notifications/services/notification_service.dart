@@ -1,36 +1,23 @@
 import 'package:dio/dio.dart';
-import 'package:frontend/core/config/env_config.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/network/response_parsing.dart';
-import 'package:frontend/features/notifications/mock/mock_notification_data.dart';
-import 'package:frontend/features/notifications/models/notification_model.dart';
+import 'package:frontend/features/notifications/dtos/notification_dto.dart';
 
 class NotificationService {
   final ApiClient _apiClient;
 
   NotificationService(this._apiClient);
 
-  Future<List<NotificationModel>> getNotifications() async {
-    if (EnvConfig.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 800));
-      return MockNotificationData.notifications;
-    }
-
+  Future<List<NotificationDto>> getNotifications() async {
     try {
       final response = await _apiClient.dio.get('/notifications');
-      final data = extractListData(response.data);
-      return data.map(NotificationModel.fromJson).toList();
+      return mapListData(response.data, NotificationDtoMapper.fromMap);
     } on DioException {
       rethrow;
     }
   }
 
   Future<void> markAsRead(String id) async {
-    if (EnvConfig.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      return;
-    }
-
     try {
       await _apiClient.dio.post('/notifications/$id/read');
     } on DioException {

@@ -26,7 +26,7 @@ class NotificationsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notificationsAsync = ref.watch(notificationsProvider);
+    final notificationsAsync = ref.watch(notificationsControllerProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -36,6 +36,7 @@ class NotificationsView extends ConsumerWidget {
             slivers: [
               // Spacing for fixed top bar
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
+
               ...notificationsAsync.when(
                 data: (notifications) => [
                   AppSuccessSliver(
@@ -55,41 +56,38 @@ class NotificationsView extends ConsumerWidget {
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final notification = notifications[index];
-                            final iconConfig = _iconConfig(notification.type);
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final notification = notifications[index];
+                          final iconConfig = _iconConfig(notification.type);
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppConstants.pagePaddingH,
-                                vertical: 4,
-                              ),
-                              child: NotificationTile(
-                                icon: iconConfig.icon,
-                                iconBgColor: iconConfig.bgColor,
-                                iconColor: iconConfig.iconColor,
-                                title: notification.title,
-                                timestamp: _relativeTime(notification.timestamp),
-                                description: notification.description,
-                                actionLabel: notification.actionLabel,
-                                opacity: notification.isRead ? 0.9 : 1,
-                              ),
-                            );
-                          },
-                          childCount: notifications.length,
-                        ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.pagePaddingH,
+                              vertical: 4,
+                            ),
+                            child: NotificationTile(
+                              icon: iconConfig.icon,
+                              iconBgColor: iconConfig.bgColor,
+                              iconColor: iconConfig.iconColor,
+                              title: notification.title,
+                              timestamp: _relativeTime(notification.timestamp),
+                              description: notification.description,
+                              actionLabel: notification.actionLabel,
+                              opacity: notification.isRead ? 0.8 : 1,
+                            ),
+                          );
+                        }, childCount: notifications.length),
                       ),
                     ],
                   ),
                 ],
                 loading: () => [const AppLoadingSliver()],
-                error: (_, __) => [
+                error: (error, stackTrace) => [
                   AppErrorSliver(
                     icon: Icons.wifi_off,
                     title: 'Khong tai du lieu duoc',
                     description: 'Vui long thu lai sau.',
-                    onRetry: () => ref.refresh(notificationsProvider),
+                    onRetry: () => ref.read(notificationsControllerProvider.notifier).refresh(),
                   ),
                 ],
               ),
