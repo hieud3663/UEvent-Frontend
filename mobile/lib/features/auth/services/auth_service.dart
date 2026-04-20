@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/config/env_config.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/auth/mock/mock_user_data.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 
@@ -20,7 +21,7 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      return AuthResponseModel.fromJson(response.data as Map<String, dynamic>);
+      return AuthResponseModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }
@@ -34,7 +35,7 @@ class AuthService {
 
     try {
       final response = await _apiClient.dio.get('/auth/profile');
-      return UserModel.fromJson(response.data as Map<String, dynamic>);
+      return UserModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

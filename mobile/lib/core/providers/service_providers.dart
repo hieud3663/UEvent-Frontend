@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/auth/services/auth_service.dart';
 import 'package:frontend/features/events/services/event_service.dart';
-import 'package:frontend/features/notifications/services/notification_service.dart';
 import 'package:frontend/features/profile/services/profile_service.dart';
 import 'package:frontend/features/ticketing/services/ticketing_service.dart';
 
@@ -14,10 +13,6 @@ final authServiceProvider = Provider<AuthService>(
 
 final eventServiceProvider = Provider<EventService>(
   (ref) => EventService(ref.read(apiClientProvider)),
-);
-
-final notificationServiceProvider = Provider<NotificationService>(
-  (ref) => NotificationService(ref.read(apiClientProvider)),
 );
 
 final profileServiceProvider = Provider<ProfileService>(

@@ -1,3 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user_model.g.dart';
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class UserModel {
   final String id;
   final String email;
@@ -23,22 +28,12 @@ class UserModel {
     this.avatarUrl,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      id: (json['id'] ?? '').toString(),
-      email: (json['email'] ?? '').toString(),
-      fullName: (json['fullName'] ?? json['full_name'] ?? '').toString(),
-      accountStatus: (json['accountStatus'] ?? json['account_status'] ?? '').toString(),
-      primaryRole: (json['primaryRole'] ?? json['primary_role'] ?? '').toString(),
-      phoneNumber: json['phoneNumber']?.toString(),
-      studentCode: json['studentCode']?.toString(),
-      faculty: json['faculty']?.toString(),
-      className: json['className']?.toString(),
-      avatarUrl: json['avatarUrl']?.toString(),
-    );
-  }
+  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class AuthResponseModel {
   final String accessToken;
   final int expiresIn;
@@ -50,11 +45,8 @@ class AuthResponseModel {
     required this.user,
   });
 
-  factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    return AuthResponseModel(
-      accessToken: (json['accessToken'] ?? json['access_token'] ?? '').toString(),
-      expiresIn: (json['expiresIn'] ?? json['expires_in'] ?? 0) as int,
-      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
-    );
-  }
+  factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$AuthResponseModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AuthResponseModelToJson(this);
 }

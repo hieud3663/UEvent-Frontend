@@ -1,11 +1,19 @@
 // File: lib/features/ticketing/models/ticket_model.dart
 
+import 'package:json_annotation/json_annotation.dart';
+
+part 'ticket_model.g.dart';
+
 /// Data class representing a registered ticket for an event.
+@JsonSerializable(fieldRename: FieldRename.snake)
 class TicketModel {
   final String id;
   final String eventId;
   final String eventName;
   final String eventImageUrl;
+  final String? qrPayload;
+  final DateTime? validFrom;
+  final DateTime? validTo;
   final String date;
   final String timeRange;
   final String location;
@@ -15,6 +23,7 @@ class TicketModel {
   final String? seat;
   final String orderId;
   final String? guestType;
+  @JsonKey(unknownEnumValue: TicketStatus.upcoming)
   final TicketStatus status;
 
   const TicketModel({
@@ -22,6 +31,9 @@ class TicketModel {
     required this.eventId,
     required this.eventName,
     required this.eventImageUrl,
+    this.qrPayload,
+    this.validFrom,
+    this.validTo,
     required this.date,
     required this.timeRange,
     required this.location,
@@ -39,6 +51,9 @@ class TicketModel {
     String? eventId,
     String? eventName,
     String? eventImageUrl,
+    String? qrPayload,
+    DateTime? validFrom,
+    DateTime? validTo,
     String? date,
     String? timeRange,
     String? location,
@@ -55,6 +70,9 @@ class TicketModel {
       eventId: eventId ?? this.eventId,
       eventName: eventName ?? this.eventName,
       eventImageUrl: eventImageUrl ?? this.eventImageUrl,
+      qrPayload: qrPayload ?? this.qrPayload,
+      validFrom: validFrom ?? this.validFrom,
+      validTo: validTo ?? this.validTo,
       date: date ?? this.date,
       timeRange: timeRange ?? this.timeRange,
       location: location ?? this.location,
@@ -68,34 +86,15 @@ class TicketModel {
     );
   }
 
-  factory TicketModel.fromJson(Map<String, dynamic> json) {
-    final String rawStatus = (json['status'] ?? 'upcoming').toString();
-    final TicketStatus status = TicketStatus.values.firstWhere(
-      (e) => e.name == rawStatus,
-      orElse: () => TicketStatus.upcoming,
-    );
+  factory TicketModel.fromJson(Map<String, dynamic> json) =>
+      _$TicketModelFromJson(json);
 
-    return TicketModel(
-      id: (json['id'] ?? json['ticketCode'] ?? '').toString(),
-      eventId: (json['eventId'] ?? json['event_id'] ?? '').toString(),
-      eventName: (json['eventName'] ?? json['event_name'] ?? 'Untitled event').toString(),
-      eventImageUrl: (json['eventImageUrl'] ?? json['event_image_url'] ?? '').toString(),
-      date: (json['date'] ?? '').toString(),
-      timeRange: (json['timeRange'] ?? json['time_range'] ?? '').toString(),
-      location: (json['location'] ?? '').toString(),
-      ticketCode: (json['ticketCode'] ?? json['ticket_code'] ?? '').toString(),
-      section: (json['section'] ?? 'General').toString(),
-      row: json['row']?.toString(),
-      seat: json['seat']?.toString(),
-      orderId: (json['orderId'] ?? json['order_id'] ?? '').toString(),
-      guestType: json['guestType']?.toString(),
-      status: status,
-    );
-  }
+  Map<String, dynamic> toJson() => _$TicketModelToJson(this);
 }
 
 enum TicketStatus { upcoming, past, cancelled }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class UserRegistrationModel {
   final String id;
   final String eventId;
@@ -111,17 +110,13 @@ class UserRegistrationModel {
     required this.registeredAt,
   });
 
-  factory UserRegistrationModel.fromJson(Map<String, dynamic> json) {
-    return UserRegistrationModel(
-      id: (json['id'] ?? '').toString(),
-      eventId: (json['eventId'] ?? json['event_id'] ?? '').toString(),
-      status: (json['status'] ?? '').toString(),
-      answersLocked: json['answersLocked'] as bool? ?? false,
-      registeredAt: DateTime.tryParse((json['registeredAt'] ?? '').toString()) ?? DateTime.now(),
-    );
-  }
+  factory UserRegistrationModel.fromJson(Map<String, dynamic> json) =>
+      _$UserRegistrationModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UserRegistrationModelToJson(this);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class RegistrationFormFieldModel {
   final String fieldKey;
   final String label;
@@ -136,4 +131,9 @@ class RegistrationFormFieldModel {
     required this.isRequired,
     this.options,
   });
+
+  factory RegistrationFormFieldModel.fromJson(Map<String, dynamic> json) =>
+      _$RegistrationFormFieldModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RegistrationFormFieldModelToJson(this);
 }
