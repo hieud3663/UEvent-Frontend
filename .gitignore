@@ -59,3 +59,5 @@ mobile/linux/
 mobile/windows/
 .claude/rules/code-style-guide.md
 mobile/pubspec.yaml
+package-lock.json
+.gitnexus
