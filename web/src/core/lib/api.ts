@@ -1,5 +1,6 @@
 // File: src/core/lib/api.ts
 
+import { isApiEnvelope, unwrapApiEnvelope } from '@/core/lib/apiEnvelope';
 import type { ApiErrorResponse, ApiRequestOptions, ExportFileResult } from '@/core/types/api';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1';
@@ -51,7 +52,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const payload = await response.json();
+  return unwrapApiEnvelope<T>(payload);
 }
 
 export async function apiExport(path: string, options: ApiRequestOptions = {}): Promise<ExportFileResult> {
@@ -112,7 +114,8 @@ async function refreshAccessToken(): Promise<boolean> {
     return false;
   }
 
-  const data = (await response.json()) as { access?: string; refresh?: string };
+  const payload = await response.json();
+  const data = unwrapApiEnvelope<{ access?: string; refresh?: string }>(payload);
   if (!data.access) {
     adminTokenStorage.clearTokens();
     redirectToLogin();
@@ -125,19 +128,36 @@ async function refreshAccessToken(): Promise<boolean> {
 
 async function buildApiError(response: Response): Promise<ApiClientError> {
   const fallback: ApiErrorResponse = {
+    success: false,
     code: `http_${response.status}`,
     message: response.statusText || 'Request failed.',
-    details: null,
-    request_id: response.headers.get('X-Request-ID'),
+    data: null,
+    errors: null,
+    meta: { request_id: response.headers.get('X-Request-ID') },
   };
 
   try {
-    const data = (await response.json()) as Partial<ApiErrorResponse>;
+    const data = await response.json();
+    if (isApiEnvelope(data)) {
+      const errorResponse: ApiErrorResponse = {
+        success: false,
+        code: data.code || fallback.code,
+        message: data.message || fallback.message,
+        data: null,
+        errors: data.errors ?? fallback.errors,
+        meta: data.meta || fallback.meta,
+      };
+      return new ApiClientError(errorResponse.message, response.status, errorResponse);
+    }
+
+    const legacy = data as { code?: string; message?: string; details?: unknown; request_id?: string | null };
     const errorResponse: ApiErrorResponse = {
-      code: data.code || fallback.code,
-      message: data.message || fallback.message,
-      details: data.details ?? fallback.details,
-      request_id: data.request_id ?? fallback.request_id,
+      success: false,
+      code: legacy.code || fallback.code,
+      message: legacy.message || fallback.message,
+      data: null,
+      errors: legacy.details ?? fallback.errors,
+      meta: { request_id: legacy.request_id ?? fallback.meta.request_id },
     };
     return new ApiClientError(errorResponse.message, response.status, errorResponse);
   } catch {
