@@ -11,7 +11,7 @@ function getErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return 'Something went wrong. Please try again.';
+  return 'Đã xảy ra lỗi. Vui lòng thử lại.';
 }
 
 export async function runActionWithToast<T>(
@@ -25,7 +25,7 @@ export async function runActionWithToast<T>(
     toast.success(options.success, { id: toastId });
     return result;
   } catch (error) {
-    toast.error(options.error ?? getErrorMessage(error), { id: toastId });
+    toast.error(getErrorMessage(error) || options.error || 'Đã xảy ra lỗi. Vui lòng thử lại.', { id: toastId });
     throw error;
   }
 }

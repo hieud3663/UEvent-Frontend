@@ -61,3 +61,6 @@ mobile/windows/
 mobile/pubspec.yaml
 package-lock.json
 .gitnexus
+.claude/skills/gitnexus/
+CLAUDE.md
+AGENTS.md

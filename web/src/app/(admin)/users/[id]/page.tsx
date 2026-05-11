@@ -1,21 +1,117 @@
 // File: src/app/(admin)/users/[id]/page.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronRight, Camera, Mail, Lock, Settings } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronRight } from 'lucide-react';
+import { ErrorState, ListSkeleton } from '@/core/components';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
+import { getUserById, unbanUserById, updateUserById } from '@/features/users/services/users.service';
+import type { User, UserRole } from '@/features/users/types';
+
+const statusDisplay = {
+  active: { dot: 'bg-emerald-500', label: 'Đang hoạt động', text: 'text-emerald-600' },
+  pending: { dot: 'bg-amber-500', label: 'Chờ duyệt', text: 'text-amber-600' },
+  banned: { dot: 'bg-red-500', label: 'Đã khóa', text: 'text-red-600' },
+} satisfies Record<User['status'], { dot: string; label: string; text: string }>;
 
 export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const roleOptions = [
-    { value: 'Student', label: 'Student' },
-    { value: 'Organizer', label: 'Organizer' },
-    { value: 'Faculty Admin', label: 'Faculty Admin' },
+    { value: 'student', label: 'Sinh viên' },
+    { value: 'organizer', label: 'Nhà tổ chức' },
+    { value: 'admin', label: 'Quản trị viên' },
   ] as const;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadUser() {
+      setIsLoading(true);
+      const currentUser = await getUserById(userId);
+      if (isMounted) {
+        setUser(currentUser);
+        setIsLoading(false);
+      }
+    }
+
+    void loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
+  const handleUpdateUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      const role = String(formData.get('role') ?? user?.role ?? 'student') as UserRole;
+      await runActionWithToast(
+        () => updateUserById(userId, {
+          full_name: String(formData.get('full_name') ?? '').trim(),
+          student_code: String(formData.get('student_code') ?? '').trim() || undefined,
+          faculty: String(formData.get('faculty') ?? '').trim() || undefined,
+          class_name: String(formData.get('class_name') ?? '').trim() || undefined,
+          role_codes: [role],
+        }),
+        {
+          loading: 'Đang cập nhật hồ sơ...',
+          success: 'Hồ sơ đã được cập nhật.',
+          error: 'Không thể cập nhật hồ sơ.',
+        }
+      );
+      router.push('/users');
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUnbanUser = async () => {
+    if (!user) return;
+
+    const previousUser = user;
+    setUser({ ...user, status: 'active' });
+
+    try {
+      const updatedUser = await runActionWithToast(() => unbanUserById(userId), {
+        loading: `Đang mở khóa ${user.name}...`,
+        success: `${user.name} đã được mở khóa.`,
+        error: `Không thể mở khóa ${user.name}.`,
+      });
+      setUser(updatedUser);
+      router.refresh();
+    } catch {
+      setUser(previousUser);
+    }
+  };
+
+  if (isLoading) {
+    return <ListSkeleton rows={6} className="p-10" />;
+  }
+
+  if (!user) {
+    return (
+      <ErrorState
+        title="Không tìm thấy người dùng"
+        message="Tài khoản này không tồn tại hoặc bạn không có quyền truy cập."
+        retryLabel="Quay lại danh sách"
+        onRetry={() => router.push('/users')}
+      />
+    );
+  }
+
+  const currentStatus = statusDisplay[user.status];
 
   return (
     <div className="min-h-screen px-10 pb-20">
@@ -23,18 +119,18 @@ export default function EditUserPage() {
         <div>
           <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
             <Link href="/users" className="hover:text-amber-500">
-              Users
+              Người dùng
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-600">Edit User Details</span>
+            <span className="text-slate-600">Cập nhật người dùng</span>
           </nav>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-            Modify Account
+            Chỉnh sửa tài khoản
           </h1>
           <p className="text-slate-500 mt-2 font-medium">
-            Update profile information and system access for{' '}
-            <span className="text-amber-600 font-bold">Lê Văn Hùng</span>
+            Cập nhật hồ sơ và quyền truy cập hệ thống cho{' '}
+            <span className="text-amber-600 font-bold">{user.name}</span>
           </p>
         </div>
         <div className="flex gap-3">
@@ -42,17 +138,15 @@ export default function EditUserPage() {
             href="/users"
             className="px-6 py-2.5 glass-panel rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all active:scale-95 border border-white/40 shadow-sm"
           >
-            Discard Changes
+            Hủy thay đổi
           </Link>
           <button 
-            type="button"
-            onClick={() => {
-              toast.success('Profile updated successfully.');
-              router.push('/users');
-            }}
-            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95"
+            type="submit"
+            form="edit-user-form"
+            disabled={isSubmitting}
+            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95 disabled:opacity-60"
           >
-            Update Profile
+            {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật hồ sơ'}
           </button>
         </div>
       </header>
@@ -64,69 +158,47 @@ export default function EditUserPage() {
           <div className="glass-panel rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
             <div className="relative mb-6">
               <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                <Image
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUVO4FhOeA38_fsKHgnSsdGBGwdx8JcsW9-W-PbiS-o32YlyO-IXMLyrAp_cwYujLn6JLqtKsXb0gGEon0QBYysA0eVLkt2j5N67ak-E8Jp8F8c4oyY7WOQjiS6yPxiDuUkdbSsJny8xgOyXCFXCR0zscZeMDQyK1TKC42jxcGu8S46SKz8F5E7EVSa4IKnXhHAShblhNqqmQiT5fvCCRriYnyoPA1LTU45X8pxzmetmQ-N9TLzchBqGCO0Ar-6sXN5GfKVlO4ej8"
-                  alt="User avatar"
-                  fill
-                  sizes="128px"
-                  className="w-full h-full object-cover"
-                />
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name}
+                    fill
+                    sizes="128px"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-200 to-amber-400 text-3xl font-black text-slate-700">
+                    {user.name.split(' ').map((part) => part[0]).join('')}
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => toast.info('Avatar upload flow will open here.')}
-                className="absolute bottom-1 right-1 h-10 w-10 bg-amber-500 text-white rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-transform hover:scale-110 active:scale-90"
-              >
-                <Camera className="w-5 h-5" />
-              </button>
+              {/* Avatar upload API chưa có trong contract admin users nên tạm ẩn nút upload. */}
             </div>
-            <h2 className="text-xl font-bold text-slate-900">Lê Văn Hùng</h2>
+            <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
             <p className="text-slate-500 text-sm font-medium">
-              Student • CS Class 2024-A
+              {user.role} • {user.className ?? 'Chưa có lớp'}
             </p>
 
             <div className="mt-8 pt-8 border-t border-slate-200/50 w-full flex justify-around">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Activity
+                  Hoạt động
                 </p>
-                <p className="text-lg font-bold text-slate-900">High</p>
+                <p className="text-lg font-bold text-slate-900">Cao</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Status
+                  Trạng thái
                 </p>
                 <div className="flex items-center gap-1.5 justify-center mt-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-sm font-bold text-emerald-600">Active</span>
+                  <span className={`h-2 w-2 rounded-full ${currentStatus.dot}`}></span>
+                  <span className={`text-sm font-bold ${currentStatus.text}`}>{currentStatus.label}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="glass-panel rounded-[32px] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => toast.success('Password reset email has been queued.')}
-                className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group"
-              >
-                <Lock className="w-6 h-6 text-slate-400 group-hover:text-amber-600" />
-                <span className="text-xs font-bold text-slate-600">Reset Pass</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => toast.success('Account notice sent to user inbox.')}
-                className="p-4 bg-slate-100/50 rounded-2xl flex flex-col items-center gap-2 hover:bg-amber-50 transition-colors group"
-              >
-                <Mail className="w-6 h-6 text-slate-400 group-hover:text-amber-600" />
-                <span className="text-xs font-bold text-slate-600">Send Notice</span>
-              </button>
-            </div>
-          </div>
+          {/* Quick actions reset password/send notice tạm ẩn vì API admin users chưa có endpoint tương ứng. */}
         </div>
 
         {/* Detailed Info Form (Large Card) */}
@@ -134,30 +206,57 @@ export default function EditUserPage() {
           <div className="glass-panel rounded-[32px] p-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
             <div className="flex items-center gap-3 mb-8">
               <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
-              <h2 className="text-2xl font-bold text-slate-900">Personal Information</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Thông tin cá nhân</h2>
             </div>
 
-            <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+            <form id="edit-user-form" className="space-y-8" onSubmit={handleUpdateUser}>
               {/* Name & Email Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                    Full Name
+                    Họ và tên
                   </label>
                   <input
+                    name="full_name"
                     type="text"
-                    defaultValue="Lê Văn Hùng"
+                    defaultValue={user.name}
                     className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                    Email Address
+                    Địa chỉ email
                   </label>
                   <input
                     type="email"
-                    defaultValue="hung.lv2024@university.edu.vn"
+                    value={user.email}
+                    readOnly
+                    className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-500 font-medium outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                    Khoa/đơn vị
+                  </label>
+                  <input
+                    name="faculty"
+                    type="text"
+                    defaultValue={user.faculty ?? ''}
                     className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                    Tên đăng nhập
+                  </label>
+                  <input
+                    type="text"
+                    value={user.username ?? ''}
+                    readOnly
+                    className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-500 font-medium outline-none"
                   />
                 </div>
               </div>
@@ -166,31 +265,37 @@ export default function EditUserPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                    Student ID (MSSV)
+                    Mã sinh viên
                   </label>
                   <div className="relative">
                     <input
+                      name="student_code"
                       type="text"
-                      defaultValue="20245678"
+                      defaultValue={user.studentId === '—' ? '' : user.studentId}
                       className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                    Class Code
+                    Mã lớp
                   </label>
                   <input
+                    name="class_name"
                     type="text"
-                    defaultValue="CS-K65-A"
+                    defaultValue={user.className ?? ''}
                     className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                    Role Type
+                    Vai trò
                   </label>
-                  <select className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none">
+                  <select
+                    name="role"
+                    defaultValue={user.role}
+                    className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none"
+                  >
                     {roleOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -200,87 +305,35 @@ export default function EditUserPage() {
                 </div>
               </div>
 
-              <div className="pt-4">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
-                  <h2 className="text-2xl font-bold text-slate-900">System Permissions</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <Settings className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">Event Participation</p>
-                        <p className="text-xs text-slate-500">
-                          Allows the user to register for campus activities
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500"
-                    />
-                  </label>
-                  
-                  <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <Settings className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">Organization Privileges</p>
-                        <p className="text-xs text-slate-500">
-                          Enable tools for creating and managing events
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500"
-                    />
-                  </label>
-                  
-                  <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <Settings className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">Data Exporting</p>
-                        <p className="text-xs text-slate-500">
-                          Access to download CSV/Excel participation reports
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500"
-                    />
-                  </label>
-                </div>
-              </div>
+              {/* Permission checkbox mock UI tạm ẩn vì API hiện chỉ hỗ trợ đồng bộ role_codes. */}
 
               <div className="pt-6">
                 <div className="p-6 bg-red-50 rounded-[24px] border border-red-100 flex items-start gap-4">
                   <div className="w-5 h-5 text-red-500 mt-1 flex-shrink-0">⚠️</div>
                   <div>
-                    <p className="font-bold text-red-700">Danger Zone</p>
+                    <p className="font-bold text-red-700">Trạng thái tài khoản</p>
                     <p className="text-sm text-red-600/80 mb-4">
-                      Deleting this user will permanently erase all associated history and
-                      records from the portal database.
+                      API hiện hỗ trợ khóa/mở khóa tài khoản qua ban/unban, không xóa vĩnh viễn dữ liệu người dùng.
                     </p>
-                    <button 
-                      type="button"
-                      onClick={() => router.push(`/users/${userId}/ban`)}
-                      className="px-5 py-2 bg-white text-red-600 rounded-xl text-xs font-bold uppercase tracking-widest border border-red-200 hover:bg-red-50 transition-colors active:scale-95"
-                    >
-                      Deactivate Account
-                    </button>
+                    {user.status === 'banned' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleUnbanUser();
+                        }}
+                        className="inline-flex px-5 py-2 bg-white text-emerald-600 rounded-xl text-xs font-bold uppercase tracking-widest border border-emerald-200 hover:bg-emerald-50 transition-colors active:scale-95"
+                      >
+                        Mở khóa tài khoản
+                      </button>
+                    ) : (
+                      <button 
+                        type="button"
+                        onClick={() => router.push(`/users/${userId}/ban`)}
+                        className="px-5 py-2 bg-white text-red-600 rounded-xl text-xs font-bold uppercase tracking-widest border border-red-200 hover:bg-red-50 transition-colors active:scale-95"
+                      >
+                        Khóa tài khoản
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
