@@ -59,6 +59,4 @@ export const userStats = {
   totalUsers: 12842,
   activeOrganizers: 432,
   pendingRequests: 89,
-  platformStatus: 'Optimal',
-  uptime: '99.9%',
 };

@@ -7,43 +7,45 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import {
+  banUserById,
   getUserById,
-  getUsers,
 } from '@/features/users/services/users.service';
 import type { User } from '@/features/users/types';
-import { toast } from 'sonner';
-import { ConfirmActionDialog } from '@/core/components';
+import { ConfirmActionDialog, ErrorState, ListSkeleton } from '@/core/components';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 export default function BanUserPage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [banReason, setBanReason] = useState('Vi phạm điều khoản sử dụng');
+  const [banDetails, setBanDetails] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const banReasonOptions = [
-    { value: 'Violation of Terms of Service', label: 'Violation of Terms of Service' },
-    { value: 'Spam or Bot Behavior', label: 'Spam or Bot Behavior' },
-    { value: 'Harassment / Hate Speech', label: 'Harassment / Hate Speech' },
-    { value: 'Fraudulent Activity', label: 'Fraudulent Activity' },
-    { value: 'Other (Specify below)', label: 'Other (Specify below)' },
+    { value: 'Vi phạm điều khoản sử dụng', label: 'Vi phạm điều khoản sử dụng' },
+    { value: 'Spam hoặc hành vi bot', label: 'Spam hoặc hành vi bot' },
+    { value: 'Quấy rối hoặc phát ngôn thù ghét', label: 'Quấy rối hoặc phát ngôn thù ghét' },
+    { value: 'Hoạt động gian lận', label: 'Hoạt động gian lận' },
+    { value: 'Khác', label: 'Khác' },
   ] as const;
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadUser() {
-      const currentUser = await getUserById(userId);
+      setIsLoading(true);
 
-      if (currentUser) {
+      try {
+        const currentUser = await getUserById(userId);
         if (isMounted) {
           setUser(currentUser);
         }
-        return;
-      }
-
-      const usersResponse = await getUsers();
-      if (isMounted) {
-        setUser(usersResponse.users[0] ?? null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -54,8 +56,19 @@ export default function BanUserPage() {
     };
   }, [userId]);
 
+  if (isLoading) {
+    return <ListSkeleton rows={5} className="p-6" />;
+  }
+
   if (!user) {
-    return <div className="p-6 text-sm text-slate-500">Loading user...</div>;
+    return (
+      <ErrorState
+        title="Không tìm thấy người dùng"
+        message="Không thể tải thông tin tài khoản cần khóa. Vui lòng quay lại danh sách và thử lại."
+        retryLabel="Quay lại danh sách"
+        onRetry={() => router.push('/users')}
+      />
+    );
   }
 
   return (
@@ -69,9 +82,9 @@ export default function BanUserPage() {
             className="flex items-center text-slate-400 hover:text-slate-600 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm font-semibold">Back</span>
+            <span className="text-sm font-semibold">Quay lại</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-900 tracking-tight">Confirm User Ban</h1>
+          <h1 className="text-lg font-bold text-slate-900 tracking-tight">Xác nhận khóa tài khoản</h1>
           <div className="w-12"></div> {/* Spacer for center alignment */}
         </div>
 
@@ -94,8 +107,8 @@ export default function BanUserPage() {
               </p>
             </div>
             <div className="ml-auto">
-              <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-md whitespace-nowrap">
-                Status: Warning
+              <span className="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-black uppercase rounded-md whitespace-nowrap">
+                Sắp khóa
               </span>
             </div>
           </div>
@@ -104,9 +117,13 @@ export default function BanUserPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">
-                Reason for Ban
+                Lý do khóa tài khoản
               </label>
-              <select className="w-full bg-slate-200/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 text-slate-700 font-medium outline-none appearance-none">
+              <select
+                value={banReason}
+                onChange={(event) => setBanReason(event.target.value)}
+                className="w-full bg-slate-200/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 text-slate-700 font-medium outline-none appearance-none"
+              >
                 {banReasonOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -117,27 +134,18 @@ export default function BanUserPage() {
 
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">
-                Detailed Explanation
+                Ghi chú chi tiết
               </label>
               <textarea 
+                value={banDetails}
+                onChange={(event) => setBanDetails(event.target.value)}
                 className="w-full bg-slate-200/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 text-slate-700 outline-none resize-none" 
-                placeholder="Enter specific details about the violation..." 
+                placeholder="Nhập chi tiết bổ sung nếu cần..." 
                 rows={4}
               ></textarea>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/50">
-              <div className="pt-0.5">
-                <input 
-                  type="checkbox" 
-                  className="rounded text-amber-500 focus:ring-amber-500 w-4 h-4 border-slate-300"
-                  defaultChecked
-                />
-              </div>
-              <p className="text-xs leading-relaxed text-slate-500 font-medium">
-                Notify user via email about this decision and provide instructions for the appeal process.
-              </p>
-            </div>
+            {/* Notify email checkbox tạm ẩn vì API ban hiện chỉ nhận reason, chưa có contract gửi email/appeal. */}
           </div>
         </div>
 
@@ -147,7 +155,7 @@ export default function BanUserPage() {
             href="/users"
             className="flex-1 order-2 md:order-1 py-3 px-6 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all active:scale-95 text-center"
           >
-            Cancel Action
+            Hủy
           </Link>
           <button 
             type="button"
@@ -156,7 +164,7 @@ export default function BanUserPage() {
             }}
             className="flex-1 order-1 md:order-2 py-3 px-6 rounded-2xl text-sm font-bold bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:saturate-150 transition-all active:scale-95"
           >
-            Ban User Permanently
+            Khóa tài khoản
           </button>
         </div>
       </div>
@@ -169,10 +177,16 @@ export default function BanUserPage() {
         confirmLabel="Xác nhận"
         cancelLabel="Hủy"
         variant="danger"
-        onConfirm={() => {
-          toast.success('User has been banned.');
+        onConfirm={async () => {
+          const reason = [banReason, banDetails.trim()].filter(Boolean).join(' - ');
+          await runActionWithToast(() => banUserById(user.id, reason), {
+            loading: `Đang khóa ${user.name}...`,
+            success: `${user.name} đã bị khóa.`,
+            error: `Không thể khóa ${user.name}.`,
+          });
           setIsConfirmOpen(false);
           router.push('/users');
+          router.refresh();
         }}
       />
     </div>

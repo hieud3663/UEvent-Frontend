@@ -1,6 +1,7 @@
 // File: src/core/lib/api.ts
 
 import { isApiEnvelope, unwrapApiEnvelope } from '@/core/lib/apiEnvelope';
+import type { ApiEnvelope } from '@/core/types/apiEnvelope';
 import type { ApiErrorResponse, ApiRequestOptions, ExportFileResult } from '@/core/types/api';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1';
@@ -17,6 +18,8 @@ export class ApiClientError extends Error {
     this.name = 'ApiClientError';
   }
 }
+
+export type ApiFieldErrors = Record<string, string[]>;
 
 export function getApiBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/$/, '');
@@ -54,6 +57,20 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   const payload = await response.json();
   return unwrapApiEnvelope<T>(payload);
+}
+
+export async function apiRequestEnvelope<T>(
+  path: string,
+  options: ApiRequestOptions = {}
+): Promise<ApiEnvelope<T>> {
+  const response = await fetchApi(path, options);
+  const payload = await response.json();
+
+  if (!isApiEnvelope(payload)) {
+    throw new ApiClientError('Invalid API response envelope.', response.status);
+  }
+
+  return payload as ApiEnvelope<T>;
 }
 
 export async function apiExport(path: string, options: ApiRequestOptions = {}): Promise<ExportFileResult> {
@@ -147,7 +164,7 @@ async function buildApiError(response: Response): Promise<ApiClientError> {
         errors: data.errors ?? fallback.errors,
         meta: data.meta || fallback.meta,
       };
-      return new ApiClientError(errorResponse.message, response.status, errorResponse);
+      return new ApiClientError(formatApiErrorMessage(errorResponse), response.status, errorResponse);
     }
 
     const legacy = data as { code?: string; message?: string; details?: unknown; request_id?: string | null };
@@ -159,10 +176,86 @@ async function buildApiError(response: Response): Promise<ApiClientError> {
       errors: legacy.details ?? fallback.errors,
       meta: { request_id: legacy.request_id ?? fallback.meta.request_id },
     };
-    return new ApiClientError(errorResponse.message, response.status, errorResponse);
+    return new ApiClientError(formatApiErrorMessage(errorResponse), response.status, errorResponse);
   } catch {
     return new ApiClientError(fallback.message, response.status, fallback);
   }
+}
+
+function formatApiErrorMessage(errorResponse: ApiErrorResponse): string {
+  const detailMessages = flattenApiErrors(errorResponse.errors);
+
+  if (detailMessages.length === 0) {
+    return errorResponse.message;
+  }
+
+  return [errorResponse.message, ...detailMessages].join('\n');
+}
+
+export function getApiFieldErrors(error: unknown): ApiFieldErrors {
+  if (!(error instanceof ApiClientError)) return {};
+
+  const errors = error.response?.errors;
+  if (!errors || typeof errors !== 'object' || Array.isArray(errors)) return {};
+
+  return Object.fromEntries(
+    Object.entries(errors as Record<string, unknown>).flatMap(([field, value]) => {
+      const messages = flattenPlainErrorMessages(value);
+      return messages.length > 0 ? [[field, messages]] : [];
+    })
+  );
+}
+
+function flattenApiErrors(errors: unknown): string[] {
+  if (!errors) return [];
+
+  if (typeof errors === 'object' && !Array.isArray(errors)) {
+    return Object.entries(errors as Record<string, unknown>).flatMap(([field, value]) => {
+      const messages = flattenPlainErrorMessages(value);
+      if (messages.length === 0) return [];
+
+      const fieldLabel = formatErrorFieldLabel(field);
+      return messages.map((message) => `${fieldLabel}: ${message}`);
+    });
+  }
+
+  return flattenPlainErrorMessages(errors);
+}
+
+function flattenPlainErrorMessages(errors: unknown): string[] {
+  if (!errors) return [];
+
+  if (typeof errors === 'string') {
+    return [errors];
+  }
+
+  if (Array.isArray(errors)) {
+    return errors.flatMap((item) => flattenPlainErrorMessages(item));
+  }
+
+  if (typeof errors === 'object') {
+    return Object.values(errors as Record<string, unknown>).flatMap((value) => flattenPlainErrorMessages(value));
+  }
+
+  return [String(errors)];
+}
+
+function formatErrorFieldLabel(field: string): string {
+  const labels: Record<string, string> = {
+    username: 'Tên đăng nhập',
+    email: 'Email',
+    password: 'Mật khẩu',
+    full_name: 'Họ và tên',
+    student_code: 'Mã sinh viên',
+    phone_number: 'Số điện thoại',
+    faculty: 'Khoa/đơn vị',
+    class_name: 'Mã lớp',
+    role_codes: 'Vai trò',
+    non_field_errors: 'Lỗi',
+    detail: 'Chi tiết',
+  };
+
+  return labels[field] ?? field.replaceAll('_', ' ');
 }
 
 function normalizePath(path: string): string {

@@ -1,26 +1,46 @@
 // File: src/app/(auth)/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Zap, ArrowLeft } from 'lucide-react';
-import { Input } from '@/core/components';
+import { Input, ListSkeleton } from '@/core/components';
+import { loginAdmin } from '@/features/auth/services/auth.service';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<ListSkeleton rows={4} className="m-auto w-full max-w-md p-6" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
 
-    // Simulate login - replace with actual auth logic
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const formData = new FormData(e.currentTarget);
+    const username = String(formData.get('username') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
 
-    setIsLoading(false);
-    router.push('/dashboard');
+    try {
+      await loginAdmin({ username, password });
+      router.push(searchParams.get('next') || '/dashboard');
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể đăng nhập. Vui lòng thử lại.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,9 +64,11 @@ export default function LoginPage() {
           {/* Email Field */}
           <Input
             label="Admin Email"
-            type="email"
-            placeholder="admin@uevents.com"
+            name="username"
+            type="text"
+            placeholder="admin@uevents.com hoặc username"
             leftIcon={<Mail className="w-5 h-5" />}
+            autoComplete="username"
             required
           />
 
@@ -60,8 +82,10 @@ export default function LoginPage() {
                 <Lock className="w-5 h-5" />
               </span>
               <input
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 className="w-full bg-surface-container-low/50 border-none rounded-2xl py-4 pl-12 pr-12 text-on-surface font-medium placeholder:text-outline-variant focus:ring-2 focus:ring-primary-container focus:outline-none transition-all duration-200"
                 required
               />
@@ -79,6 +103,12 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {errorMessage ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
 
           {/* Submit Button */}
           <button

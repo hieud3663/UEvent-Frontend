@@ -1,23 +1,55 @@
 // File: src/app/(admin)/users/create/page.tsx
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Settings, UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronRight, UserPlus } from 'lucide-react';
+import { buildCreateUserPayload, createUser } from '@/features/users/services/users.service';
+import { getApiFieldErrors, type ApiFieldErrors } from '@/core/lib/api';
+import { runActionWithToast } from '@/core/lib/runActionWithToast';
+
+const baseFieldClassName =
+  'w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none';
 
 export default function CreateUserPage() {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors>({});
   const roleOptions = [
-    { value: 'Student', label: 'Student' },
-    { value: 'Organizer', label: 'Organizer' },
-    { value: 'Faculty Admin', label: 'Faculty Admin' },
+    { value: 'student', label: 'Sinh viên' },
+    { value: 'organizer', label: 'Nhà tổ chức' },
+    { value: 'admin', label: 'Quản trị viên' },
   ] as const;
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  const getFieldMessages = (...fields: string[]) => fields.flatMap((field) => fieldErrors[field] ?? []);
+
+  const getFieldClassName = (...fields: string[]) => {
+    const hasError = getFieldMessages(...fields).length > 0;
+    return hasError
+      ? `${baseFieldClassName} ring-2 ring-red-400 bg-red-50/80 focus:ring-red-500`
+      : baseFieldClassName;
+  };
+
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.success('User created successfully.');
-    router.push('/users');
+    setIsSubmitting(true);
+    setFieldErrors({});
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      await runActionWithToast(() => createUser(buildCreateUserPayload(formData)), {
+        loading: 'Đang tạo tài khoản...',
+        success: 'Tài khoản đã được tạo.',
+        error: 'Không thể tạo tài khoản.',
+      });
+      router.push('/users');
+      router.refresh();
+    } catch (error) {
+      setFieldErrors(getApiFieldErrors(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -26,17 +58,17 @@ export default function CreateUserPage() {
         <div>
           <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
             <Link href="/users" className="hover:text-amber-500">
-              Users
+              Người dùng
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-600">Create New User</span>
+            <span className="text-slate-600">Tạo người dùng mới</span>
           </nav>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-            Create Account
+            Tạo tài khoản
           </h1>
           <p className="text-slate-500 mt-2 font-medium">
-            Setup a new user profile and configure system access permissions.
+            Thiết lập hồ sơ người dùng mới và phân quyền truy cập hệ thống.
           </p>
         </div>
         <div className="flex gap-3">
@@ -44,15 +76,16 @@ export default function CreateUserPage() {
             href="/users"
             className="px-6 py-2.5 glass-panel rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all active:scale-95 border border-white/40 shadow-sm flex items-center justify-center"
           >
-            Cancel
+            Hủy
           </Link>
           <button 
             type="submit" 
             form="create-user-form"
-            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
-            Create User
+            {isSubmitting ? 'Đang tạo...' : 'Tạo người dùng'}
           </button>
         </div>
       </header>
@@ -62,33 +95,41 @@ export default function CreateUserPage() {
         <div className="glass-panel rounded-[32px] p-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
-            <h2 className="text-2xl font-bold text-slate-900">Personal Information</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Thông tin cá nhân</h2>
           </div>
 
           <form id="create-user-form" className="space-y-8" onSubmit={handleCreateUser}>
+            <FieldErrorMessages messages={getFieldMessages('non_field_errors', 'detail')} />
+
             {/* Name & Email Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                  Full Name
+                  Họ và tên
                 </label>
                 <input
+                  name="full_name"
                   type="text"
-                  placeholder="e.g. Nguyễn Văn A"
+                  placeholder="VD: Nguyễn Văn A"
                   required
-                  className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                  aria-invalid={getFieldMessages('full_name').length > 0}
+                  className={getFieldClassName('full_name')}
                 />
+                <FieldErrorMessages messages={getFieldMessages('full_name')} />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                  Email Address
+                  Địa chỉ email
                 </label>
                 <input
+                  name="email"
                   type="email"
-                  placeholder="e.g. nva@university.edu.vn"
+                  placeholder="VD: nva@university.edu.vn"
                   required
-                  className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                  aria-invalid={getFieldMessages('email').length > 0}
+                  className={getFieldClassName('email')}
                 />
+                <FieldErrorMessages messages={getFieldMessages('email')} />
               </div>
             </div>
 
@@ -96,102 +137,96 @@ export default function CreateUserPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                  Student ID (MSSV)
+                  Mã sinh viên 
                 </label>
                 <input
+                  name="student_code"
                   type="text"
-                  placeholder="e.g. 20241234"
-                  className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                  placeholder="VD: 20241234"
+                  aria-invalid={getFieldMessages('student_code').length > 0}
+                  className={getFieldClassName('student_code')}
                 />
+                <FieldErrorMessages messages={getFieldMessages('student_code')} />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                  Class Code
+                  Mã lớp
                 </label>
                 <input
+                  name="class_name"
                   type="text"
-                  placeholder="e.g. CS-K65"
-                  className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                  placeholder="VD: CS-K65"
+                  aria-invalid={getFieldMessages('class_name').length > 0}
+                  className={getFieldClassName('class_name')}
                 />
+                <FieldErrorMessages messages={getFieldMessages('class_name')} />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                  Role Type
+                  Vai trò
                 </label>
-                <select className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none cursor-pointer">
+                <select
+                  name="role"
+                  aria-invalid={getFieldMessages('role', 'role_codes').length > 0}
+                  className={`${getFieldClassName('role', 'role_codes')} appearance-none cursor-pointer`}
+                >
                   {roleOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
+                <FieldErrorMessages messages={getFieldMessages('role', 'role_codes')} />
               </div>
             </div>
 
-            <div className="pt-4">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
-                <h2 className="text-2xl font-bold text-slate-900">System Permissions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Tên đăng nhập
+                </label>
+                <input
+                  name="username"
+                  type="text"
+                  placeholder="Mặc định dùng email"
+                  aria-invalid={getFieldMessages('username').length > 0}
+                  className={getFieldClassName('username')}
+                />
+                <FieldErrorMessages messages={getFieldMessages('username')} />
               </div>
-
-              <div className="space-y-4">
-                <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                      <Settings className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">Event Participation</p>
-                      <p className="text-xs text-slate-500">
-                        Allows the user to register for campus activities
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500 outline-none"
-                  />
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Mật khẩu
                 </label>
-                
-                <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                      <Settings className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">Organization Privileges</p>
-                      <p className="text-xs text-slate-500">
-                        Enable tools for creating and managing events
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500 outline-none"
-                  />
+                <input
+                  value={'12345678@'}
+                  name="password"
+                  type="password"
+                  placeholder="Mật khẩu tạm"
+                  required
+                  minLength={8}
+                  aria-invalid={getFieldMessages('password').length > 0}
+                  className={getFieldClassName('password')}
+                />
+                <FieldErrorMessages messages={getFieldMessages('password')} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Khoa/đơn vị
                 </label>
-                
-                <label className="flex items-center justify-between p-4 bg-slate-100/50 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                      <Settings className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">Data Exporting</p>
-                      <p className="text-xs text-slate-500">
-                        Access to download CSV/Excel participation reports
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-6 h-6 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500 outline-none"
-                  />
-                </label>
+                <input
+                  name="faculty"
+                  type="text"
+                  placeholder="VD: Công nghệ thông tin"
+                  aria-invalid={getFieldMessages('faculty').length > 0}
+                  className={getFieldClassName('faculty')}
+                />
+                <FieldErrorMessages messages={getFieldMessages('faculty')} />
               </div>
             </div>
+
+            {/* Permission checkbox mock UI tạm ẩn vì API admin users hiện chỉ hỗ trợ role_codes.
+                Khi backend có contract permission chi tiết, khối này sẽ được bật lại và bind với API thật. */}
             
             {/* Action Buttons for Mobile mostly, but good to have at bottom too */}
             <div className="pt-8 border-t border-slate-200/50 flex justify-end gap-3 md:hidden">
@@ -199,12 +234,24 @@ export default function CreateUserPage() {
                 type="submit"
                 className="w-full py-3.5 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors shadow-md"
               >
-                Create User
+                Tạo người dùng
               </button>
             </div>
           </form>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FieldErrorMessages({ messages }: { messages: string[] }) {
+  if (messages.length === 0) return null;
+
+  return (
+    <div className="space-y-1 rounded-xl bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600">
+      {messages.map((message) => (
+        <p key={message}>{message}</p>
+      ))}
     </div>
   );
 }
