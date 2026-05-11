@@ -8,11 +8,12 @@ import Link from 'next/link';
 import { EmptyState, ErrorState, ListSkeleton } from '@/core/components';
 import {
   downloadExportFile,
-  exportUsersCsv,
+  exportUsers,
   getUsers,
   getUserStats,
   unbanUserById,
 } from '@/features/users/services/users.service';
+import type { UserExportFormat } from '@/features/users/services/users.service';
 import type { User, UserRole, UserStatus } from '@/features/users/types';
 import { cn } from '@/core/lib/utils';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
@@ -101,11 +102,12 @@ export default function UsersPage() {
     [safeCurrentPage, users]
   );
 
-  const handleExport = async () => {
-    const result = await runActionWithToast(() => exportUsersCsv(), {
-      loading: 'Đang xuất CSV người dùng...',
-      success: 'File CSV người dùng đã sẵn sàng tải xuống.',
-      error: 'Không thể xuất CSV người dùng.',
+  const handleExport = async (format: UserExportFormat) => {
+    const formatLabel = format === 'xlsx' ? 'Excel' : 'CSV';
+    const result = await runActionWithToast(() => exportUsers({}, format), {
+      loading: `Đang xuất ${formatLabel} người dùng...`,
+      success: `File ${formatLabel} người dùng đã sẵn sàng tải xuống.`,
+      error: `Không thể xuất ${formatLabel} người dùng.`,
     });
     downloadExportFile(result);
   };
@@ -157,16 +159,27 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button 
-            type="button"
-            onClick={() => {
-              void handleExport();
-            }}
-            className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-all"
-          >
-            <Download className="w-[18px] h-[18px]" />
-            Xuất CSV
-          </button>
+          <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <button 
+              type="button"
+              onClick={() => {
+                void handleExport('csv');
+              }}
+              className="px-4 py-2.5 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-all"
+            >
+              <Download className="w-[18px] h-[18px]" />
+              CSV
+            </button>
+            <button 
+              type="button"
+              onClick={() => {
+                void handleExport('xlsx');
+              }}
+              className="border-l border-slate-200 px-4 py-2.5 text-sm font-bold hover:bg-slate-50 transition-all"
+            >
+              Excel
+            </button>
+          </div>
           <Link 
             href="/users/create"
             className="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"

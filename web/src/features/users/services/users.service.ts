@@ -24,6 +24,8 @@ export interface UsersResponse {
   total: number;
 }
 
+export type UserExportFormat = 'csv' | 'xlsx';
+
 const roleMap: Record<string, UserRole> = {
   student: 'student',
   organizer: 'organizer',
@@ -137,9 +139,11 @@ export async function updateUserById(userId: string, payload: UpdateUserPayload)
   return mapUser(response);
 }
 
-export async function exportUsersCsv(filters: UserFilters = {}): Promise<ExportFileResult> {
+export async function exportUsers(filters: UserFilters = {}, format: UserExportFormat = 'csv'): Promise<ExportFileResult> {
   const exportFields = ['username', 'email', 'full_name', 'student_code', 'faculty', 'account_status', 'created_at'];
   const params = new URLSearchParams();
+
+  params.set('export_format', format);
 
   if (filters.keyword?.trim()) {
     params.set('search', filters.keyword.trim());
