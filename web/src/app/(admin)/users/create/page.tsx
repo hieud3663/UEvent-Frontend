@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, UserPlus } from 'lucide-react';
 import { buildCreateUserPayload, createUser } from '@/features/users/services/users.service';
 import { getApiFieldErrors, type ApiFieldErrors } from '@/core/lib/api';
+import { AdminSelect } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 const baseFieldClassName =
@@ -165,17 +166,14 @@ export default function CreateUserPage() {
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                   Vai trò
                 </label>
-                <select
+                <AdminSelect
                   name="role"
-                  aria-invalid={getFieldMessages('role', 'role_codes').length > 0}
-                  className={`${getFieldClassName('role', 'role_codes')} appearance-none cursor-pointer`}
-                >
-                  {roleOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  defaultValue="student"
+                  options={roleOptions}
+                  invalid={getFieldMessages('role', 'role_codes').length > 0}
+                  ariaLabel="Chọn vai trò người dùng"
+                  triggerClassName={`${getFieldClassName('role', 'role_codes')} h-auto cursor-pointer py-4`}
+                />
                 <FieldErrorMessages messages={getFieldMessages('role', 'role_codes')} />
               </div>
             </div>

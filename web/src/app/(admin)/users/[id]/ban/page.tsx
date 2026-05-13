@@ -11,7 +11,7 @@ import {
   getUserById,
 } from '@/features/users/services/users.service';
 import type { User } from '@/features/users/types';
-import { ConfirmActionDialog, ErrorState, ListSkeleton } from '@/core/components';
+import { AdminSelect, ConfirmActionDialog, ErrorState, ListSkeleton } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 export default function BanUserPage() {
@@ -119,17 +119,13 @@ export default function BanUserPage() {
               <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">
                 Lý do khóa tài khoản
               </label>
-              <select
+              <AdminSelect
                 value={banReason}
-                onChange={(event) => setBanReason(event.target.value)}
-                className="w-full bg-slate-200/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 text-slate-700 font-medium outline-none appearance-none"
-              >
-                {banReasonOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setBanReason}
+                options={banReasonOptions}
+                ariaLabel="Chọn lý do khóa tài khoản"
+                triggerClassName="h-auto rounded-2xl border-none bg-slate-200/50 px-4 py-3 text-slate-700 focus:ring-2 focus:ring-amber-500"
+              />
             </div>
 
             <div>

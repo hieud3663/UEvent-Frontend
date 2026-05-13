@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ConfirmActionDialog } from '@/core/components';
+import { AdminSelect, ConfirmActionDialog } from '@/core/components';
 import {
   publishNotification,
   saveNotificationDraft,
@@ -23,7 +23,6 @@ import {
   Link as LinkIcon,
   Smile,
   RocketIcon,
-  ChevronDown,
   Wifi,
   Battery,
   Signal,
@@ -47,10 +46,10 @@ export default function CreateNotificationPage() {
   const [scheduleTime, setScheduleTime] = useState('');
   const [pendingAction, setPendingAction] = useState<'draft' | 'send' | null>(null);
   const audienceOptions = [
-    { value: 'all', label: 'All Users' },
-    { value: 'students', label: 'Students' },
-    { value: 'organizers', label: 'Organizers' },
-    { value: 'specific', label: 'Specific Event' },
+    { value: 'all', label: 'Tất cả người dùng' },
+    { value: 'students', label: 'Sinh viên' },
+    { value: 'organizers', label: 'Nhà tổ chức' },
+    { value: 'specific', label: 'Sự kiện cụ thể' },
   ] as const;
   const baseInputClass =
     'w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10';
@@ -182,20 +181,13 @@ export default function CreateNotificationPage() {
                   <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
                     Target Audience
                   </label>
-                  <div className="relative">
-                    <select
-                      value={audience}
-                      onChange={(e) => setAudience(e.target.value)}
-                      className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200 bg-white/70 py-3.5 pl-4 pr-11 text-sm font-medium text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
-                    >
-                      {audienceOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-5 h-5" />
-                  </div>
+                  <AdminSelect
+                    value={audience}
+                    onChange={setAudience}
+                    options={audienceOptions}
+                    ariaLabel="Chọn đối tượng nhận thông báo"
+                    triggerClassName="h-auto cursor-pointer rounded-2xl bg-white/70 py-3.5 pl-4 pr-3 focus:border-[#FFB800] focus:ring-[#FFB800]/10"
+                  />
                 </div>
 
                 {/* Delivery Method */}

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
-import { ErrorState, ListSkeleton } from '@/core/components';
+import { AdminSelect, ErrorState, ListSkeleton } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 import { getUserById, unbanUserById, updateUserById } from '@/features/users/services/users.service';
 import type { User, UserRole } from '@/features/users/types';
@@ -291,17 +291,13 @@ export default function EditUserPage() {
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                     Vai trò
                   </label>
-                  <select
+                  <AdminSelect
                     name="role"
                     defaultValue={user.role}
-                    className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none appearance-none"
-                  >
-                    {roleOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={roleOptions}
+                    ariaLabel="Chọn vai trò người dùng"
+                    triggerClassName="h-auto rounded-2xl border-none bg-slate-200/30 px-5 py-4 text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500"
+                  />
                 </div>
               </div>
 

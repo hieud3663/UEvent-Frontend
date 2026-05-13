@@ -6,7 +6,7 @@ import type { FormEvent } from 'react';
 import { Plus, Edit, Trash2, Music, ChevronLeft, ChevronRight, Search, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
+import { AdminSelect, Button, Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
 import {
   deleteCategoryById,
   getCategoriesPage,
@@ -21,6 +21,21 @@ import { runActionWithToast } from '@/core/lib/runActionWithToast';
 const CATEGORY_PAGE_SIZE = 8;
 type CategoryStatusFilter = 'all' | 'active' | 'inactive';
 type CategoryOrdering = 'name' | '-name' | 'created_at' | '-created_at' | 'event_count' | '-event_count';
+
+const CATEGORY_STATUS_OPTIONS: Array<{ value: CategoryStatusFilter; label: string }> = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'active', label: 'Đang hoạt động' },
+  { value: 'inactive', label: 'Tạm ẩn' },
+];
+
+const CATEGORY_ORDERING_OPTIONS: Array<{ value: CategoryOrdering; label: string }> = [
+  { value: 'name', label: 'Tên A-Z' },
+  { value: '-name', label: 'Tên Z-A' },
+  { value: '-event_count', label: 'Nhiều sự kiện nhất' },
+  { value: 'event_count', label: 'Ít sự kiện nhất' },
+  { value: '-created_at', label: 'Mới tạo trước' },
+  { value: 'created_at', label: 'Cũ nhất trước' },
+];
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -181,33 +196,24 @@ export default function CategoriesPage() {
             className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
           />
         </label>
-        <select
+        <AdminSelect
           value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value as CategoryStatusFilter);
+          onChange={(nextValue) => {
+            setStatusFilter(nextValue as CategoryStatusFilter);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="active">Đang hoạt động</option>
-          <option value="inactive">Tạm ẩn</option>
-        </select>
-        <select
+          options={CATEGORY_STATUS_OPTIONS}
+          ariaLabel="Lọc theo trạng thái danh mục"
+        />
+        <AdminSelect
           value={ordering}
-          onChange={(event) => {
-            setOrdering(event.target.value as CategoryOrdering);
+          onChange={(nextValue) => {
+            setOrdering(nextValue as CategoryOrdering);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          <option value="name">Tên A-Z</option>
-          <option value="-name">Tên Z-A</option>
-          <option value="-event_count">Nhiều sự kiện nhất</option>
-          <option value="event_count">Ít sự kiện nhất</option>
-          <option value="-created_at">Mới tạo trước</option>
-          <option value="created_at">Cũ nhất trước</option>
-        </select>
+          options={CATEGORY_ORDERING_OPTIONS}
+          ariaLabel="Sắp xếp danh sách danh mục"
+        />
         <div className="flex gap-2">
           <Button type="submit" size="md" className="shrink-0">
             Tìm kiếm

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  ChevronDown,
   Music,
   Eye,
   Info,
@@ -20,7 +19,7 @@ import {
   Martini,
   Film,
 } from 'lucide-react';
-import { ConfirmActionDialog, ListSkeleton } from '@/core/components';
+import { AdminSelect, ConfirmActionDialog, ListSkeleton } from '@/core/components';
 import { getApiFieldErrors, type ApiFieldErrors } from '@/core/lib/api';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 import {
@@ -41,6 +40,11 @@ const iconOptions: Array<{ key: CategoryIconKey; label: string; icon: typeof Mus
   { key: 'nightlife', label: 'Giải trí đêm', icon: Martini },
   { key: 'film', label: 'Phim ảnh', icon: Film },
 ];
+
+const iconSelectOptions = iconOptions.map((option) => ({
+  value: option.key,
+  label: option.label,
+}));
 
 export default function CreateCategoryPage() {
   const router = useRouter();
@@ -239,21 +243,14 @@ export default function CreateCategoryPage() {
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Biểu tượng danh mục
                 </label>
-                <div className="relative">
-                  <SelectedIcon className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-amber-500" />
-                  <select
-                    value={iconKey}
-                    onChange={(event) => setIconKey(event.target.value as CategoryIconKey)}
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white/70 py-3 pl-12 pr-10 text-sm font-medium text-slate-800 outline-none transition-all focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
-                  >
-                    {iconOptions.map((option) => (
-                      <option key={option.key} value={option.key}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                </div>
+                <AdminSelect
+                  value={iconKey}
+                  onChange={(nextValue) => setIconKey(nextValue as CategoryIconKey)}
+                  options={iconSelectOptions}
+                  ariaLabel="Chọn biểu tượng danh mục"
+                  leftIcon={<SelectedIcon className="h-5 w-5" />}
+                  triggerClassName="h-auto bg-white/70 py-3 pl-4 pr-3"
+                />
                 <FieldError messages={fieldErrors.icon} />
               </div>
             </div>

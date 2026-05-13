@@ -21,12 +21,12 @@ export function Header({ className }: HeaderProps) {
     >
       {/* Search Bar */}
       <div className="hidden min-w-0 items-center gap-4 rounded-full bg-slate-200/50 px-4 py-2 sm:flex sm:w-72 lg:w-96">
-        <Search className="w-4 h-4 text-slate-400" />
+        {/* <Search className="w-4 h-4 text-slate-400" />
         <input
           type="text"
           placeholder="Tìm sự kiện hoặc người dùng..."
           className="bg-transparent border-none focus:ring-0 focus:outline-none text-sm w-full placeholder:text-slate-500"
-        />
+        /> */}
       </div>
 
       {/* Right Side Actions */}

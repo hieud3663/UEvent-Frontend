@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Calendar, Download, Settings, Shield, ShieldAlert, TrendingUp, Users, Verified } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/core/components';
+import { AdminSelect, Button } from '@/core/components';
 import { cn } from '@/core/lib/utils';
 import { useSystemSettings } from '@/features/settings/hooks/useSystemSettings';
 
@@ -19,6 +19,12 @@ interface StatsCardProps {
   };
   avatars?: number;
 }
+
+const DATE_RANGE_OPTIONS: Array<{ value: '24hours' | '7days' | '30days'; label: string }> = [
+  { value: '24hours', label: '24 giờ qua' },
+  { value: '7days', label: '7 ngày qua' },
+  { value: '30days', label: '30 ngày qua' },
+];
 
 function SettingsStatsCard({ icon, iconBg, iconColor, label, value, badge, avatars }: StatsCardProps) {
   return (
@@ -93,18 +99,14 @@ export default function SettingsPage() {
           <div className="glass-panel glass-border p-4 rounded-[2rem] flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[150px]">
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Date Range</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[14px] h-[14px]" />
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value as '24hours' | '7days' | '30days')}
-                  className="w-full bg-slate-100/50 border-none rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer"
-                >
-                  <option value="24hours">Last 24 Hours</option>
-                  <option value="7days">Last 7 Days</option>
-                  <option value="30days">Last 30 Days</option>
-                </select>
-              </div>
+              <AdminSelect
+                value={dateRange}
+                onChange={(nextValue) => setDateRange(nextValue as '24hours' | '7days' | '30days')}
+                options={DATE_RANGE_OPTIONS}
+                ariaLabel="Chọn khoảng thời gian nhật ký"
+                leftIcon={<Calendar className="h-[14px] w-[14px] text-slate-400" />}
+                triggerClassName="h-auto cursor-pointer rounded-xl border-none bg-slate-100/50 py-2 pl-3 pr-3 text-slate-700 focus:ring-2 focus:ring-amber-500/20"
+              />
             </div>
 
             <div className="flex-1 min-w-[150px]">

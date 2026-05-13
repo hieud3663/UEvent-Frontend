@@ -11,13 +11,12 @@ import {
   Filter,
   Flag,
   MoreHorizontal,
-  RotateCw,
   Search,
   TrendingDown,
   User,
   XCircle,
 } from 'lucide-react';
-import { Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
+import { AdminSelect, Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
 import {
   deleteEventById,
   getEventsPage,
@@ -74,6 +73,21 @@ const EVENT_STATUS_OPTIONS: Array<{ value: EventStatusFilter; label: string }> =
   { value: 'rejected', label: 'Từ chối' },
   { value: 'cancelled', label: 'Đã hủy' },
   { value: 'archived', label: 'Lưu trữ' },
+];
+
+const EVENT_VISIBILITY_OPTIONS: Array<{ value: 'all' | 'public' | 'private'; label: string }> = [
+  { value: 'all', label: 'Mọi hiển thị' },
+  { value: 'public', label: 'Công khai' },
+  { value: 'private', label: 'Riêng tư' },
+];
+
+const EVENT_ORDERING_OPTIONS: Array<{ value: EventOrdering; label: string }> = [
+  { value: '-start_at', label: 'Diễn ra mới nhất' },
+  { value: 'start_at', label: 'Diễn ra sớm nhất' },
+  { value: '-created_at', label: 'Mới tạo trước' },
+  { value: 'created_at', label: 'Cũ nhất trước' },
+  { value: 'status', label: 'Trạng thái A-Z' },
+  { value: '-status', label: 'Trạng thái Z-A' },
 ];
 
 export default function EventsPage() {
@@ -168,6 +182,10 @@ export default function EventsPage() {
   const reportedCount = stats?.urgentReports ?? 0;
   const pendingCount = stats?.pendingApproval ?? 0;
   const paginationItems = getPaginationItems(safeCurrentPage, totalPages);
+  const categoryOptions = [
+    { value: '', label: 'Tất cả danh mục' },
+    ...categories.map((category) => ({ value: category.id, label: category.name })),
+  ];
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
@@ -340,62 +358,42 @@ export default function EventsPage() {
             className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
           />
         </label>
-        <select
+        <AdminSelect
           value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value as EventStatusFilter);
+          onChange={(nextValue) => {
+            setStatusFilter(nextValue as EventStatusFilter);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          {EVENT_STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select
+          options={EVENT_STATUS_OPTIONS}
+          ariaLabel="Lọc theo trạng thái sự kiện"
+        />
+        <AdminSelect
           value={categoryFilter}
-          onChange={(event) => {
-            setCategoryFilter(event.target.value);
+          onChange={(nextValue) => {
+            setCategoryFilter(nextValue);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          <option value="">Tất cả danh mục</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <select
+          options={categoryOptions}
+          ariaLabel="Lọc theo danh mục sự kiện"
+        />
+        <AdminSelect
           value={visibilityFilter}
-          onChange={(event) => {
-            setVisibilityFilter(event.target.value as 'all' | 'public' | 'private');
+          onChange={(nextValue) => {
+            setVisibilityFilter(nextValue as 'all' | 'public' | 'private');
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          <option value="all">Mọi hiển thị</option>
-          <option value="public">Công khai</option>
-          <option value="private">Riêng tư</option>
-        </select>
-        <select
+          options={EVENT_VISIBILITY_OPTIONS}
+          ariaLabel="Lọc theo phạm vi hiển thị"
+        />
+        <AdminSelect
           value={ordering}
-          onChange={(event) => {
-            setOrdering(event.target.value as EventOrdering);
+          onChange={(nextValue) => {
+            setOrdering(nextValue as EventOrdering);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-amber-500"
-        >
-          <option value="-start_at">Diễn ra mới nhất</option>
-          <option value="start_at">Diễn ra sớm nhất</option>
-          <option value="-created_at">Mới tạo trước</option>
-          <option value="created_at">Cũ nhất trước</option>
-          <option value="status">Trạng thái A-Z</option>
-          <option value="-status">Trạng thái Z-A</option>
-        </select>
+          options={EVENT_ORDERING_OPTIONS}
+          ariaLabel="Sắp xếp danh sách sự kiện"
+        />
         <div className="flex gap-2">
           <button
             type="submit"
