@@ -315,7 +315,7 @@ export default function EventsPage() {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-on-surface">
             Quản lý sự kiện
@@ -324,7 +324,7 @@ export default function EventsPage() {
             Theo dõi, lọc và xử lý toàn bộ sự kiện trong hệ thống.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button 
             type="button"
             onClick={handleResetFilters}
@@ -347,9 +347,9 @@ export default function EventsPage() {
 
       <form
         onSubmit={handleSearchSubmit}
-        className="grid grid-cols-1 gap-3 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_160px_180px_160px_190px_auto]"
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_160px_180px_160px_190px_auto]"
       >
-        <label className="relative">
+        <label className="relative sm:col-span-2 xl:col-span-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={keyword}
@@ -394,10 +394,10 @@ export default function EventsPage() {
           options={EVENT_ORDERING_OPTIONS}
           ariaLabel="Sắp xếp danh sách sự kiện"
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:col-span-2 xl:col-span-1">
           <button
             type="submit"
-            className="h-10 rounded-xl bg-amber-500 px-4 text-sm font-bold text-white hover:bg-amber-600"
+            className="h-10 w-full rounded-xl bg-amber-500 px-4 text-sm font-bold text-white hover:bg-amber-600 xl:w-auto"
           >
             Tìm
           </button>
@@ -620,7 +620,7 @@ function ReportedEventCard({
   onAction: (type: ModerationActionType, eventId: string, title: string) => void;
 }) {
   return (
-    <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 border-l-4 border-l-error">
+    <Card className="glass-card border-none rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 border-l-4 border-l-error">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-slate-200 to-slate-300">
         {event.coverImageUrl && (
@@ -636,10 +636,10 @@ function ReportedEventCard({
 
       {/* Content */}
       <div className="flex-grow flex flex-col">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h4 className="font-bold text-lg text-on-surface">{event.title}</h4>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1 mt-0.5">
               <User className="w-3 h-3" />
               {event.organizer} • <Calendar className="w-3 h-3" />
               {event.date}
@@ -660,7 +660,7 @@ function ReportedEventCard({
           </div>
         )}
 
-        <div className="mt-auto pt-4 flex gap-3">
+        <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap">
           <Link href={`/events/${event.id}`} className="flex-grow md:flex-none px-6 py-2 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-bold hover:opacity-90 transition-opacity whitespace-nowrap text-center">
             Xem sự kiện
           </Link>
@@ -683,7 +683,7 @@ function ReportedEventCard({
           <button
             type="button"
             onClick={() => onAction('delete', event.id, event.title)}
-            className="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40"
+            className="flex items-center justify-center p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40"
             aria-label={`Xóa ${event.title}`}
           >
             <MoreHorizontal className="w-4 h-4" />
@@ -702,7 +702,7 @@ function PendingEventCard({
   onAction: (type: ModerationActionType, eventId: string, title: string) => void;
 }) {
   return (
-    <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-shadow duration-300">
+    <Card className="glass-card border-none rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-amber-100 to-amber-200">
         {event.coverImageUrl && (
@@ -718,10 +718,10 @@ function PendingEventCard({
 
       {/* Content */}
       <div className="flex-grow flex flex-col">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h4 className="font-bold text-lg text-on-surface">{event.title}</h4>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1 mt-0.5">
               <User className="w-3 h-3" />
               {event.organizer} • <Calendar className="w-3 h-3" />
               {event.date}
@@ -738,7 +738,7 @@ function PendingEventCard({
           {event.moderationNote ?? 'Không có thêm ngữ cảnh kiểm duyệt cho sự kiện này.'}
         </p>
 
-        <div className="mt-auto pt-4 flex gap-3">
+        <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={() => {

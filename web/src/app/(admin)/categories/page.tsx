@@ -164,7 +164,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
             Quản lý danh mục
@@ -264,8 +264,9 @@ export default function CategoriesPage() {
       </div>
 
       {/* Category Table */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/60 shadow-lg overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-hidden rounded-3xl border border-white/60 bg-white/80 shadow-lg backdrop-blur-xl">
+        <div className="overflow-x-auto">
+        <table className="min-w-[760px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
@@ -296,6 +297,7 @@ export default function CategoriesPage() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {categories.length === 0 ? (
           <div className="p-8">
@@ -309,7 +311,7 @@ export default function CategoriesPage() {
         ) : null}
 
         {/* Pagination */}
-        <div className="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
+        <div className="flex flex-col gap-3 bg-slate-50/30 px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
           <p className="text-xs font-medium text-slate-500">
             Hiển thị {(safeCurrentPage - 1) * CATEGORY_PAGE_SIZE + 1}-{Math.min(safeCurrentPage * CATEGORY_PAGE_SIZE, totalCategories)} trong {totalCategories} danh mục
           </p>
@@ -338,7 +340,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Floating Action Button */}
-      <Link href="/categories/create" className="fixed bottom-8 right-8 w-14 h-14 bg-on-surface text-white rounded-full shadow-2xl shadow-black/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+      <Link href="/categories/create" className="fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-on-surface text-white shadow-2xl shadow-black/30 transition-all hover:scale-110 active:scale-95 sm:right-8 lg:bottom-8">
         <Plus className="w-6 h-6" />
       </Link>
 

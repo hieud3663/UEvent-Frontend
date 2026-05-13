@@ -149,7 +149,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-on-surface tracking-tight">
             Quản lý người dùng
@@ -158,7 +158,7 @@ export default function UsersPage() {
             Theo dõi tài khoản, role và trạng thái khóa/mở theo dữ liệu API.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white">
             <button 
               type="button"
@@ -182,7 +182,7 @@ export default function UsersPage() {
           </div>
           <Link 
             href="/users/create"
-            className="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary-container px-5 py-2.5 text-sm font-bold text-on-primary-container shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <UserPlus className="w-[18px] h-[18px]" />
             Tạo người dùng
@@ -214,7 +214,7 @@ export default function UsersPage() {
       {/* Main Data Table Container */}
       <div className="glass-card rounded-[32px] overflow-hidden shadow-2xl shadow-black/5">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="min-w-[820px] w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/40">
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Hồ sơ</th>
@@ -242,7 +242,7 @@ export default function UsersPage() {
         ) : null}
 
         {/* Pagination */}
-        <div className="px-6 py-4 bg-white/30 flex items-center justify-between">
+        <div className="flex flex-col gap-3 bg-white/30 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             Hiển thị {(safeCurrentPage - 1) * usersPerPage + 1}-{Math.min(safeCurrentPage * usersPerPage, users.length)} / {users.length.toLocaleString('en-US')} user đã tải
           </span>
@@ -288,7 +288,7 @@ export default function UsersPage() {
       {/* Floating Action Button */}
       <Link 
         href="/users/create"
-        className="fixed bottom-8 right-8 w-14 h-14 bg-amber-500 text-white rounded-full shadow-2xl shadow-amber-500/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50"
+        className="fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-2xl shadow-amber-500/40 transition-all hover:scale-110 active:scale-95 sm:right-8 lg:bottom-8"
       >
         <Plus className="w-6 h-6" />
       </Link>
@@ -324,7 +324,7 @@ function UserRow({
               </div>
             )}
           </div>
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <span
               className={cn(
                 'text-sm font-bold',
@@ -333,7 +333,7 @@ function UserRow({
             >
               {user.name}
             </span>
-            <span className={cn('text-xs', isBanned ? 'text-slate-400' : 'text-slate-500')}>
+            <span className={cn('max-w-[220px] truncate text-xs', isBanned ? 'text-slate-400' : 'text-slate-500')}>
               {user.email}
             </span>
           </div>

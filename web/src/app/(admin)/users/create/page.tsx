@@ -54,8 +54,8 @@ export default function CreateUserPage() {
   };
 
   return (
-    <div className="min-h-screen px-10 pb-20">
-      <header className="mb-10 flex justify-between items-end">
+    <div className="min-h-screen px-0 pb-20 sm:px-4 lg:px-10">
+      <header className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
         <div>
           <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
             <Link href="/users" className="hover:text-amber-500">
@@ -65,17 +65,17 @@ export default function CreateUserPage() {
             <span className="text-slate-600">Tạo người dùng mới</span>
           </nav>
 
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Tạo tài khoản
           </h1>
           <p className="text-slate-500 mt-2 font-medium">
             Thiết lập hồ sơ người dùng mới và phân quyền truy cập hệ thống.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/users"
-            className="px-6 py-2.5 glass-panel rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all active:scale-95 border border-white/40 shadow-sm flex items-center justify-center"
+            className="flex items-center justify-center rounded-xl border border-white/40 px-6 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:bg-white active:scale-95 glass-panel"
           >
             Hủy
           </Link>
@@ -83,7 +83,7 @@ export default function CreateUserPage() {
             type="submit" 
             form="create-user-form"
             disabled={isSubmitting}
-            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/30 transition-all hover:saturate-150 active:scale-95 disabled:opacity-60"
           >
             <UserPlus className="w-4 h-4" />
             {isSubmitting ? 'Đang tạo...' : 'Tạo người dùng'}
@@ -93,7 +93,7 @@ export default function CreateUserPage() {
 
       {/* Form Content */}
       <div className="max-w-4xl">
-        <div className="glass-panel rounded-[32px] p-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
+        <div className="glass-panel rounded-[28px] border border-white/40 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] sm:p-6 lg:rounded-[32px] lg:p-10">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
             <h2 className="text-2xl font-bold text-slate-900">Thông tin cá nhân</h2>

@@ -27,14 +27,14 @@ export default function DashboardPage() {
 
   const handleOpenQueue = async (queueId: string, queueLabel: string) => {
     await runActionWithToast(async () => Promise.resolve(queueId), {
-      loading: `Opening ${queueLabel}...`,
-      success: `${queueLabel} is ready.`,
-      error: `Failed to open ${queueLabel}.`,
+      loading: `Đang mở ${queueLabel}...`,
+      success: `${queueLabel} đã sẵn sàng.`,
+      error: `Không thể mở ${queueLabel}.`,
     });
   };
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-slate-500">Loading dashboard overview...</div>;
+    return <div className="p-6 text-sm text-slate-500">Đang tải tổng quan hệ thống...</div>;
   }
 
   if (error) {
@@ -49,10 +49,10 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-on-surface">
-          Dashboard Overview
+          Tổng quan hệ thống
         </h1>
         <p className="text-on-surface-variant text-sm mt-1">
-          Real-time performance metrics and global event monitoring.
+          Theo dõi chỉ số vận hành và hoạt động sự kiện theo thời gian thực.
         </p>
       </div>
 
@@ -84,11 +84,11 @@ export default function DashboardPage() {
       {/* Charts & Activities Section */}
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Event Growth Chart */}
-        <div className="lg:col-span-2 glass-card rounded-[32px] p-8">
-          <div className="flex items-center justify-between mb-8">
+        <div className="glass-card rounded-[28px] p-4 sm:p-6 lg:col-span-2 lg:rounded-[32px] lg:p-8">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-lg font-bold text-on-surface">Event Growth Trends</h3>
-              <p className="text-sm text-slate-500">Monthly overview of new event creation</p>
+              <h3 className="text-lg font-bold text-on-surface">Xu hướng tăng trưởng sự kiện</h3>
+              <p className="text-sm text-slate-500">Tổng quan số sự kiện mới được tạo theo thời gian</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -99,7 +99,7 @@ export default function DashboardPage() {
                   period === 'monthly' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 bg-transparent'
                 )}
               >
-                Monthly
+                Theo tháng
               </button>
               <button
                 type="button"
@@ -109,12 +109,12 @@ export default function DashboardPage() {
                   period === 'yearly' ? 'bg-white shadow-sm text-slate-900 border-black/5' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
-                Yearly
+                Theo năm
               </button>
             </div>
           </div>
           {/* Visual Chart Placeholder */}
-          <div className="relative h-[300px] w-full mt-4 flex items-end gap-4 overflow-hidden">
+          <div className="relative mt-4 flex h-[220px] w-full items-end gap-2 overflow-hidden sm:h-[300px] sm:gap-4">
             {/* Background Grid */}
             <div className="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
               <div className="w-full h-[1px] bg-slate-400"></div>
@@ -156,8 +156,8 @@ export default function DashboardPage() {
         {/* Queue Management */}
         <div className="glass-card rounded-[32px] overflow-hidden flex flex-col">
           <div className="p-6 border-b border-black/5 bg-white/40">
-            <h3 className="text-lg font-bold text-on-surface">Queue Management</h3>
-            <p className="text-sm text-slate-500">Pending reviews and actions</p>
+            <h3 className="text-lg font-bold text-on-surface">Hàng đợi xử lý</h3>
+            <p className="text-sm text-slate-500">Các mục đang chờ xem xét và thao tác</p>
           </div>
           <div className="flex-1 p-4 space-y-3">
             {pendingQueueItems.map((item) => (
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-bold">{latestCompletedItem.title}</p>
                     <p className="text-xs text-slate-500">{latestCompletedItem.subtitle}</p>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap">2H AGO</span>
+                  <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap">2 giờ trước</span>
                 </div>
               </div>
             )}
@@ -206,20 +206,20 @@ export default function DashboardPage() {
               href="/events"
               className="w-full py-3 bg-amber-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center"
             >
-              View All Activity
+              Xem tất cả hoạt động
             </Link>
           </div>
         </div>
       </div>
 
       {/* Floating Action Button */}
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-24 right-4 z-50 sm:right-8 lg:bottom-8">
         <Link 
           href="/notifications/create"
-          className="flex items-center gap-2 bg-on-surface text-white px-6 py-4 rounded-full shadow-2xl hover:scale-[1.05] transition-transform duration-300"
+          className="flex items-center gap-2 rounded-full bg-on-surface px-4 py-3 text-white shadow-2xl transition-transform duration-300 hover:scale-[1.05] sm:px-6 sm:py-4"
         >
           <Plus className="w-5 h-5" />
-          <span className="text-sm font-bold">New Notification</span>
+          <span className="hidden text-sm font-bold sm:inline">Thông báo mới</span>
         </Link>
       </div>
     </div>

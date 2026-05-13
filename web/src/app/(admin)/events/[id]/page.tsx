@@ -127,44 +127,66 @@ export default function EventReviewDetailPage() {
     return null;
   }
 
+  const canReview = event.status === 'pending';
+  const canCancel = event.status === 'approved' || event.status === 'active';
+  const canArchive = event.status === 'finished' || event.status === 'cancelled' || event.status === 'rejected';
+  const canReopen = event.status === 'cancelled' || event.status === 'rejected' || event.status === 'archived';
+  const canSoftDelete = event.status !== 'archived';
+
   return (
     <div className="min-h-screen pb-12">
       {/* TopNavBar */}
-      <header className="fixed top-0 left-64 right-0 z-40 flex items-center justify-between px-8 h-[64px] bg-white/65 backdrop-blur-[40px] saturate-180 border-b-[0.5px] border-black/10">
-        <div className="flex items-center gap-4">
+      <header className="mb-6 flex flex-col gap-4 rounded-3xl border border-white/50 bg-white/65 p-4 shadow-sm backdrop-blur-3xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link
             href="/events"
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors text-slate-900"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-900 transition-colors hover:bg-black/5"
           >
             <ChevronLeft className="w-6 h-6" />
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            Xem xét chi tiết sự kiện
-          </h2>
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+              Xem xét chi tiết sự kiện
+            </h2>
+            <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+              {getStatusHelperText(event.status)}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleDecline}
-            className="px-6 py-2 rounded-full border border-red-600 text-red-600 font-bold text-sm hover:bg-red-50 transition-all active:scale-95"
-          >
-            Từ chối
-          </button>
-          <button
-            type="button"
-            onClick={handleApprove}
-            className="px-6 py-2 rounded-full bg-amber-500 text-white font-bold text-sm shadow-md hover:opacity-90 transition-all active:scale-95"
-          >
-            Phê duyệt
-          </button>
-        </div>
+        {canReview ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={handleDecline}
+              className="rounded-full border border-red-600 px-6 py-2 text-sm font-bold text-red-600 transition-all hover:bg-red-50 active:scale-95"
+            >
+              Từ chối
+            </button>
+            <button
+              type="button"
+              onClick={handleApprove}
+              className="rounded-full bg-amber-500 px-6 py-2 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
+            >
+              Phê duyệt
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <span className={getStatusBadgeClassName(event.status)}>
+              {formatStatusLabel(event.status)}
+            </span>
+            <span className="text-xs font-medium text-slate-500">
+              Không hiển thị thao tác duyệt lại cho trạng thái này.
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Scrollable Content */}
-      <div className="pt-[88px] px-8 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl">
         {event.reportType ? (
-          <div className="mb-8 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4">
+          <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-red-100 bg-red-50 p-4 sm:flex-row sm:items-start">
             <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shrink-0">
               <AlertTriangle className="text-white w-5 h-5" />
             </div>
@@ -176,7 +198,7 @@ export default function EventReviewDetailPage() {
                 {event.reportSnippet || 'Sự kiện này có báo cáo kiểm duyệt cần được xem xét.'}
               </p>
             </div>
-            <div className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-widest rounded-full">
+            <div className="w-fit rounded-full bg-red-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-700 sm:ml-auto">
               {formatReportTypeLabel(event.reportType)}
             </div>
           </div>
@@ -186,7 +208,7 @@ export default function EventReviewDetailPage() {
         <div className="grid grid-cols-12 gap-6">
           {/* Hero Section: Full Event Banner (8 Cols) */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
-            <div className="relative aspect-[21/9] rounded-[32px] overflow-hidden shadow-xl group">
+            <div className="group relative aspect-[4/3] overflow-hidden rounded-[28px] shadow-xl sm:aspect-[16/9] lg:aspect-[21/9] lg:rounded-[32px]">
               <Image
                 src={event.coverImageUrl || FALLBACK_EVENT_IMAGE}
                 alt="Ảnh bìa sự kiện"
@@ -195,8 +217,8 @@ export default function EventReviewDetailPage() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div className="absolute bottom-8 left-8 right-8 text-white">
-                <div className="flex gap-2 mb-3">
+              <div className="absolute inset-x-4 bottom-4 text-white sm:inset-x-8 sm:bottom-8">
+                <div className="mb-3 flex flex-wrap gap-2">
                   <span className="px-3 py-1 bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest rounded-full">
                     {event.category}
                   </span>
@@ -204,7 +226,7 @@ export default function EventReviewDetailPage() {
                     {formatVisibilityLabel(event.visibility)}
                   </span>
                 </div>
-                <h1 className="text-4xl font-black tracking-tight leading-none mb-2">
+                <h1 className="mb-2 line-clamp-3 text-2xl font-black leading-tight tracking-tight sm:text-4xl sm:leading-none">
                   {event.title}
                 </h1>
                 <p className="text-white/80 font-medium flex flex-wrap gap-2">
@@ -216,7 +238,7 @@ export default function EventReviewDetailPage() {
             </div>
 
             {/* Description Section */}
-            <div className="bg-white/50 backdrop-blur-xl rounded-[32px] p-8 border border-white/40 shadow-sm">
+            <div className="rounded-[28px] border border-white/40 bg-white/50 p-5 shadow-sm backdrop-blur-xl sm:p-8 lg:rounded-[32px]">
               <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
                 Mô tả sự kiện
               </h4>
@@ -241,7 +263,7 @@ export default function EventReviewDetailPage() {
           {/* Details & Stats (4 Cols) */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             {/* Quick Info */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/40 shadow-sm space-y-6">
+            <div className="space-y-6 rounded-[28px] border border-white/40 bg-white/80 p-5 shadow-sm backdrop-blur-xl sm:p-6 lg:rounded-[32px]">
               <div>
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
                   Địa điểm
@@ -291,7 +313,7 @@ export default function EventReviewDetailPage() {
             </div>
 
             {/* Organizer Profile */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/40 shadow-sm">
+            <div className="rounded-[28px] border border-white/40 bg-white/80 p-5 shadow-sm backdrop-blur-xl sm:p-6 lg:rounded-[32px]">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">
                 Tài khoản ban tổ chức
               </h4>
@@ -312,7 +334,7 @@ export default function EventReviewDetailPage() {
               </p>
             </div>
 
-            <div className="rounded-[32px] border border-white/40 bg-white/80 p-6 shadow-sm">
+            <div className="rounded-[28px] border border-white/40 bg-white/80 p-5 shadow-sm sm:p-6 lg:rounded-[32px]">
               <h4 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Nhật ký kiểm duyệt
               </h4>
@@ -345,55 +367,65 @@ export default function EventReviewDetailPage() {
         </div>
 
         {/* Action Footer */}
-        <div className="mt-12 pt-8 border-t border-slate-200 flex justify-between items-center">
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => setPendingAction('cancel')}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
-            >
-              <Flag className="w-5 h-5" />
-              Hủy sự kiện
-            </button>
-            <button
-              type="button"
-              onClick={() => setPendingAction('archive')}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
-            >
-              <Archive className="w-5 h-5" />
-              Lưu trữ
-            </button>
-            <button
-              type="button"
-              onClick={() => setPendingAction('reopen')}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
-            >
-              <RotateCw className="w-5 h-5" />
-              Kích hoạt lại
-            </button>
-            <button
-              type="button"
-              onClick={() => setPendingAction('delete')}
-              className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors"
-            >
-              <Trash2 className="w-5 h-5" />
-              Xóa mềm
-            </button>
+        <div className="mt-12 flex flex-col gap-5 border-t border-slate-200 pt-8 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-wrap gap-4">
+            {canCancel ? (
+              <button
+                type="button"
+                onClick={() => setPendingAction('cancel')}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+              >
+                <Flag className="w-5 h-5" />
+                Hủy sự kiện
+              </button>
+            ) : null}
+            {canArchive ? (
+              <button
+                type="button"
+                onClick={() => setPendingAction('archive')}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+              >
+                <Archive className="w-5 h-5" />
+                Lưu trữ
+              </button>
+            ) : null}
+            {canReopen ? (
+              <button
+                type="button"
+                onClick={() => setPendingAction('reopen')}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+              >
+                <RotateCw className="w-5 h-5" />
+                Kích hoạt lại
+              </button>
+            ) : null}
+            {canSoftDelete ? (
+              <button
+                type="button"
+                onClick={() => setPendingAction('delete')}
+                className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors"
+              >
+                <Trash2 className="w-5 h-5" />
+                Xóa mềm
+              </button>
+            ) : null}
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/events"
-              className="px-8 py-3 rounded-full bg-slate-200 text-slate-700 font-bold hover:bg-slate-300 transition-all text-center"
+              className="rounded-full bg-slate-200 px-8 py-3 text-center font-bold text-slate-700 transition-all hover:bg-slate-300"
             >
               Quay lại
             </Link>
-            <button
-              type="button"
-              onClick={handleApprove}
-              className="px-10 py-3 rounded-full bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all"
-            >
-              Xác nhận & phê duyệt
-            </button>
+            {canReview ? (
+              <button
+                type="button"
+                onClick={handleApprove}
+                className="rounded-full bg-amber-500 px-8 py-3 font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 sm:px-10"
+              >
+                Xác nhận & phê duyệt
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -486,6 +518,39 @@ function formatStatusLabel(status: Event['status']): string {
   if (status === 'rejected') return 'Đã từ chối';
   if (status === 'archived') return 'Lưu trữ';
   return 'Bản nháp';
+}
+
+function getStatusHelperText(status: Event['status']): string {
+  if (status === 'pending') return 'Sự kiện đang chờ kiểm duyệt, vui lòng chọn phê duyệt hoặc từ chối.';
+  if (status === 'approved') return 'Sự kiện đã được phê duyệt, không cần thực hiện thao tác duyệt lại.';
+  if (status === 'active') return 'Sự kiện đang hoạt động, chỉ hiển thị các thao tác quản trị phù hợp.';
+  if (status === 'finished') return 'Sự kiện đã kết thúc, có thể lưu trữ hoặc xem lại nhật ký kiểm duyệt.';
+  if (status === 'cancelled') return 'Sự kiện đã bị hủy, có thể lưu trữ hoặc kích hoạt lại khi cần.';
+  if (status === 'rejected') return 'Sự kiện đã bị từ chối, có thể lưu trữ hoặc kích hoạt lại nếu đã xử lý xong.';
+  if (status === 'archived') return 'Sự kiện đang ở trạng thái lưu trữ, chỉ có thể kích hoạt lại.';
+  return 'Sự kiện đang ở bản nháp, chưa sẵn sàng để phê duyệt.';
+}
+
+function getStatusBadgeClassName(status: Event['status']): string {
+  const baseClassName = 'w-fit rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest';
+
+  if (status === 'approved' || status === 'active') {
+    return `${baseClassName} bg-emerald-100 text-emerald-700`;
+  }
+
+  if (status === 'pending') {
+    return `${baseClassName} bg-amber-100 text-amber-700`;
+  }
+
+  if (status === 'cancelled' || status === 'rejected') {
+    return `${baseClassName} bg-red-100 text-red-700`;
+  }
+
+  if (status === 'finished') {
+    return `${baseClassName} bg-blue-100 text-blue-700`;
+  }
+
+  return `${baseClassName} bg-slate-100 text-slate-700`;
 }
 
 function formatModerationAction(action: string): string {

@@ -1,7 +1,7 @@
 // File: src/core/components/Header.tsx
 'use client';
 
-import { Search, HelpCircle, Settings, Bell } from 'lucide-react';
+import { HelpCircle, Settings, Bell } from 'lucide-react';
 import { cn } from '@/core/lib/utils';
 
 interface HeaderProps {
@@ -15,7 +15,7 @@ export function Header({ className }: HeaderProps) {
         'fixed top-0 right-0 left-0 h-16 z-30 lg:left-64',
         'border-b border-black/10',
         'ios-blur',
-        'flex items-center justify-between px-4 sm:px-6 lg:px-8',
+        'flex items-center justify-end px-4 sm:justify-between sm:px-6 lg:px-8',
         className
       )}
     >
@@ -30,9 +30,9 @@ export function Header({ className }: HeaderProps) {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-6">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-6">
         {/* Quick Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             type="button"
             className="text-slate-600 hover:text-slate-800 transition-colors"
@@ -61,7 +61,7 @@ export function Header({ className }: HeaderProps) {
         <div className="hidden h-8 w-px bg-black/10 sm:block" />
 
         {/* User Info */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <span className="hidden text-sm font-medium text-slate-900 sm:inline">Bảng điều khiển UEvents</span>
           <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center border-2 border-white/40">
             <span className="text-white font-bold text-xs">UC</span>

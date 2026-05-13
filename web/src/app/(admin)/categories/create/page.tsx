@@ -189,7 +189,7 @@ export default function CreateCategoryPage() {
 
   if (isLoadingCategory) {
     return (
-      <div className="min-h-screen relative p-8">
+      <div className="relative min-h-screen overflow-hidden p-4 sm:p-8">
         <div className="fixed top-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-200/20 blur-[120px] rounded-full z-[-1]" />
         <div className="fixed bottom-[-10%] left-[10%] w-[400px] h-[400px] bg-sky-200/20 blur-[100px] rounded-full z-[-1]" />
         <ListSkeleton rows={5} className="mx-auto max-w-4xl" />
@@ -198,7 +198,7 @@ export default function CreateCategoryPage() {
   }
 
   return (
-    <div className="min-h-screen relative p-8">
+    <div className="relative min-h-screen overflow-hidden p-4 sm:p-8">
       {/* Background Decorative Elements */}
       <div className="fixed top-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-200/20 blur-[120px] rounded-full z-[-1]"></div>
       <div className="fixed bottom-[-10%] left-[10%] w-[400px] h-[400px] bg-sky-200/20 blur-[100px] rounded-full z-[-1]"></div>
@@ -211,9 +211,9 @@ export default function CreateCategoryPage() {
 
       {/* Form Content */}
       <div className="max-w-4xl mx-auto">
-        <div className="glass-panel border border-white/40 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="glass-panel overflow-hidden rounded-[24px] border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
           {/* Header of the Modal Section */}
-          <div className="px-8 py-6 border-b border-black/5 bg-white/40">
+          <div className="border-b border-black/5 bg-white/40 px-4 py-5 sm:px-8 sm:py-6">
             <h3 className="text-xl font-bold text-slate-900">Thông tin danh mục</h3>
             <p className="text-sm text-slate-500 mt-1">
               Thiết lập các thuộc tính cho nhóm sự kiện mới.
@@ -221,7 +221,7 @@ export default function CreateCategoryPage() {
           </div>
 
           {/* Form Fields */}
-          <div className="p-8 space-y-8">
+          <div className="space-y-8 p-4 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Category Name */}
               <div className="space-y-2">
@@ -390,10 +390,10 @@ export default function CreateCategoryPage() {
           </div>
 
           {/* Footer Actions */}
-          <div className="px-8 py-6 bg-slate-50/50 border-t border-black/5 flex items-center justify-end gap-4">
+          <div className="flex flex-col gap-3 border-t border-black/5 bg-slate-50/50 px-4 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-8 sm:py-6">
             <Link
               href="/categories"
-              className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
+              className="px-6 py-2.5 text-center text-sm font-bold text-slate-500 transition-colors hover:text-slate-800"
             >
               Hủy
             </Link>
@@ -401,7 +401,7 @@ export default function CreateCategoryPage() {
               type="button"
               onClick={handleCreateRequest}
               disabled={isSaving || isLoadingCategory}
-              className="px-8 py-2.5 text-sm font-bold bg-amber-500 text-white rounded-xl shadow-[0_4px_12px_rgba(255,184,0,0.3)] hover:brightness-105 active:scale-95 transition-all"
+              className="rounded-xl bg-amber-500 px-8 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(255,184,0,0.3)] transition-all hover:brightness-105 active:scale-95"
             >
               {categoryId ? 'Cập nhật danh mục' : 'Tạo danh mục'}
             </button>

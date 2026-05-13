@@ -97,7 +97,7 @@ export default function EditUserPage() {
   };
 
   if (isLoading) {
-    return <ListSkeleton rows={6} className="p-10" />;
+    return <ListSkeleton rows={6} className="p-4 sm:p-10" />;
   }
 
   if (!user) {
@@ -114,8 +114,8 @@ export default function EditUserPage() {
   const currentStatus = statusDisplay[user.status];
 
   return (
-    <div className="min-h-screen px-10 pb-20">
-      <header className="mb-10 flex justify-between items-end">
+    <div className="min-h-screen px-0 pb-20 sm:px-4 lg:px-10">
+      <header className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
         <div>
           <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
             <Link href="/users" className="hover:text-amber-500">
@@ -125,7 +125,7 @@ export default function EditUserPage() {
             <span className="text-slate-600">Cập nhật người dùng</span>
           </nav>
 
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Chỉnh sửa tài khoản
           </h1>
           <p className="text-slate-500 mt-2 font-medium">
@@ -133,10 +133,10 @@ export default function EditUserPage() {
             <span className="text-amber-600 font-bold">{user.name}</span>
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/users"
-            className="px-6 py-2.5 glass-panel rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all active:scale-95 border border-white/40 shadow-sm"
+            className="rounded-xl border border-white/40 px-6 py-2.5 text-center text-sm font-bold text-slate-600 shadow-sm transition-all hover:bg-white active:scale-95 glass-panel"
           >
             Hủy thay đổi
           </Link>
@@ -144,7 +144,7 @@ export default function EditUserPage() {
             type="submit"
             form="edit-user-form"
             disabled={isSubmitting}
-            className="px-8 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:saturate-150 transition-all active:scale-95 disabled:opacity-60"
+            className="rounded-xl bg-amber-500 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-amber-500/30 transition-all hover:saturate-150 active:scale-95 disabled:opacity-60"
           >
             {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật hồ sơ'}
           </button>
@@ -155,7 +155,7 @@ export default function EditUserPage() {
       <div className="grid grid-cols-12 gap-6">
         {/* Profile Overview (Small Card) */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="glass-panel rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
+          <div className="glass-panel flex flex-col items-center rounded-[28px] border border-white/40 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] lg:rounded-[32px] lg:p-8">
             <div className="relative mb-6">
               <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
                 {user.avatar ? (
@@ -203,7 +203,7 @@ export default function EditUserPage() {
 
         {/* Detailed Info Form (Large Card) */}
         <div className="col-span-12 lg:col-span-8">
-          <div className="glass-panel rounded-[32px] p-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/40">
+          <div className="glass-panel rounded-[28px] border border-white/40 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] sm:p-6 lg:rounded-[32px] lg:p-10">
             <div className="flex items-center gap-3 mb-8">
               <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
               <h2 className="text-2xl font-bold text-slate-900">Thông tin cá nhân</h2>

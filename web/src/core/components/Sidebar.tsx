@@ -37,10 +37,10 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed bottom-0 left-0 top-auto z-40 h-20 w-full lg:top-0 lg:bottom-auto lg:h-screen lg:w-64',
+        'fixed bottom-0 left-0 top-auto z-40 h-[calc(5rem+env(safe-area-inset-bottom))] w-full lg:top-0 lg:bottom-auto lg:h-screen lg:w-64',
         'bg-white/70 backdrop-blur-3xl',
         'border-t border-white/40 lg:border-r lg:border-t-0',
-        'flex flex-row p-2 lg:flex-col lg:p-4',
+        'flex flex-row p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] lg:flex-col lg:p-4',
         'shadow-2xl shadow-black/5',
         className
       )}
@@ -56,7 +56,7 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-row gap-2 overflow-x-auto lg:flex-col lg:gap-1 lg:overflow-visible">
+      <nav className="flex flex-1 flex-row gap-2 overflow-x-auto [scrollbar-width:none] lg:flex-col lg:gap-1 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           const Icon = item.icon;
