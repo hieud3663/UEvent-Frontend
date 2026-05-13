@@ -15,7 +15,7 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
     <div className="min-h-screen bg-surface">
       <Sidebar />
       <Header />
-      <main className={cn('ml-64 pt-24 px-8 pb-12 min-h-screen', className)}>
+      <main className={cn('min-h-screen px-4 pb-24 pt-24 sm:px-6 lg:ml-64 lg:px-8 lg:pb-12', className)}>
         {children}
       </main>
     </div>

@@ -12,19 +12,19 @@ export function Header({ className }: HeaderProps) {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 left-64 h-16 z-30',
+        'fixed top-0 right-0 left-0 h-16 z-30 lg:left-64',
         'border-b border-black/10',
         'ios-blur',
-        'flex items-center justify-between px-8',
+        'flex items-center justify-between px-4 sm:px-6 lg:px-8',
         className
       )}
     >
       {/* Search Bar */}
-      <div className="flex items-center gap-4 bg-slate-200/50 px-4 py-2 rounded-full w-96">
+      <div className="hidden min-w-0 items-center gap-4 rounded-full bg-slate-200/50 px-4 py-2 sm:flex sm:w-72 lg:w-96">
         <Search className="w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Search events or users..."
+          placeholder="Tìm sự kiện hoặc người dùng..."
           className="bg-transparent border-none focus:ring-0 focus:outline-none text-sm w-full placeholder:text-slate-500"
         />
       </div>
@@ -36,21 +36,21 @@ export function Header({ className }: HeaderProps) {
           <button
             type="button"
             className="text-slate-600 hover:text-slate-800 transition-colors"
-            aria-label="Help"
+            aria-label="Trợ giúp"
           >
             <HelpCircle className="w-5 h-5" />
           </button>
           <button
             type="button"
             className="text-slate-600 hover:text-slate-800 transition-colors"
-            aria-label="Settings"
+            aria-label="Cài đặt"
           >
             <Settings className="w-5 h-5" />
           </button>
           <button
             type="button"
             className="text-slate-600 hover:text-slate-800 transition-colors relative"
-            aria-label="Notifications"
+            aria-label="Thông báo"
           >
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -58,11 +58,11 @@ export function Header({ className }: HeaderProps) {
         </div>
 
         {/* Divider */}
-        <div className="h-8 w-px bg-black/10" />
+        <div className="hidden h-8 w-px bg-black/10 sm:block" />
 
         {/* User Info */}
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-slate-900">UEvents Control</span>
+          <span className="hidden text-sm font-medium text-slate-900 sm:inline">Bảng điều khiển UEvents</span>
           <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center border-2 border-white/40">
             <span className="text-white font-bold text-xs">UC</span>
           </div>
