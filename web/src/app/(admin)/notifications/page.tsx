@@ -36,21 +36,21 @@ const notificationStatusConfig: Record<
   NotificationStatus,
   { label: string; color: string; bg: string; dotColor: string }
 > = {
-  draft: { label: 'Draft', color: 'text-slate-600', bg: 'bg-slate-100', dotColor: 'bg-slate-500' },
-  scheduled: { label: 'Scheduled', color: 'text-amber-700', bg: 'bg-amber-100', dotColor: 'bg-amber-500' },
-  sent: { label: 'Sent', color: 'text-emerald-700', bg: 'bg-emerald-100', dotColor: 'bg-emerald-500' },
-  failed: { label: 'Failed', color: 'text-red-600', bg: 'bg-red-100', dotColor: 'bg-red-500' },
+  draft: { label: 'Bản nháp', color: 'text-slate-600', bg: 'bg-slate-100', dotColor: 'bg-slate-500' },
+  scheduled: { label: 'Đã lên lịch', color: 'text-amber-700', bg: 'bg-amber-100', dotColor: 'bg-amber-500' },
+  sent: { label: 'Đã gửi', color: 'text-emerald-700', bg: 'bg-emerald-100', dotColor: 'bg-emerald-500' },
+  failed: { label: 'Thất bại', color: 'text-red-600', bg: 'bg-red-100', dotColor: 'bg-red-500' },
 };
 
 const notificationAudienceConfig: Record<
   AudienceType,
   { label: string; color: string; bg: string }
 > = {
-  all: { label: 'All Users', color: 'text-slate-600', bg: 'bg-slate-100' },
-  students: { label: 'Students', color: 'text-blue-600', bg: 'bg-blue-50' },
-  organizers: { label: 'Organizers', color: 'text-blue-600', bg: 'bg-blue-50' },
-  admins: { label: 'Admins', color: 'text-purple-600', bg: 'bg-purple-50' },
-  custom: { label: 'Specific Event', color: 'text-purple-600', bg: 'bg-purple-50' },
+  all: { label: 'Tất cả người dùng', color: 'text-slate-600', bg: 'bg-slate-100' },
+  students: { label: 'Sinh viên', color: 'text-blue-600', bg: 'bg-blue-50' },
+  organizers: { label: 'Nhà tổ chức', color: 'text-blue-600', bg: 'bg-blue-50' },
+  admins: { label: 'Quản trị viên', color: 'text-purple-600', bg: 'bg-purple-50' },
+  custom: { label: 'Sự kiện cụ thể', color: 'text-purple-600', bg: 'bg-purple-50' },
 };
 
 export default function NotificationsPage() {
@@ -101,30 +101,30 @@ export default function NotificationsPage() {
 
   const handleFilter = async () => {
     await runActionWithToast(async () => Promise.resolve(), {
-      loading: 'Preparing notification filters...',
-      success: 'Notification filters are ready.',
-      error: 'Failed to open notification filters.',
+      loading: 'Đang chuẩn bị bộ lọc thông báo...',
+      success: 'Bộ lọc thông báo đã sẵn sàng.',
+      error: 'Không thể mở bộ lọc thông báo.',
     });
   };
 
   const handleExport = async () => {
     await runActionWithToast(() => exportNotificationsHistory(), {
-      loading: 'Preparing notification export...',
-      success: 'Notification export has been queued.',
-      error: 'Failed to export notification history.',
+      loading: 'Đang chuẩn bị file xuất thông báo...',
+      success: 'Yêu cầu xuất lịch sử thông báo đã được đưa vào hàng đợi.',
+      error: 'Không thể xuất lịch sử thông báo.',
     });
   };
 
   const handleMoreActions = async (notification: Notification) => {
     await runActionWithToast(async () => Promise.resolve(), {
-      loading: `Opening actions for "${notification.title}"...`,
-      success: `Actions menu ready for "${notification.title}".`,
-      error: `Failed to open actions for "${notification.title}".`,
+      loading: `Đang mở thao tác cho "${notification.title}"...`,
+      success: `Menu thao tác cho "${notification.title}" đã sẵn sàng.`,
+      error: `Không thể mở thao tác cho "${notification.title}".`,
     });
   };
 
   if (!stats || !paginationConfig) {
-    return <div className="p-6 text-sm text-slate-500">Loading notifications...</div>;
+    return <div className="p-6 text-sm text-slate-500">Đang tải thông báo...</div>;
   }
 
   const visiblePageCount = Math.min(paginationConfig.maxVisiblePages, totalPages);
@@ -136,13 +136,13 @@ export default function NotificationsPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Notification History
+            Lịch sử thông báo
           </h2>
           <p className="text-slate-500 text-sm mt-1">
-            Review and manage your push communication logs
+            Xem lại và quản lý nhật ký gửi thông báo cho người dùng.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
             onClick={() => {
@@ -151,7 +151,7 @@ export default function NotificationsPage() {
             className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider"
             leftIcon={<Filter className="w-4 h-4" />}
           >
-            Filter
+            Lọc
           </Button>
           <Button
             variant="secondary"
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
             className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider"
             leftIcon={<Download className="w-4 h-4" />}
           >
-            Export
+            Xuất file
           </Button>
           <Link href="/notifications/create">
             <Button
@@ -169,17 +169,17 @@ export default function NotificationsPage() {
               className="rounded-full shadow-lg shadow-amber-500/20"
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              Create New Notification
+              Tạo thông báo
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         <Card className="glass-card border-none rounded-3xl p-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-            Total Sent
+            Tổng đã gửi
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
@@ -195,7 +195,7 @@ export default function NotificationsPage() {
 
         <Card className="glass-card border-none rounded-3xl p-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-            Avg. Open Rate
+            Tỷ lệ mở trung bình
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
@@ -211,7 +211,7 @@ export default function NotificationsPage() {
 
         <Card className="glass-card border-none rounded-3xl p-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-            Scheduled
+            Đã lên lịch
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
@@ -230,7 +230,7 @@ export default function NotificationsPage() {
             <div className="w-full h-full bg-gradient-to-br from-amber-500 via-purple-500 to-pink-500" />
           </div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-            Active Users
+            Người dùng hoạt động
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-slate-900">
@@ -248,26 +248,26 @@ export default function NotificationsPage() {
       {/* Notification Table */}
       <Card className="glass-card border-none rounded-[2rem] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="min-w-[920px] w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-black/5 bg-slate-50/30">
                 <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Notification Title
+                  Tiêu đề thông báo
                 </th>
                 <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Target Audience
+                  Đối tượng nhận
                 </th>
                 <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Sent Date
+                  Ngày gửi
                 </th>
                 <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Performance
+                  Hiệu suất
                 </th>
                 <th className="px-8 py-5 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Action
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -284,10 +284,10 @@ export default function NotificationsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
+        <div className="flex flex-col gap-3 bg-slate-50/30 px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-slate-500">
-            Showing <span className="font-bold text-slate-900">{(safeCurrentPage - 1) * notificationsPerPage + 1}-{Math.min(safeCurrentPage * notificationsPerPage, totalNotifications)}</span> of{' '}
-            <span className="font-bold text-slate-900">{totalNotifications}</span> notifications
+            Hiển thị <span className="font-bold text-slate-900">{(safeCurrentPage - 1) * notificationsPerPage + 1}-{Math.min(safeCurrentPage * notificationsPerPage, totalNotifications)}</span> trong{' '}
+            <span className="font-bold text-slate-900">{totalNotifications}</span> thông báo
           </p>
           <div className="flex gap-2">
             <button
@@ -295,7 +295,7 @@ export default function NotificationsPage() {
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors disabled:opacity-50"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              title="Previous page"
+              title="Trang trước"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -321,7 +321,7 @@ export default function NotificationsPage() {
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white transition-colors"
               disabled={safeCurrentPage >= totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              title="Next page"
+              title="Trang sau"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -349,8 +349,8 @@ function NotificationRow({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      date: date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     };
   };
 
@@ -400,7 +400,7 @@ function NotificationRow({
             <p className="text-[10px] text-slate-400">{sentDate.time}</p>
           </>
         ) : (
-          <p className="text-sm text-slate-400 italic">Not sent</p>
+          <p className="text-sm text-slate-400 italic">Chưa gửi</p>
         )}
       </td>
 
@@ -430,15 +430,15 @@ function NotificationRow({
                 />
               </div>
               <span className="text-xs font-bold text-slate-700">
-                {notification.performance.reachPercentage}% Reach
+                {notification.performance.reachPercentage}% tiếp cận
               </span>
             </div>
             <p className="text-[10px] text-slate-400 mt-1">
-              {notification.performance.openRate}% Open Rate
+              {notification.performance.openRate}% mở
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 italic">Pending...</p>
+          <p className="text-xs text-slate-400 italic">Đang chờ...</p>
         )}
       </td>
 
@@ -448,7 +448,7 @@ function NotificationRow({
           type="button"
           onClick={() => onMoreActions(notification)}
           className="text-slate-400 hover:text-slate-900 transition-colors"
-          title="More actions"
+          title="Thêm thao tác"
         >
           <MoreHorizontal className="w-5 h-5" />
         </button>

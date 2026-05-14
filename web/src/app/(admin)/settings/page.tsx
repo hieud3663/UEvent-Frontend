@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Calendar, Download, Settings, Shield, ShieldAlert, TrendingUp, Users, Verified } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/core/components';
+import { AdminSelect, Button } from '@/core/components';
 import { cn } from '@/core/lib/utils';
 import { useSystemSettings } from '@/features/settings/hooks/useSystemSettings';
 
@@ -19,6 +19,12 @@ interface StatsCardProps {
   };
   avatars?: number;
 }
+
+const DATE_RANGE_OPTIONS: Array<{ value: '24hours' | '7days' | '30days'; label: string }> = [
+  { value: '24hours', label: '24 giờ qua' },
+  { value: '7days', label: '7 ngày qua' },
+  { value: '30days', label: '30 ngày qua' },
+];
 
 function SettingsStatsCard({ icon, iconBg, iconColor, label, value, badge, avatars }: StatsCardProps) {
   return (
@@ -66,63 +72,59 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">System Logs &amp; Audit Trail</h1>
-          <p className="text-slate-500 text-sm mt-1">Real-time monitoring of platform operations and administrative actions.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Nhật ký hệ thống &amp; kiểm toán</h1>
+          <p className="text-slate-500 text-sm mt-1">Theo dõi hoạt động nền tảng và thao tác quản trị theo thời gian thực.</p>
         </div>
         <Button
           variant="outline"
-          onClick={() => toast.success('Exported audit logs snapshot.')}
+          onClick={() => toast.success('Đã xuất bản ghi nhật ký kiểm toán.')}
           className="bg-white/80 hover:bg-white border border-white/40 shadow-sm backdrop-blur-md"
           leftIcon={<Download className="w-[18px] h-[18px]" />}
         >
-          Export Audit Logs
+          Xuất nhật ký
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SettingsStatsCard icon={<Users className="w-5 h-5" />} iconBg="bg-amber-100" iconColor="text-amber-600" label="Total Sessions Today" value="12,842" badge={{ text: '+12%', color: 'emerald' }} />
-        <SettingsStatsCard icon={<ShieldAlert className="w-5 h-5" />} iconBg="bg-red-100" iconColor="text-red-600" label="Failed Logins" value="42" badge={{ text: '-3%', color: 'red' }} />
-        <SettingsStatsCard icon={<TrendingUp className="w-5 h-5" />} iconBg="bg-blue-100" iconColor="text-blue-600" label="Peak Activity Time" value="14:20 PM" />
-        <SettingsStatsCard icon={<Shield className="w-5 h-5" />} iconBg="bg-purple-100" iconColor="text-purple-600" label="Active Admins" value="07" avatars={2} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SettingsStatsCard icon={<Users className="w-5 h-5" />} iconBg="bg-amber-100" iconColor="text-amber-600" label="Phiên hôm nay" value="12.842" badge={{ text: '+12%', color: 'emerald' }} />
+        <SettingsStatsCard icon={<ShieldAlert className="w-5 h-5" />} iconBg="bg-red-100" iconColor="text-red-600" label="Đăng nhập lỗi" value="42" badge={{ text: '-3%', color: 'red' }} />
+        <SettingsStatsCard icon={<TrendingUp className="w-5 h-5" />} iconBg="bg-blue-100" iconColor="text-blue-600" label="Giờ cao điểm" value="14:20" />
+        <SettingsStatsCard icon={<Shield className="w-5 h-5" />} iconBg="bg-purple-100" iconColor="text-purple-600" label="Quản trị đang hoạt động" value="07" avatars={2} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-6">
-          <div className="glass-panel glass-border p-4 rounded-[2rem] flex flex-wrap items-center gap-4">
+          <div className="glass-panel glass-border flex flex-col gap-4 rounded-[2rem] p-4 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Date Range</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[14px] h-[14px]" />
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value as '24hours' | '7days' | '30days')}
-                  className="w-full bg-slate-100/50 border-none rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer"
-                >
-                  <option value="24hours">Last 24 Hours</option>
-                  <option value="7days">Last 7 Days</option>
-                  <option value="30days">Last 30 Days</option>
-                </select>
-              </div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Khoảng thời gian</label>
+              <AdminSelect
+                value={dateRange}
+                onChange={(nextValue) => setDateRange(nextValue as '24hours' | '7days' | '30days')}
+                options={DATE_RANGE_OPTIONS}
+                ariaLabel="Chọn khoảng thời gian nhật ký"
+                leftIcon={<Calendar className="h-[14px] w-[14px] text-slate-400" />}
+                triggerClassName="h-auto cursor-pointer rounded-xl border-none bg-slate-100/50 py-2 pl-3 pr-3 text-slate-700 focus:ring-2 focus:ring-amber-500/20"
+              />
             </div>
 
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Action Type</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Loại thao tác</label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setActionType('all')}
                   className={cn('px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all', actionType === 'all' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/50')}
                 >
-                  All
+                  Tất cả
                 </button>
                 <button
                   type="button"
                   onClick={() => setActionType('error')}
                   className={cn('px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all', actionType === 'error' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/50')}
                 >
-                  Error
+                  Lỗi
                 </button>
               </div>
             </div>
@@ -130,13 +132,13 @@ export default function SettingsPage() {
 
           <div className="glass-panel glass-border rounded-[2.5rem] overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="min-w-[720px] w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100/50">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Timestamp</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User/Admin</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thời điểm</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Người dùng/quản trị</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thao tác</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50/50">
@@ -181,16 +183,16 @@ export default function SettingsPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <div className="glass-panel glass-border rounded-[32px] p-8 shadow-sm">
+          <div className="glass-panel glass-border rounded-[28px] p-5 shadow-sm sm:rounded-[32px] sm:p-8">
             <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
               <Settings className="w-5 h-5 text-amber-500" />
-              System Preferences
+              Tùy chọn hệ thống
             </h3>
             <div className="space-y-8">
               <div className="flex items-center justify-between group">
                 <div className="space-y-1">
-                  <p className="font-bold text-slate-900">Dark Mode</p>
-                  <p className="text-xs text-slate-500">Sync with system default</p>
+                  <p className="font-bold text-slate-900">Chế độ tối</p>
+                  <p className="text-xs text-slate-500">Đồng bộ theo thiết lập hệ thống</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} />
@@ -199,8 +201,8 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between group">
                 <div className="space-y-1">
-                  <p className="font-bold text-slate-900">Audit Alerts</p>
-                  <p className="text-xs text-slate-500">Notify on critical log events</p>
+                  <p className="font-bold text-slate-900">Cảnh báo kiểm toán</p>
+                  <p className="text-xs text-slate-500">Thông báo khi có sự kiện nhật ký quan trọng</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={auditAlerts} onChange={(e) => setAuditAlerts(e.target.checked)} />
@@ -212,8 +214,8 @@ export default function SettingsPage() {
               <div className="flex gap-4">
                 <Verified className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-amber-900 uppercase tracking-widest mb-1">Security Status</p>
-                  <p className="text-[11px] text-amber-800 leading-snug">Two-factor authentication is active. Last audit review 2h ago.</p>
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-widest mb-1">Trạng thái bảo mật</p>
+                  <p className="text-[11px] text-amber-800 leading-snug">Xác thực hai lớp đang hoạt động. Lần rà soát kiểm toán gần nhất cách đây 2 giờ.</p>
                 </div>
               </div>
             </div>

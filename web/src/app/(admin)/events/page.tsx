@@ -1,35 +1,50 @@
 // File: src/app/(admin)/events/page.tsx
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import type { ElementType } from 'react';
-import { AlertTriangle, CheckCircle, Filter, MoreHorizontal, Calendar, User, TrendingDown, Flag, XCircle } from 'lucide-react';
-import { Card, ConfirmActionDialog } from '@/core/components';
+import { useCallback, useEffect, useState } from 'react';
+import type { ElementType, FormEvent } from 'react';
 import {
-  getEvents,
+  Calendar,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Flag,
+  MoreHorizontal,
+  Search,
+  TrendingDown,
+  User,
+  XCircle,
+} from 'lucide-react';
+import { AdminSelect, Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
+import {
+  deleteEventById,
+  getEventsPage,
   getEventModerationActivities,
   getEventModerationPulse,
   getEventPolicyHandbook,
   getEventStats,
   moderateEventStatus,
 } from '@/features/events/services/events.service';
+import { getCategories } from '@/features/categories/services/categories.service';
 import type {
   Event,
+  EventListResult,
   EventModerationActivity,
   EventModerationPulse,
   EventPolicyHandbook,
   ReportType,
 } from '@/features/events/types';
+import type { Category } from '@/features/categories/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 const reportTypeLabels: Record<NonNullable<ReportType>, string> = {
-  safety: 'Safety Concern',
-  copyright: 'Copyright Claim',
-  spam: 'Spam Report',
-  other: 'Other Issue',
+  safety: 'Vấn đề an toàn',
+  copyright: 'Khiếu nại bản quyền',
+  spam: 'Báo cáo spam',
+  other: 'Vấn đề khác',
 };
 
 const moderationActivityTypeConfig: Record<
@@ -41,108 +56,188 @@ const moderationActivityTypeConfig: Record<
   flagged: { icon: Flag, iconColor: 'text-blue-600', iconBg: 'bg-blue-100' },
 };
 
+const EVENTS_PER_PAGE = 6;
+const MAX_VISIBLE_PAGES = 7;
+
+type EventStatusFilter = 'all' | 'reported' | 'pending' | 'approved' | 'active' | 'rejected' | 'cancelled' | 'archived';
+type EventOrdering = '-start_at' | 'start_at' | '-created_at' | 'created_at' | 'status' | '-status';
+type ModerationActionType = 'approve' | 'decline' | 'cancel' | 'archive' | 'reopen' | 'delete';
+type PaginationItem = number | 'ellipsis-start' | 'ellipsis-end';
+
+const EVENT_STATUS_OPTIONS: Array<{ value: EventStatusFilter; label: string }> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'reported', label: 'Bị báo cáo' },
+  { value: 'pending', label: 'Chờ duyệt' },
+  { value: 'approved', label: 'Đã duyệt' },
+  { value: 'active', label: 'Đang diễn ra' },
+  { value: 'rejected', label: 'Từ chối' },
+  { value: 'cancelled', label: 'Đã hủy' },
+  { value: 'archived', label: 'Lưu trữ' },
+];
+
+const EVENT_VISIBILITY_OPTIONS: Array<{ value: 'all' | 'public' | 'private'; label: string }> = [
+  { value: 'all', label: 'Mọi hiển thị' },
+  { value: 'public', label: 'Công khai' },
+  { value: 'private', label: 'Riêng tư' },
+];
+
+const EVENT_ORDERING_OPTIONS: Array<{ value: EventOrdering; label: string }> = [
+  { value: '-start_at', label: 'Diễn ra mới nhất' },
+  { value: 'start_at', label: 'Diễn ra sớm nhất' },
+  { value: '-created_at', label: 'Mới tạo trước' },
+  { value: 'created_at', label: 'Cũ nhất trước' },
+  { value: 'status', label: 'Trạng thái A-Z' },
+  { value: '-status', label: 'Trạng thái Z-A' },
+];
+
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [pagination, setPagination] = useState<Omit<EventListResult, 'events'> | null>(null);
   const [stats, setStats] = useState<Awaited<ReturnType<typeof getEventStats>> | null>(null);
   const [moderationPulse, setModerationPulse] = useState<EventModerationPulse | null>(null);
   const [moderationActivities, setModerationActivities] = useState<EventModerationActivity[]>([]);
   const [policyHandbook, setPolicyHandbook] = useState<EventPolicyHandbook | null>(null);
+  const [isContextLoading, setIsContextLoading] = useState(true);
+  const [isEventsLoading, setIsEventsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pendingModerationAction, setPendingModerationAction] = useState<
-    { type: 'approve' | 'decline'; eventId: string; title: string } | null
+    { type: ModerationActionType; eventId: string; title: string } | null
   >(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [keyword, setKeyword] = useState('');
+  const [submittedKeyword, setSubmittedKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<EventStatusFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
+  const [ordering, setOrdering] = useState<EventOrdering>('-start_at');
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadEventsPageData() {
-      const [eventsResponse, eventsStats, pulse, activities, handbook] = await Promise.all([
-        getEvents(),
+  const loadEventContextData = useCallback(async () => {
+    try {
+      setIsContextLoading(true);
+      setError(null);
+      const [eventsStats, pulse, activities, handbook, categoriesResponse] = await Promise.all([
         getEventStats(),
         getEventModerationPulse(),
         getEventModerationActivities(),
         getEventPolicyHandbook(),
+        getCategories({ pageSize: 100 }),
       ]);
 
-      if (!isMounted) {
-        return;
-      }
-
-      setEvents(eventsResponse);
       setStats(eventsStats);
       setModerationPulse(pulse);
       setModerationActivities(activities);
       setPolicyHandbook(handbook);
+      setCategories(categoriesResponse);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải dữ liệu tổng quan sự kiện.');
+    } finally {
+      setIsContextLoading(false);
     }
-
-    void loadEventsPageData();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  const reportedEvents = useMemo(
-    () => events.filter((item) => item.status === 'reported').slice(0, 2),
-    [events]
-  );
+  const loadEventsPageData = useCallback(async () => {
+    try {
+      setIsEventsLoading(true);
+      setError(null);
+      const eventsResponse = await getEventsPage({
+        keyword: submittedKeyword,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        category: categoryFilter || undefined,
+        visibility: visibilityFilter === 'all' ? undefined : visibilityFilter,
+        ordering,
+        page: currentPage,
+        pageSize: EVENTS_PER_PAGE,
+      });
 
-  const pendingEvents = useMemo(
-    () => events.filter((item) => item.status === 'pending').slice(0, 1),
-    [events]
-  );
+      setEvents(eventsResponse.events);
+      setPagination({
+        total: eventsResponse.total,
+        page: eventsResponse.page,
+        pageSize: eventsResponse.pageSize,
+        totalPages: eventsResponse.totalPages,
+      });
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải sự kiện.');
+    } finally {
+      setIsEventsLoading(false);
+    }
+  }, [categoryFilter, currentPage, ordering, statusFilter, submittedKeyword, visibilityFilter]);
 
-  const handleDecline = async (eventId: string, title: string) => {
+  const refreshEventsDashboard = useCallback(async () => {
+    await Promise.all([loadEventsPageData(), loadEventContextData()]);
+  }, [loadEventContextData, loadEventsPageData]);
+
+  useEffect(() => {
+    void loadEventsPageData();
+  }, [loadEventsPageData]);
+
+  useEffect(() => {
+    void loadEventContextData();
+  }, [loadEventContextData]);
+
+  const totalPages = pagination?.totalPages ?? 1;
+  const safeCurrentPage = pagination?.page ?? currentPage;
+  const totalEvents = pagination?.total ?? events.length;
+  const reportedCount = stats?.urgentReports ?? 0;
+  const pendingCount = stats?.pendingApproval ?? 0;
+  const paginationItems = getPaginationItems(safeCurrentPage, totalPages);
+  const categoryOptions = [
+    { value: '', label: 'Tất cả danh mục' },
+    ...categories.map((category) => ({ value: category.id, label: category.name })),
+  ];
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const handleModerateStatus = async (
+    eventId: string,
+    title: string,
+    status: 'approved' | 'rejected' | 'cancelled' | 'archived' | 'active',
+    reason: string
+  ) => {
     const previousEvents = events;
-    setEvents((prev) => prev.map((item) => (item.id === eventId ? { ...item, status: 'rejected' } : item)));
+    setEvents((prev) => prev.map((item) => (item.id === eventId ? { ...item, status } : item)));
 
     try {
-      await runActionWithToast(() => moderateEventStatus(eventId, 'rejected'), {
-        loading: `Declining ${title}...`,
-        success: `Declined event: ${title}`,
-        error: `Failed to decline ${title}.`,
+      await runActionWithToast(() => moderateEventStatus(eventId, status, reason), {
+        loading: `Đang cập nhật ${title}...`,
+        success: `Đã cập nhật trạng thái sự kiện: ${title}`,
+        error: `Không thể cập nhật ${title}.`,
       });
+      await refreshEventsDashboard();
     } catch {
       setEvents(previousEvents);
     }
   };
 
-  const handleApprove = async (eventId: string, title: string) => {
+  const handleDelete = async (eventId: string, title: string) => {
     const previousEvents = events;
-    setEvents((prev) => prev.map((item) => (item.id === eventId ? { ...item, status: 'approved' } : item)));
+    setEvents((prev) => prev.filter((item) => item.id !== eventId));
 
     try {
-      await runActionWithToast(() => moderateEventStatus(eventId, 'approved'), {
-        loading: `Approving ${title}...`,
-        success: `Approved event: ${title}`,
-        error: `Failed to approve ${title}.`,
+      await runActionWithToast(() => deleteEventById(eventId), {
+        loading: `Đang xóa ${title}...`,
+        success: `Đã xóa sự kiện: ${title}`,
+        error: `Không thể xóa ${title}.`,
       });
+      await refreshEventsDashboard();
     } catch {
       setEvents(previousEvents);
     }
-  };
-
-  const handleFilter = async () => {
-    await runActionWithToast(async () => Promise.resolve(), {
-      loading: 'Preparing filter panel...',
-      success: 'Filter panel is ready.',
-      error: 'Failed to open filter panel.',
-    });
   };
 
   const handleQuickAudit = async () => {
-    await runActionWithToast(async () => Promise.resolve(), {
-      loading: 'Starting quick audit...',
-      success: 'Quick audit started for moderation queue.',
-      error: 'Failed to start quick audit.',
+    await runActionWithToast(refreshEventsDashboard, {
+      loading: 'Đang làm mới hàng đợi kiểm duyệt...',
+      success: 'Đã làm mới hàng đợi kiểm duyệt.',
+      error: 'Không thể làm mới hàng đợi kiểm duyệt.',
     });
   };
 
-  const handleApproveRequest = (eventId: string, title: string) => {
-    setPendingModerationAction({ type: 'approve', eventId, title });
-  };
-
-  const handleDeclineRequest = (eventId: string, title: string) => {
-    setPendingModerationAction({ type: 'decline', eventId, title });
+  const handleActionRequest = (type: ModerationActionType, eventId: string, title: string) => {
+    setPendingModerationAction({ type, eventId, title });
   };
 
   const handleConfirmModeration = async () => {
@@ -154,39 +249,89 @@ export default function EventsPage() {
     setPendingModerationAction(null);
 
     if (currentAction.type === 'approve') {
-      await handleApprove(currentAction.eventId, currentAction.title);
+      await handleModerateStatus(currentAction.eventId, currentAction.title, 'approved', 'Quản trị viên đã phê duyệt từ danh sách sự kiện.');
       return;
     }
 
-    await handleDecline(currentAction.eventId, currentAction.title);
+    if (currentAction.type === 'delete') {
+      await handleDelete(currentAction.eventId, currentAction.title);
+      return;
+    }
+
+    if (currentAction.type === 'cancel') {
+      await handleModerateStatus(currentAction.eventId, currentAction.title, 'cancelled', 'Quản trị viên đã hủy từ danh sách sự kiện.');
+      return;
+    }
+
+    if (currentAction.type === 'archive') {
+      await handleModerateStatus(currentAction.eventId, currentAction.title, 'archived', 'Quản trị viên đã lưu trữ từ danh sách sự kiện.');
+      return;
+    }
+
+    if (currentAction.type === 'reopen') {
+      await handleModerateStatus(currentAction.eventId, currentAction.title, 'active', 'Quản trị viên đã kích hoạt lại từ danh sách sự kiện.');
+      return;
+    }
+
+    await handleModerateStatus(currentAction.eventId, currentAction.title, 'rejected', 'Quản trị viên đã từ chối từ danh sách sự kiện.');
   };
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCurrentPage(1);
+    setSubmittedKeyword(keyword.trim());
+  };
+
+  const handleResetFilters = () => {
+    setKeyword('');
+    setSubmittedKeyword('');
+    setStatusFilter('all');
+    setCategoryFilter('');
+    setVisibilityFilter('all');
+    setOrdering('-start_at');
+    setCurrentPage(1);
+  };
+
+  if ((isEventsLoading || isContextLoading) && !pagination) {
+    return <ListSkeleton rows={8} />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Không thể tải sự kiện"
+        message={error}
+        onRetry={() => {
+          void refreshEventsDashboard();
+        }}
+      />
+    );
+  }
+
   if (!stats || !moderationPulse || !policyHandbook) {
-    return <div className="p-6 text-sm text-slate-500">Loading events...</div>;
+    return <ListSkeleton rows={8} />;
   }
 
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-on-surface">
-            Event Moderation
+            Quản lý sự kiện
           </h2>
           <p className="text-on-surface-variant text-sm mt-1">
-            Review pending approvals and reported policy violations.
+            Theo dõi, lọc và xử lý toàn bộ sự kiện trong hệ thống.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button 
             type="button"
-            onClick={() => {
-              void handleFilter();
-            }}
+            onClick={handleResetFilters}
             className="px-4 py-2 rounded-full glass-card text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-white/40"
           >
             <Filter className="w-4 h-4" />
-            Filter
+            Xóa lọc
           </button>
           <button 
             type="button"
@@ -195,56 +340,190 @@ export default function EventsPage() {
             }}
             className="px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-xs font-bold uppercase tracking-wider"
           >
-            Quick Audit
+            Kiểm tra nhanh
           </button>
         </div>
       </div>
+
+      <form
+        onSubmit={handleSearchSubmit}
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_160px_180px_160px_190px_auto]"
+      >
+        <label className="relative sm:col-span-2 xl:col-span-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Tìm theo tiêu đề, mô tả hoặc ban tổ chức"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+          />
+        </label>
+        <AdminSelect
+          value={statusFilter}
+          onChange={(nextValue) => {
+            setStatusFilter(nextValue as EventStatusFilter);
+            setCurrentPage(1);
+          }}
+          options={EVENT_STATUS_OPTIONS}
+          ariaLabel="Lọc theo trạng thái sự kiện"
+        />
+        <AdminSelect
+          value={categoryFilter}
+          onChange={(nextValue) => {
+            setCategoryFilter(nextValue);
+            setCurrentPage(1);
+          }}
+          options={categoryOptions}
+          ariaLabel="Lọc theo danh mục sự kiện"
+        />
+        <AdminSelect
+          value={visibilityFilter}
+          onChange={(nextValue) => {
+            setVisibilityFilter(nextValue as 'all' | 'public' | 'private');
+            setCurrentPage(1);
+          }}
+          options={EVENT_VISIBILITY_OPTIONS}
+          ariaLabel="Lọc theo phạm vi hiển thị"
+        />
+        <AdminSelect
+          value={ordering}
+          onChange={(nextValue) => {
+            setOrdering(nextValue as EventOrdering);
+            setCurrentPage(1);
+          }}
+          options={EVENT_ORDERING_OPTIONS}
+          ariaLabel="Sắp xếp danh sách sự kiện"
+        />
+        <div className="flex gap-2 sm:col-span-2 xl:col-span-1">
+          <button
+            type="submit"
+            className="h-10 w-full rounded-xl bg-amber-500 px-4 text-sm font-bold text-white hover:bg-amber-600 xl:w-auto"
+          >
+            Tìm
+          </button>
+          {/* <button
+            type="button"
+            onClick={() => {
+              void handleQuickAudit();
+            }}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 hover:text-amber-600"
+          >
+            <RotateCw className="h-4 w-4" />
+            Làm mới
+          </button> */}
+        </div>
+      </form>
 
       {/* Moderation Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Urgent Reports Section */}
-          <h3 className="text-xs font-bold uppercase tracking-widest text-error flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4" />
-            Urgent Violations ({reportedEvents.length})
-          </h3>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Danh sách sự kiện ({totalEvents})
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {reportedCount} sự kiện bị báo cáo, {pendingCount} sự kiện chờ phê duyệt.
+              </p>
+            </div>
+            <p className="text-xs font-semibold text-slate-500">
+              {isEventsLoading ? 'Đang tải danh sách...' : `Trang ${safeCurrentPage}/${totalPages}`}
+            </p>
+          </div>
 
-          {reportedEvents.map((event) => (
-            <ReportedEventCard
-              key={event.id}
-              event={event}
-              onDecline={handleDeclineRequest}
+          {isEventsLoading ? (
+            <ListSkeleton rows={3} />
+          ) : (
+            events.map((event) =>
+              event.reportType ? (
+                <ReportedEventCard
+                  key={event.id}
+                  event={event}
+                  onAction={handleActionRequest}
+                />
+              ) : (
+                <PendingEventCard
+                  key={event.id}
+                  event={event}
+                  onAction={handleActionRequest}
+                />
+              )
+            )
+          )}
+
+          {!isEventsLoading && events.length === 0 ? (
+            <EmptyState
+              title="Không tìm thấy sự kiện"
+              description="Hãy thay đổi bộ lọc hoặc từ khóa để xem các sự kiện phù hợp."
             />
-          ))}
+          ) : null}
 
-          {/* Pending Approval Section */}
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 pt-6 mb-4">
-            <CheckCircle className="w-4 h-4" />
-            Pending Approval ({stats.pendingApproval})
-          </h3>
-
-          {pendingEvents.map((event) => (
-            <PendingEventCard
-              key={event.id}
-              event={event}
-              onApprove={handleApproveRequest}
-            />
-          ))}
+          {totalEvents > EVENTS_PER_PAGE ? (
+            <div className="flex flex-col gap-3 rounded-2xl border border-white/50 bg-white/60 px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <p className="text-xs font-medium text-slate-500">
+                Hiển thị {(safeCurrentPage - 1) * EVENTS_PER_PAGE + 1}
+                -{Math.min(safeCurrentPage * EVENTS_PER_PAGE, totalEvents)} trong tổng số {totalEvents} sự kiện.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Trang trước"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {paginationItems.map((item) =>
+                  typeof item === 'number' ? (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCurrentPage(item)}
+                      aria-current={item === safeCurrentPage ? 'page' : undefined}
+                      className={item === safeCurrentPage
+                        ? 'h-9 min-w-9 rounded-lg bg-amber-500 px-3 text-xs font-bold text-white shadow-sm'
+                        : 'h-9 min-w-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-500 hover:text-amber-600'}
+                    >
+                      {item}
+                    </button>
+                  ) : (
+                    <span
+                      key={item}
+                      className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-xs font-bold text-slate-400"
+                    >
+                      ...
+                    </span>
+                  )
+                )}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Trang sau"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Right Column: Stats & Queue */}
         <div className="lg:col-span-4 space-y-6">
           {/* Moderation Pulse Card */}
           <Card className="glass-card border-none rounded-[32px] p-6">
-            <h3 className="text-sm font-bold text-on-surface mb-4">Moderation Pulse</h3>
+            <h3 className="text-sm font-bold text-on-surface mb-4">Nhịp kiểm duyệt</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/50 p-4 rounded-2xl border border-white/40">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg Response</p>
-                <p className="text-2xl font-black text-on-surface mt-1">{moderationPulse.avgResponseHours}h</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phản hồi TB</p>
+                <p className="text-2xl font-black text-on-surface mt-1">{moderationPulse.avgResponseHours} giờ</p>
               </div>
               <div className="bg-white/50 p-4 rounded-2xl border border-white/40">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Queue Size</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quy mô hàng đợi</p>
                 <p className="text-2xl font-black text-on-surface mt-1">{moderationPulse.queueSize}</p>
               </div>
             </div>
@@ -264,7 +543,7 @@ export default function EventsPage() {
 
           {/* Recent Activities Card */}
           <Card className="glass-card border-none rounded-[32px] p-6">
-            <h3 className="text-sm font-bold text-on-surface mb-6">Recent Activities</h3>
+            <h3 className="text-sm font-bold text-on-surface mb-6">Hoạt động gần đây</h3>
             <div className="space-y-6">
               {moderationActivities.map((activity) => {
                 const config = moderationActivityTypeConfig[activity.type];
@@ -318,15 +597,13 @@ export default function EventsPage() {
             setPendingModerationAction(null);
           }
         }}
-        title={pendingModerationAction?.type === 'approve' ? 'Xác nhận phê duyệt sự kiện' : 'Xác nhận từ chối sự kiện'}
+        title={getActionDialogTitle(pendingModerationAction?.type)}
         description={pendingModerationAction
-          ? pendingModerationAction.type === 'approve'
-            ? `Bạn sắp phê duyệt sự kiện ${pendingModerationAction.title}. Hành động này sẽ cập nhật trạng thái kiểm duyệt.`
-            : `Bạn sắp từ chối sự kiện ${pendingModerationAction.title}. Hành động này có thể không hoàn tác.`
+          ? getActionDialogDescription(pendingModerationAction.type, pendingModerationAction.title)
           : 'Xác nhận hành động kiểm duyệt.'}
         confirmLabel="Xác nhận"
         cancelLabel="Hủy"
-        variant={pendingModerationAction?.type === 'decline' ? 'danger' : 'default'}
+        variant={pendingModerationAction?.type === 'decline' || pendingModerationAction?.type === 'delete' || pendingModerationAction?.type === 'cancel' ? 'danger' : 'default'}
         onConfirm={() => {
           void handleConfirmModeration();
         }}
@@ -337,13 +614,13 @@ export default function EventsPage() {
 
 function ReportedEventCard({
   event,
-  onDecline,
+  onAction,
 }: {
   event: Event;
-  onDecline: (eventId: string, title: string) => void;
+  onAction: (type: ModerationActionType, eventId: string, title: string) => void;
 }) {
   return (
-    <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 border-l-4 border-l-error">
+    <Card className="glass-card border-none rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 border-l-4 border-l-error">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-slate-200 to-slate-300">
         {event.coverImageUrl && (
@@ -359,10 +636,10 @@ function ReportedEventCard({
 
       {/* Content */}
       <div className="flex-grow flex flex-col">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h4 className="font-bold text-lg text-on-surface">{event.title}</h4>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1 mt-0.5">
               <User className="w-3 h-3" />
               {event.organizer} • <Calendar className="w-3 h-3" />
               {event.date}
@@ -378,28 +655,36 @@ function ReportedEventCard({
         {event.reportSnippet && (
           <div className="mt-4 bg-error-container/30 p-3 rounded-xl">
             <p className="text-xs text-on-error-container leading-relaxed">
-              <span className="font-bold">Report Snippet:</span> &quot;{event.reportSnippet}&quot;
+              <span className="font-bold">Trích đoạn báo cáo:</span> &quot;{event.reportSnippet}&quot;
             </p>
           </div>
         )}
 
-        <div className="mt-auto pt-4 flex gap-3">
+        <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap">
           <Link href={`/events/${event.id}`} className="flex-grow md:flex-none px-6 py-2 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-bold hover:opacity-90 transition-opacity whitespace-nowrap text-center">
-            View Event
+            Xem sự kiện
           </Link>
           <button
             type="button"
             onClick={() => {
-              void onDecline(event.id, event.title);
+              void onAction('decline', event.id, event.title);
             }}
             className="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-opacity"
           >
-            Decline
+            Từ chối
           </button>
           <button
             type="button"
-            onClick={() => toast.info(`More actions for ${event.title} coming soon.`)}
-            className="p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40"
+            onClick={() => onAction('archive', event.id, event.title)}
+            className="flex-grow md:flex-none px-6 py-2 glass-card text-on-surface rounded-xl text-xs font-bold border border-white/40 text-center"
+          >
+            Lưu trữ
+          </button>
+          <button
+            type="button"
+            onClick={() => onAction('delete', event.id, event.title)}
+            className="flex items-center justify-center p-2 glass-card rounded-xl text-on-surface-variant hover:text-on-surface transition-colors border border-white/40"
+            aria-label={`Xóa ${event.title}`}
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -411,13 +696,13 @@ function ReportedEventCard({
 
 function PendingEventCard({
   event,
-  onApprove,
+  onAction,
 }: {
   event: Event;
-  onApprove: (eventId: string, title: string) => void;
+  onAction: (type: ModerationActionType, eventId: string, title: string) => void;
 }) {
   return (
-    <Card className="glass-card border-none rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-shadow duration-300">
+    <Card className="glass-card border-none rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 hover:shadow-xl transition-shadow duration-300">
       {/* Image */}
       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 relative bg-gradient-to-br from-amber-100 to-amber-200">
         {event.coverImageUrl && (
@@ -433,10 +718,10 @@ function PendingEventCard({
 
       {/* Content */}
       <div className="flex-grow flex flex-col">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h4 className="font-bold text-lg text-on-surface">{event.title}</h4>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-on-surface-variant flex flex-wrap items-center gap-1 mt-0.5">
               <User className="w-3 h-3" />
               {event.organizer} • <Calendar className="w-3 h-3" />
               {event.date}
@@ -450,24 +735,99 @@ function PendingEventCard({
         </div>
 
         <p className="text-xs text-on-surface-variant mt-4 line-clamp-2 leading-relaxed">
-          {event.moderationNote ?? 'No additional moderation context provided for this event.'}
+          {event.moderationNote ?? 'Không có thêm ngữ cảnh kiểm duyệt cho sự kiện này.'}
         </p>
 
-        <div className="mt-auto pt-4 flex gap-3">
+        <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={() => {
-              void onApprove(event.id, event.title);
+              void onAction(getPrimaryAction(event.status), event.id, event.title);
             }}
             className="flex-grow md:flex-none px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors"
           >
-            Approve
+            {getPrimaryActionLabel(event.status)}
           </button>
           <Link href={`/events/${event.id}`} className="flex-grow md:flex-none px-6 py-2 glass-card text-on-surface rounded-xl text-xs font-bold border border-white/40 text-center">
-            Review Details
+            Xem chi tiết
           </Link>
+          <button
+            type="button"
+            onClick={() => onAction(getSecondaryAction(event.status), event.id, event.title)}
+            className="flex-grow md:flex-none px-6 py-2 bg-error text-white rounded-xl text-xs font-bold hover:bg-error/90 transition-colors"
+          >
+            {getSecondaryActionLabel(event.status)}
+          </button>
         </div>
       </div>
     </Card>
   );
+}
+
+function getPrimaryAction(status: Event['status']): ModerationActionType {
+  if (status === 'approved' || status === 'active') return 'archive';
+  if (status === 'rejected' || status === 'cancelled' || status === 'archived') return 'reopen';
+  return 'approve';
+}
+
+function getPaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
+  if (totalPages <= MAX_VISIBLE_PAGES) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage]);
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page > 1 && page < totalPages) {
+      pages.add(page);
+    }
+  }
+
+  const sortedPages = Array.from(pages).sort((first, second) => first - second);
+  return sortedPages.flatMap<PaginationItem>((page, index) => {
+    const previousPage = sortedPages[index - 1];
+    if (!previousPage || page - previousPage === 1) {
+      return [page];
+    }
+
+    return [page - previousPage === 2 ? previousPage + 1 : index === 1 ? 'ellipsis-start' : 'ellipsis-end', page];
+  });
+}
+
+function getPrimaryActionLabel(status: Event['status']): string {
+  if (status === 'approved' || status === 'active') return 'Lưu trữ';
+  if (status === 'rejected' || status === 'cancelled' || status === 'archived') return 'Kích hoạt lại';
+  return 'Phê duyệt';
+}
+
+function getSecondaryAction(status: Event['status']): ModerationActionType {
+  if (status === 'approved' || status === 'active') return 'cancel';
+  if (status === 'rejected' || status === 'cancelled') return 'archive';
+  if (status === 'archived') return 'reopen';
+  return 'delete';
+}
+
+function getSecondaryActionLabel(status: Event['status']): string {
+  if (status === 'approved' || status === 'active') return 'Hủy';
+  if (status === 'rejected' || status === 'cancelled') return 'Lưu trữ';
+  if (status === 'archived') return 'Kích hoạt lại';
+  return 'Xóa';
+}
+
+function getActionDialogTitle(type?: ModerationActionType): string {
+  if (type === 'approve') return 'Xác nhận phê duyệt sự kiện';
+  if (type === 'decline') return 'Xác nhận từ chối sự kiện';
+  if (type === 'cancel') return 'Xác nhận hủy sự kiện';
+  if (type === 'archive') return 'Xác nhận lưu trữ sự kiện';
+  if (type === 'reopen') return 'Xác nhận kích hoạt lại sự kiện';
+  if (type === 'delete') return 'Xác nhận xóa sự kiện';
+  return 'Xác nhận thao tác sự kiện';
+}
+
+function getActionDialogDescription(type: ModerationActionType, title: string): string {
+  if (type === 'approve') return `Bạn sắp phê duyệt sự kiện ${title}. Hành động này sẽ cập nhật trạng thái kiểm duyệt.`;
+  if (type === 'decline') return `Bạn sắp từ chối sự kiện ${title}. Hành động này sẽ được ghi vào nhật ký kiểm duyệt.`;
+  if (type === 'cancel') return `Bạn sắp hủy sự kiện ${title}. Người dùng có thể không tiếp tục đăng ký hoặc tham gia.`;
+  if (type === 'archive') return `Bạn sắp lưu trữ sự kiện ${title}. Sự kiện sẽ rời khỏi hàng đợi vận hành chính.`;
+  if (type === 'reopen') return `Bạn sắp kích hoạt lại sự kiện ${title}. Sự kiện sẽ trở lại trạng thái hoạt động.`;
+  return `Bạn sắp xóa mềm sự kiện ${title}. Hành động này sẽ được ghi audit.`;
 }

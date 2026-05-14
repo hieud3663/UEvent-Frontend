@@ -1,81 +1,97 @@
 // File: src/app/(admin)/categories/page.tsx
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Plus, Edit, Trash2, Music, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { Plus, Edit, Trash2, Music, ChevronLeft, ChevronRight, Search, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, ConfirmActionDialog } from '@/core/components';
+import { AdminSelect, Button, Card, ConfirmActionDialog, EmptyState, ErrorState, ListSkeleton } from '@/core/components';
 import {
   deleteCategoryById,
-  getCategories,
+  getCategoriesPage,
   getCategoryStats,
 } from '@/features/categories/services/categories.service';
 import { categoryIconMap } from '@/features/categories/utils/category-display';
 import { cn } from '@/core/lib/utils';
-import type { Category } from '@/features/categories/types';
+import type { Category, CategoryListResult } from '@/features/categories/types';
 import { toast } from 'sonner';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
-const FILTER_CATEGORIES = ['ALL', 'ENTERTAINMENT', 'EDUCATION', 'NETWORKING', 'CHARITY'] as const;
+const CATEGORY_PAGE_SIZE = 8;
+type CategoryStatusFilter = 'all' | 'active' | 'inactive';
+type CategoryOrdering = 'name' | '-name' | 'created_at' | '-created_at' | 'event_count' | '-event_count';
+
+const CATEGORY_STATUS_OPTIONS: Array<{ value: CategoryStatusFilter; label: string }> = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'active', label: 'Đang hoạt động' },
+  { value: 'inactive', label: 'Tạm ẩn' },
+];
+
+const CATEGORY_ORDERING_OPTIONS: Array<{ value: CategoryOrdering; label: string }> = [
+  { value: 'name', label: 'Tên A-Z' },
+  { value: '-name', label: 'Tên Z-A' },
+  { value: '-event_count', label: 'Nhiều sự kiện nhất' },
+  { value: 'event_count', label: 'Ít sự kiện nhất' },
+  { value: '-created_at', label: 'Mới tạo trước' },
+  { value: 'created_at', label: 'Cũ nhất trước' },
+];
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Awaited<ReturnType<typeof getCategoryStats>> | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [pagination, setPagination] = useState<Omit<CategoryListResult, 'categories'> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState('');
+  const [submittedKeyword, setSubmittedKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CategoryStatusFilter>('all');
+  const [ordering, setOrdering] = useState<CategoryOrdering>('name');
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const router = useRouter();
-  const categoriesPerPage = 4;
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadCategoriesPageData() {
+  const loadCategoriesPageData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const isActive = statusFilter === 'all' ? undefined : statusFilter === 'active';
       const [categoriesResponse, categoriesStats] = await Promise.all([
-        getCategories(),
+        getCategoriesPage({
+          keyword: submittedKeyword,
+          isActive,
+          ordering,
+          page: currentPage,
+          pageSize: CATEGORY_PAGE_SIZE,
+        }),
         getCategoryStats(),
       ]);
 
-      if (!isMounted) {
-        return;
-      }
-
-      setCategories(categoriesResponse);
+      setCategories(categoriesResponse.categories);
+      setPagination({
+        total: categoriesResponse.total,
+        page: categoriesResponse.page,
+        pageSize: categoriesResponse.pageSize,
+        totalPages: categoriesResponse.totalPages,
+      });
       setStats(categoriesStats);
-      setSelectedFilter(FILTER_CATEGORIES[0]);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải danh mục.');
+    } finally {
+      setIsLoading(false);
     }
+  }, [currentPage, ordering, statusFilter, submittedKeyword]);
 
+  useEffect(() => {
     void loadCategoriesPageData();
+  }, [loadCategoriesPageData]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const filteredCategories = useMemo(() => {
-    if (selectedFilter === 'ALL') {
-      return categories;
-    }
-
-    return categories.filter((category) =>
-      category.name.toUpperCase().includes(selectedFilter)
-    );
-  }, [categories, selectedFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredCategories.length / categoriesPerPage));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedCategories = useMemo(
-    () =>
-      filteredCategories.slice(
-        (safeCurrentPage - 1) * categoriesPerPage,
-        safeCurrentPage * categoriesPerPage
-      ),
-    [filteredCategories, safeCurrentPage]
-  );
+  const totalPages = pagination?.totalPages ?? 1;
+  const safeCurrentPage = pagination?.page ?? currentPage;
+  const totalCategories = pagination?.total ?? categories.length;
 
   const handleEditCategory = (category: Category) => {
-    toast.info(`Opening editor for ${category.name}.`);
+    toast.info(`Đang mở trình chỉnh sửa cho ${category.name}.`);
     router.push(`/categories/create?categoryId=${category.id}`);
   };
 
@@ -85,10 +101,13 @@ export default function CategoriesPage() {
 
     try {
       await runActionWithToast(() => deleteCategoryById(category.id), {
-        loading: `Deleting ${category.name}...`,
-        success: `Deleted category ${category.name}.`,
-        error: `Failed to delete ${category.name}.`,
+        loading: `Đang xóa ${category.name}...`,
+        success: category.eventCount > 0
+          ? `Đã chuyển danh mục ${category.name} sang tạm ẩn vì vẫn còn sự kiện.`
+          : `Đã xóa danh mục ${category.name}.`,
+        error: `Không thể xóa ${category.name}.`,
       });
+      await loadCategoriesPageData();
     } catch {
       setCategories(previousCategories);
     }
@@ -108,20 +127,50 @@ export default function CategoriesPage() {
     await handleDeleteCategory(target);
   };
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCurrentPage(1);
+    setSubmittedKeyword(keyword.trim());
+  };
+
+  const handleResetFilters = () => {
+    setKeyword('');
+    setSubmittedKeyword('');
+    setStatusFilter('all');
+    setOrdering('name');
+    setCurrentPage(1);
+  };
+
+  if (isLoading) {
+    return <ListSkeleton rows={8} />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Không thể tải danh mục"
+        message={error}
+        onRetry={() => {
+          void loadCategoriesPageData();
+        }}
+      />
+    );
+  }
+
   if (!stats) {
-    return <div className="p-6 text-sm text-slate-500">Loading categories...</div>;
+    return null;
   }
 
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Category Management
+            Quản lý danh mục
           </h2>
           <p className="text-slate-500 text-sm font-medium mt-1">
-            Organize and control event classification across the platform.
+            Sắp xếp và kiểm soát phân loại sự kiện trên toàn hệ thống.
           </p>
         </div>
         <Button
@@ -130,67 +179,115 @@ export default function CategoriesPage() {
           className="rounded-xl shadow-lg shadow-amber-500/30"
           leftIcon={<Plus className="w-5 h-5" />}
         >
-          Create New Category
+          Tạo danh mục mới
         </Button>
       </div>
+
+      <form
+        onSubmit={handleSearchSubmit}
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_180px_220px_auto]"
+      >
+        <label className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Tìm theo tên, slug hoặc mô tả danh mục"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+          />
+        </label>
+        <AdminSelect
+          value={statusFilter}
+          onChange={(nextValue) => {
+            setStatusFilter(nextValue as CategoryStatusFilter);
+            setCurrentPage(1);
+          }}
+          options={CATEGORY_STATUS_OPTIONS}
+          ariaLabel="Lọc theo trạng thái danh mục"
+        />
+        <AdminSelect
+          value={ordering}
+          onChange={(nextValue) => {
+            setOrdering(nextValue as CategoryOrdering);
+            setCurrentPage(1);
+          }}
+          options={CATEGORY_ORDERING_OPTIONS}
+          ariaLabel="Sắp xếp danh sách danh mục"
+        />
+        <div className="flex gap-2">
+          <Button type="submit" size="md" className="shrink-0">
+            Tìm kiếm
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={handleResetFilters}
+            leftIcon={<RotateCw className="h-4 w-4" />}
+          >
+            Đặt lại
+          </Button>
+        </div>
+      </form>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="glass-card border-none rounded-2xl p-6">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Total Categories
+            Tổng danh mục
           </p>
           <p className="text-3xl font-extrabold text-slate-900">{stats.totalCategories}</p>
         </Card>
         <Card className="glass-card border-none rounded-2xl p-6">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Active Now
+            Đang hoạt động
           </p>
           <div className="flex items-center gap-2">
             <p className="text-3xl font-extrabold text-slate-900">{stats.activeCategories}</p>
             <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">
-              +2 new
+              +2 mới
             </span>
           </div>
         </Card>
         <Card className="glass-card border-none rounded-2xl p-6">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Total Event Volume
+            Tổng sự kiện
           </p>
-          <p className="text-3xl font-extrabold text-slate-900">{stats.totalEvents.toLocaleString('en-US')}</p>
+          <p className="text-3xl font-extrabold text-slate-900">{stats.totalEvents.toLocaleString('vi-VN')}</p>
         </Card>
         <Card className="glass-card border-none rounded-2xl p-6 bg-amber-50/50 border-amber-200/50">
           <p className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-1">
-            Trending
+            Nổi bật
           </p>
           <p className="text-xl font-bold text-amber-900">{stats.popularCategory}</p>
         </Card>
       </div>
 
       {/* Category Table */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/60 shadow-lg overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-hidden rounded-3xl border border-white/60 bg-white/80 shadow-lg backdrop-blur-xl">
+        <div className="overflow-x-auto">
+        <table className="min-w-[760px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Category Name
+                Tên danh mục
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Event Count
+                Số sự kiện
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Status
+                Trạng thái
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Last Updated
+                Cập nhật lần cuối
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-right">
-                Actions
+                Hành động
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedCategories.map((category) => (
+            {categories.map((category) => (
               <CategoryRow
                 key={category.id}
                 category={category}
@@ -200,11 +297,23 @@ export default function CategoriesPage() {
             ))}
           </tbody>
         </table>
+        </div>
+
+        {categories.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              title="Không tìm thấy danh mục"
+              description="Hãy tạo danh mục mới hoặc xóa bộ lọc hiện tại để xem kết quả."
+              actionLabel="Tạo danh mục"
+              onAction={() => router.push('/categories/create')}
+            />
+          </div>
+        ) : null}
 
         {/* Pagination */}
-        <div className="px-8 py-4 bg-slate-50/30 flex items-center justify-between">
+        <div className="flex flex-col gap-3 bg-slate-50/30 px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
           <p className="text-xs font-medium text-slate-500">
-            Showing {(safeCurrentPage - 1) * categoriesPerPage + 1}-{Math.min(safeCurrentPage * categoriesPerPage, filteredCategories.length)} of {filteredCategories.length} categories
+            Hiển thị {(safeCurrentPage - 1) * CATEGORY_PAGE_SIZE + 1}-{Math.min(safeCurrentPage * CATEGORY_PAGE_SIZE, totalCategories)} trong {totalCategories} danh mục
           </p>
           <div className="flex gap-2">
             <button
@@ -215,6 +324,9 @@ export default function CategoriesPage() {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
+            <span className="inline-flex min-w-20 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600">
+              {safeCurrentPage}/{totalPages}
+            </span>
             <button
               type="button"
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
@@ -227,35 +339,8 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Quick Filter Categories */}
-      <div className="mt-12">
-        <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-4">
-          Quick Filter Categories
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {FILTER_CATEGORIES.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => {
-                setSelectedFilter(filter);
-                setCurrentPage(1);
-              }}
-              className={cn(
-                'px-4 py-2 rounded-full text-xs font-bold transition-all',
-                selectedFilter === filter
-                  ? 'bg-amber-500 text-white shadow-sm hover:scale-105'
-                  : 'bg-white/70 backdrop-blur border border-slate-200 text-slate-600 hover:border-amber-500'
-              )}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Floating Action Button */}
-      <Link href="/categories/create" className="fixed bottom-8 right-8 w-14 h-14 bg-on-surface text-white rounded-full shadow-2xl shadow-black/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+      <Link href="/categories/create" className="fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-on-surface text-white shadow-2xl shadow-black/30 transition-all hover:scale-110 active:scale-95 sm:right-8 lg:bottom-8">
         <Plus className="w-6 h-6" />
       </Link>
 
@@ -307,7 +392,7 @@ function CategoryRow({
       </td>
       <td className="px-8 py-5">
         <span className="text-sm font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
-          {category.eventCount} Events
+          {category.eventCount} sự kiện
         </span>
       </td>
       <td className="px-8 py-5">
@@ -324,13 +409,13 @@ function CategoryRow({
             )}
           />
           <span className="text-xs font-bold uppercase tracking-wider">
-            {category.isActive ? 'Active' : 'Inactive'}
+            {category.isActive ? 'Đang hoạt động' : 'Tạm ẩn'}
           </span>
         </div>
       </td>
       <td className="px-8 py-5">
         <span className="text-sm text-slate-500 font-medium">
-          {new Date(category.updatedAt).toLocaleDateString('en-US', {
+          {new Date(category.updatedAt).toLocaleDateString('vi-VN', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',

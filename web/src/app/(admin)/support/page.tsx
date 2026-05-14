@@ -15,10 +15,10 @@ const supportStatusConfig: Record<
   TicketStatus,
   { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }
 > = {
-  open: { label: 'Pending', variant: 'warning' },
-  in_progress: { label: 'In Progress', variant: 'info' },
-  resolved: { label: 'Resolved', variant: 'success' },
-  closed: { label: 'Closed', variant: 'neutral' },
+  open: { label: 'Đang chờ', variant: 'warning' },
+  in_progress: { label: 'Đang xử lý', variant: 'info' },
+  resolved: { label: 'Đã xử lý', variant: 'success' },
+  closed: { label: 'Đã đóng', variant: 'neutral' },
 };
 
 type FilterType = 'all' | 'pending' | 'in_progress';
@@ -54,7 +54,7 @@ export default function SupportPage() {
   }, []);
 
   if (!stats) {
-    return <div className="p-6 text-sm text-slate-500">Loading support tickets...</div>;
+    return <div className="p-6 text-sm text-slate-500">Đang tải yêu cầu hỗ trợ...</div>;
   }
 
   // Filter tickets based on selected filters
@@ -69,7 +69,7 @@ export default function SupportPage() {
     return true;
   });
 
-  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / itemsPerPage));
   const paginatedTickets = filteredTickets.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -80,27 +80,27 @@ export default function SupportPage() {
 
   const handleFilter = async () => {
     await runActionWithToast(async () => Promise.resolve(), {
-      loading: 'Preparing support filters...',
-      success: 'Support filter panel is ready.',
-      error: 'Failed to open support filters.',
+      loading: 'Đang chuẩn bị bộ lọc hỗ trợ...',
+      success: 'Bảng lọc hỗ trợ đã sẵn sàng.',
+      error: 'Không thể mở bộ lọc hỗ trợ.',
     });
   };
 
   return (
     <div className="space-y-8 pb-32">
       {/* Header Section */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Support &amp; Inquiries
+            Hỗ trợ &amp; yêu cầu
           </h1>
           <p className="text-slate-500 mt-1">
-            Manage and respond to user questions and support tickets.
+            Quản lý và phản hồi câu hỏi, yêu cầu hỗ trợ từ người dùng.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* Status Filter Toggle */}
-          <div className="flex bg-white/60 p-1 rounded-full border border-white/80 shadow-sm">
+          <div className="flex max-w-full overflow-x-auto rounded-full border border-white/80 bg-white/60 p-1 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setFilterType('all')}
               className={cn(
@@ -110,7 +110,7 @@ export default function SupportPage() {
                   : 'text-slate-500 hover:bg-slate-100'
               )}
             >
-              ALL
+              TẤT CẢ
             </button>
             <button
               onClick={() => setFilterType('pending')}
@@ -121,7 +121,7 @@ export default function SupportPage() {
                   : 'text-slate-500 hover:bg-slate-100'
               )}
             >
-              PENDING
+              ĐANG CHỜ
             </button>
             <button
               onClick={() => setFilterType('in_progress')}
@@ -132,7 +132,7 @@ export default function SupportPage() {
                   : 'text-slate-500 hover:bg-slate-100'
               )}
             >
-              IN PROGRESS
+              ĐANG XỬ LÝ
             </button>
           </div>
 
@@ -145,42 +145,42 @@ export default function SupportPage() {
             className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-white/80 text-sm font-semibold text-slate-700 hover:scale-[1.02] transition-transform"
           >
             <Filter className="w-4 h-4" />
-            Filter
+            Lọc
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {/* Total Tickets */}
         <div className="col-span-1 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/40">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-            Total Tickets
+            Tổng yêu cầu
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-extrabold text-slate-900">{totalTickets.toLocaleString('en-US')}</span>
           </div>
-          <p className="text-xs text-green-600 font-medium mt-2">+12% this week</p>
+          <p className="text-xs text-green-600 font-medium mt-2">+12% trong tuần này</p>
         </div>
 
         {/* Pending Inquiries */}
         <div className="col-span-1 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/40">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-            Pending Inquiries
+            Yêu cầu đang chờ
           </p>
           <span className="text-4xl font-extrabold text-slate-900">{pendingInquiries}</span>
-          <p className="text-xs text-amber-600 font-medium mt-2">Requires urgent attention</p>
+          <p className="text-xs text-amber-600 font-medium mt-2">Cần ưu tiên xử lý</p>
         </div>
 
         {/* Avg. Response Time - Large Card */}
-        <div className="col-span-2 bg-amber-500 p-6 rounded-2xl shadow-lg border border-amber-400 relative overflow-hidden">
+        <div className="relative overflow-hidden rounded-2xl border border-amber-400 bg-amber-500 p-6 shadow-lg sm:col-span-2">
           <div className="relative z-10">
             <p className="text-xs font-bold text-amber-100 uppercase tracking-widest mb-2">
-              Avg. Response Time
+              Thời gian phản hồi TB
             </p>
-            <span className="text-4xl font-extrabold text-white">2.4 hrs</span>
+            <span className="text-4xl font-extrabold text-white">2,4 giờ</span>
             <p className="text-xs text-amber-100 font-medium mt-2">
-              Improving by 15 mins since yesterday
+              Cải thiện 15 phút so với hôm qua
             </p>
           </div>
           <Timer className="absolute -right-4 -bottom-4 w-36 h-36 text-amber-400/30 rotate-12" />
@@ -188,24 +188,25 @@ export default function SupportPage() {
       </div>
 
       {/* Support Table */}
-      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-lg overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/40 shadow-lg backdrop-blur-xl">
+        <div className="overflow-x-auto">
+        <table className="min-w-[860px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                User
+                Người dùng
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest w-1/3">
-                Subject / Question
+                Chủ đề / câu hỏi
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Date
+                Ngày
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Status
+                Trạng thái
               </th>
               <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-right">
-                Actions
+                Thao tác
               </th>
             </tr>
           </thead>
@@ -215,13 +216,14 @@ export default function SupportPage() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Pagination Section */}
-        <div className="bg-slate-50/50 px-8 py-4 flex items-center justify-between">
+        <div className="flex flex-col gap-3 bg-slate-50/50 px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
           <p className="text-xs font-medium text-slate-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, filteredTickets.length)} of{' '}
-            {totalTickets.toLocaleString('en-US')} entries
+            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến{' '}
+            {Math.min(currentPage * itemsPerPage, filteredTickets.length)} trong{' '}
+            {totalTickets.toLocaleString('vi-VN')} yêu cầu
           </p>
           <div className="flex gap-2">
             <button
@@ -257,9 +259,9 @@ export default function SupportPage() {
       </div>
 
       {/* Floating Category/Filter Nav */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/70 backdrop-blur-xl p-2 rounded-full border border-white/60 shadow-lg z-30">
+      <div className="fixed bottom-24 left-1/2 z-30 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 overflow-x-auto rounded-full border border-white/60 bg-white/70 p-2 shadow-lg backdrop-blur-xl [scrollbar-width:none] sm:bottom-8 [&::-webkit-scrollbar]:hidden">
         <span className="px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-r border-slate-200 mr-2">
-          Queue Type
+          Loại hàng đợi
         </span>
         <button
           onClick={() => setQueueType('all')}
@@ -270,7 +272,7 @@ export default function SupportPage() {
               : 'text-slate-600 hover:bg-slate-100'
           )}
         >
-          All Support
+          Tất cả
         </button>
         <button
           onClick={() => setQueueType('technical')}
@@ -281,7 +283,7 @@ export default function SupportPage() {
               : 'text-slate-600 hover:bg-slate-100'
           )}
         >
-          Technical
+          Kỹ thuật
         </button>
         <button
           onClick={() => setQueueType('billing')}
@@ -292,7 +294,7 @@ export default function SupportPage() {
               : 'text-slate-600 hover:bg-slate-100'
           )}
         >
-          Billing
+          Thanh toán
         </button>
         <button
           onClick={() => setQueueType('general')}
@@ -303,7 +305,7 @@ export default function SupportPage() {
               : 'text-slate-600 hover:bg-slate-100'
           )}
         >
-          General
+          Chung
         </button>
       </div>
     </div>
@@ -321,12 +323,12 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
 
   // Format date
   const date = new Date(ticket.createdAt);
-  const formattedDate = date.toLocaleDateString('en-US', {
+  const formattedDate = date.toLocaleDateString('vi-VN', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
   });
-  const formattedTime = date.toLocaleTimeString('en-US', {
+  const formattedTime = date.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -390,13 +392,13 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
         {ticket.status === 'open' ? (
           <Link href={`/support/${ticket.id}`}>
             <button className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:scale-[1.05] transition-transform active:scale-95 shadow-md shadow-amber-200">
-              Answer
+              Trả lời
             </button>
           </Link>
         ) : ticket.status === 'in_progress' ? (
           <Link href={`/support/${ticket.id}`}>
             <button className="bg-white border border-amber-500 text-amber-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-50 transition-colors">
-              Reply
+              Phản hồi
             </button>
           </Link>
         ) : (

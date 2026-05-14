@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ConfirmActionDialog } from '@/core/components';
+import { AdminSelect, ConfirmActionDialog } from '@/core/components';
 import {
   publishNotification,
   saveNotificationDraft,
@@ -23,7 +23,6 @@ import {
   Link as LinkIcon,
   Smile,
   RocketIcon,
-  ChevronDown,
   Wifi,
   Battery,
   Signal,
@@ -47,10 +46,10 @@ export default function CreateNotificationPage() {
   const [scheduleTime, setScheduleTime] = useState('');
   const [pendingAction, setPendingAction] = useState<'draft' | 'send' | null>(null);
   const audienceOptions = [
-    { value: 'all', label: 'All Users' },
-    { value: 'students', label: 'Students' },
-    { value: 'organizers', label: 'Organizers' },
-    { value: 'specific', label: 'Specific Event' },
+    { value: 'all', label: 'Tất cả người dùng' },
+    { value: 'students', label: 'Sinh viên' },
+    { value: 'organizers', label: 'Nhà tổ chức' },
+    { value: 'specific', label: 'Sự kiện cụ thể' },
   ] as const;
   const baseInputClass =
     'w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10';
@@ -71,32 +70,32 @@ export default function CreateNotificationPage() {
 
   const handleSaveDraft = async () => {
     await runActionWithToast(() => saveNotificationDraft(buildNotificationPayload()), {
-      loading: 'Saving draft...',
-      success: 'Draft saved successfully.',
-      error: 'Failed to save draft.',
+      loading: 'Đang lưu bản nháp...',
+      success: 'Đã lưu bản nháp.',
+      error: 'Không thể lưu bản nháp.',
     });
   };
 
   const handleSendNotification = async () => {
     if (!title.trim() || !message.trim()) {
-      toast.error('Please fill in both title and message before sending.');
+      toast.error('Vui lòng nhập tiêu đề và nội dung trước khi gửi.');
       return;
     }
 
     if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
-      toast.error('Please select at least one delivery method.');
+      toast.error('Vui lòng chọn ít nhất một kênh gửi.');
       return;
     }
 
     if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
-      toast.error('Please select schedule date and time.');
+      toast.error('Vui lòng chọn ngày và giờ lên lịch.');
       return;
     }
 
     await runActionWithToast(() => publishNotification(buildNotificationPayload()), {
-      loading: scheduleType === 'now' ? 'Sending notification...' : 'Scheduling notification...',
-      success: scheduleType === 'now' ? 'Notification sent successfully.' : 'Notification scheduled successfully.',
-      error: scheduleType === 'now' ? 'Failed to send notification.' : 'Failed to schedule notification.',
+      loading: scheduleType === 'now' ? 'Đang gửi thông báo...' : 'Đang lên lịch thông báo...',
+      success: scheduleType === 'now' ? 'Đã gửi thông báo.' : 'Đã lên lịch thông báo.',
+      error: scheduleType === 'now' ? 'Không thể gửi thông báo.' : 'Không thể lên lịch thông báo.',
     });
 
     router.push('/notifications');
@@ -108,17 +107,17 @@ export default function CreateNotificationPage() {
 
   const handleRequestSendNotification = () => {
     if (!title.trim() || !message.trim()) {
-      toast.error('Please fill in both title and message before sending.');
+      toast.error('Vui lòng nhập tiêu đề và nội dung trước khi gửi.');
       return;
     }
 
     if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
-      toast.error('Please select at least one delivery method.');
+      toast.error('Vui lòng chọn ít nhất một kênh gửi.');
       return;
     }
 
     if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
-      toast.error('Please select schedule date and time.');
+      toast.error('Vui lòng chọn ngày và giờ lên lịch.');
       return;
     }
 
@@ -140,23 +139,23 @@ export default function CreateNotificationPage() {
   return (
     <>
       {/* Breadcrumbs & Title Section */}
-      <div className="px-10 pt-8 pb-4">
+      <div className="px-0 pb-4 pt-2 sm:px-4 lg:px-10 lg:pt-8">
         <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
           <Link href="/notifications" className="hover:text-[#FFB800] transition-colors">
-            Notifications
+            Thông báo
           </Link>
           <ChevronRight className="w-3 h-3" />
-          <span className="text-slate-600">Create New</span>
+          <span className="text-slate-600">Tạo mới</span>
         </nav>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-          Create New Notification
+        <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+          Tạo thông báo mới
         </h2>
       </div>
 
       {/* Form Canvas */}
-      <div className="px-10 pb-20 flex-1">
+      <div className="flex-1 px-0 pb-28 sm:px-4 lg:px-10">
         <div className="max-w-4xl mx-auto">
-          <div className="glass-panel rounded-[32px] p-10 shadow-xl relative overflow-hidden">
+          <div className="glass-panel relative overflow-hidden rounded-[28px] p-4 shadow-xl sm:p-6 lg:rounded-[32px] lg:p-10">
             {/* Subtle Decorative Background Glow */}
             <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#FFB800]/5 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl"></div>
@@ -165,43 +164,36 @@ export default function CreateNotificationPage() {
               {/* Notification Title */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                  Notification Title
+                  Tiêu đề thông báo
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className={`${baseInputClass} text-base`}
-                  placeholder="Enter a compelling title..."
+                  placeholder="Nhập tiêu đề rõ ràng..."
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                 {/* Target Audience */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                    Target Audience
+                    Đối tượng nhận
                   </label>
-                  <div className="relative">
-                    <select
-                      value={audience}
-                      onChange={(e) => setAudience(e.target.value)}
-                      className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200 bg-white/70 py-3.5 pl-4 pr-11 text-sm font-medium text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
-                    >
-                      {audienceOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-5 h-5" />
-                  </div>
+                  <AdminSelect
+                    value={audience}
+                    onChange={setAudience}
+                    options={audienceOptions}
+                    ariaLabel="Chọn đối tượng nhận thông báo"
+                    triggerClassName="h-auto cursor-pointer rounded-2xl bg-white/70 py-3.5 pl-4 pr-3 focus:border-[#FFB800] focus:ring-[#FFB800]/10"
+                  />
                 </div>
 
                 {/* Delivery Method */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                    Delivery Method
+                    Kênh gửi
                   </label>
                   <div className="flex flex-wrap gap-3">
                     <label className="flex items-center gap-2 bg-white/60 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-white transition-all">
@@ -229,7 +221,7 @@ export default function CreateNotificationPage() {
                         onChange={() => toggleDeliveryMethod('inbox')}
                         className="w-4 h-4 rounded text-[#FFB800] focus:ring-[#FFB800] border-slate-300"
                       />
-                      <span className="text-xs font-semibold text-slate-600">App Inbox</span>
+                      <span className="text-xs font-semibold text-slate-600">Hộp thư ứng dụng</span>
                     </label>
                   </div>
                 </div>
@@ -238,34 +230,34 @@ export default function CreateNotificationPage() {
               {/* Message Body */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                  Message Body
+                  Nội dung thông báo
                 </label>
                 <div className="bg-white/60 border border-slate-200 rounded-3xl overflow-hidden focus-within:border-[#FFB800] transition-all">
                   <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100 flex gap-4">
                     <button
                       type="button"
-                      onClick={() => toast.info('Rich text controls will be available in the editor service.')}
+                      onClick={() => toast.info('Công cụ soạn thảo định dạng sẽ được bổ sung trong dịch vụ editor.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <Bold className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('Rich text controls will be available in the editor service.')}
+                      onClick={() => toast.info('Công cụ soạn thảo định dạng sẽ được bổ sung trong dịch vụ editor.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <Italic className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('Link insertion modal is coming soon.')}
+                      onClick={() => toast.info('Hộp chèn liên kết sẽ được bổ sung sau.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       <LinkIcon className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('Emoji picker is coming soon.')}
+                      onClick={() => toast.info('Bộ chọn biểu tượng cảm xúc sẽ được bổ sung sau.')}
                       className="text-slate-400 hover:text-slate-900 transition-colors ml-auto"
                     >
                       <Smile className="w-[18px] h-[18px]" />
@@ -275,7 +267,7 @@ export default function CreateNotificationPage() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="w-full resize-none border-none bg-transparent p-6 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-                    placeholder="Write your notification message here..."
+                    placeholder="Nhập nội dung thông báo tại đây..."
                     rows={6}
                   />
                 </div>
@@ -284,9 +276,9 @@ export default function CreateNotificationPage() {
               {/* Scheduling */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                  Scheduling
+                  Lịch gửi
                 </label>
-                <div className="flex gap-4">
+                <div className="flex flex-col gap-4 md:flex-row">
                   <label
                     className="flex-1 flex items-center justify-between p-4 bg-white/60 border border-slate-200 rounded-2xl cursor-pointer group hover:bg-white transition-all"
                   >
@@ -295,8 +287,8 @@ export default function CreateNotificationPage() {
                         <Send className="w-[18px] h-[18px]" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Send Now</p>
-                        <p className="text-[10px] text-slate-400">Immediate delivery to all</p>
+                        <p className="text-sm font-bold text-slate-900">Gửi ngay</p>
+                        <p className="text-[10px] text-slate-400">Gửi ngay tới đối tượng đã chọn</p>
                       </div>
                     </div>
                     <input
@@ -316,8 +308,8 @@ export default function CreateNotificationPage() {
                         <Clock className="w-[18px] h-[18px]" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Schedule for Later</p>
-                        <p className="text-[10px] text-slate-400">Select date and time</p>
+                        <p className="text-sm font-bold text-slate-900">Lên lịch gửi</p>
+                        <p className="text-[10px] text-slate-400">Chọn ngày và giờ gửi</p>
                       </div>
                     </div>
                     <input
@@ -333,7 +325,7 @@ export default function CreateNotificationPage() {
 
                 {/* Contextual Date Picker (Shown on Schedule) */}
                 {scheduleType === 'later' && (
-                  <div className="flex gap-4 p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4 sm:flex-row">
                     <div className="flex-1">
                       <input
                         type="date"
@@ -355,7 +347,7 @@ export default function CreateNotificationPage() {
               </div>
 
               {/* Actions */}
-              <div className="pt-6 flex items-center justify-between gap-4 border-t border-slate-100">
+              <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 md:flex-row md:items-center md:justify-between">
                 <button
                   type="button"
                   onClick={() => {
@@ -363,24 +355,24 @@ export default function CreateNotificationPage() {
                   }}
                   className="px-8 py-3.5 rounded-2xl border border-slate-200 bg-white/50 text-slate-600 font-bold text-sm hover:bg-white transition-all active:scale-95"
                 >
-                  Save Draft
+                  Lưu bản nháp
                 </button>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <button
                     type="button"
                     onClick={() => router.back()}
                     className="text-slate-400 text-xs font-semibold hover:text-slate-600 transition-colors"
                   >
-                    Discard changes
+                    Hủy thay đổi
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       handleRequestSendNotification();
                     }}
-                    className="px-10 py-3.5 bg-[#FFB800] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#FFB800]/30 hover:saturate-150 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFB800] px-8 py-3.5 text-sm font-black text-white shadow-xl shadow-[#FFB800]/30 transition-all hover:scale-[1.02] hover:saturate-150 active:scale-95 sm:px-10"
                   >
-                    <span>Send Notification</span>
+                    <span>Gửi thông báo</span>
                     <RocketIcon className="w-[18px] h-[18px]" />
                   </button>
                 </div>
@@ -392,11 +384,11 @@ export default function CreateNotificationPage() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Quick Preview
+                Xem trước nhanh
               </h4>
-              <span className="text-[10px] text-slate-400 font-medium">Device: iPhone 15 Pro</span>
+              <span className="text-[10px] text-slate-400 font-medium">Thiết bị: iPhone 15 Pro</span>
             </div>
-            <div className="max-w-sm mx-auto glass-panel rounded-[2.5rem] p-4 border-8 border-slate-900 shadow-2xl aspect-[9/19] flex flex-col items-center justify-start overflow-hidden relative">
+            <div className="glass-panel relative mx-auto flex aspect-[9/19] w-full max-w-[22rem] flex-col items-center justify-start overflow-hidden rounded-[2rem] border-[6px] border-slate-900 p-3 shadow-2xl sm:rounded-[2.5rem] sm:border-8 sm:p-4">
               {/* Screen Header */}
               <div className="w-full flex justify-between px-6 pt-2 mb-8">
                 <span className="text-[10px] font-bold">9:41</span>
@@ -413,13 +405,13 @@ export default function CreateNotificationPage() {
                   <div className="w-5 h-5 bg-[#FFB800] rounded-md flex items-center justify-center">
                     <Star className="w-[12px] h-[12px] text-white fill-white" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">AMBER EVENTS • NOW</span>
+                  <span className="text-[10px] font-bold text-slate-400">UEVENTS • BÂY GIỜ</span>
                 </div>
                 <h5 className="text-xs font-bold text-slate-900 mb-0.5">
-                  {title || 'Notification Title Appears Here'}
+                  {title || 'Tiêu đề thông báo hiển thị tại đây'}
                 </h5>
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                  {message || 'The content of your message will be displayed like this on user lock screens...'}
+                  {message || 'Nội dung thông báo sẽ hiển thị như thế này trên màn hình khóa của người dùng...'}
                 </p>
               </div>
 
@@ -436,18 +428,18 @@ export default function CreateNotificationPage() {
       </div>
 
       {/* Bottom Action Bar (Contextual) */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-2 py-2 glass-panel rounded-full shadow-2xl border border-white/40">
+      <div className="fixed bottom-24 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 overflow-x-auto rounded-full border border-white/40 px-2 py-2 shadow-2xl glass-panel sm:bottom-8">
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => toast.info('Preview mode is already active.')}
+            onClick={() => toast.info('Chế độ xem trước đang được bật.')}
             className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
           >
             <Eye className="w-5 h-5" />
           </button>
           <button
             type="button"
-            onClick={() => toast.info('Notification history panel is coming soon.')}
+            onClick={() => toast.info('Bảng lịch sử thông báo sẽ được bổ sung sau.')}
             className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
           >
             <History className="w-5 h-5" />
@@ -456,11 +448,11 @@ export default function CreateNotificationPage() {
         <div className="h-6 w-[1px] bg-slate-200 mx-1"></div>
         <button
           type="button"
-          onClick={() => toast.success('AI Optimizer suggested an improved message tone.')}
+          onClick={() => toast.success('Trình tối ưu AI đã gợi ý giọng văn phù hợp hơn.')}
           className="bg-[#FFB800] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:saturate-150 transition-all active:scale-95 shadow-lg shadow-[#FFB800]/20"
         >
           <Sparkles className="w-4 h-4" />
-          AI Optimizer
+          Tối ưu AI
         </button>
       </div>
 

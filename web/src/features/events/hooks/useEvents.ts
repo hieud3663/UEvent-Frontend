@@ -34,7 +34,7 @@ export function useEvents(filters: EventFilters = {}): UseEventsResult {
           return;
         }
 
-        setError('Failed to load events');
+        setError('Không thể tải sự kiện');
       } finally {
         if (isMounted) {
           setIsLoading(false);

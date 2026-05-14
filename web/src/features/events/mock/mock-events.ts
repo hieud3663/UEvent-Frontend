@@ -15,7 +15,7 @@ export const mockEvents: Event[] = [
     date: 'Oct 24, 2024',
     coverImageUrl:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDWr1ZLrB2PRjy_meeHzsve3tDJ5IqG4_V7_hbpCy4BaTbyUvUmXr0COd6ppICAccsQji3LpzrAXoZty2sVF2a-9H_eZONwwoXfNMb2_dHDyoMbFM4EzljjyHGtAZ1ZVwf0vvHIM8LyzOOAKwhZoNCzeDf9XCpYjx_H1G4W1CQ0a_oQmdfw6SzxXNwfHF08cO8Pi5FLVuvEFxMakARkq8B9hYy2Cr71yzY68IKa65embMoyBmnrbk5LXjbJ4TAkfKs89fu7em7d07E',
-    status: 'reported',
+    status: 'pending',
     reportType: 'safety',
     reportSnippet:
       'Organizers are advertising unverified capacity. Previous events at this venue had blocked emergency exits and no fire marshals present...',
@@ -28,7 +28,7 @@ export const mockEvents: Event[] = [
     date: 'Nov 12, 2024',
     coverImageUrl:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDM-9hYTuO2vpG1-AV5rmjnXqj3aMQRZQag8HNz53HFoGtdIweRS4HDR7YkMC7_Mmet-yBNI764yTib5EE1QOl5sm6fpj_kaaFP1KiJu39owtykk-zkfhY22527LJST21ZpsiVh_Av4-uIBwd2-tQ1BaTMe36BqJUsLrWkGXww6MoPB9DJqjpyz9HyDPciyLxRzC_LhDIJoiVmVRUbZdhYBWZ8jPtQxuqYuIrEWYa05xApOtfaKLMFu96fnsBSBeUg4D1X_3PVnVEg',
-    status: 'reported',
+    status: 'pending',
     reportType: 'copyright',
     reportSnippet:
       'The event header image and keynote titles are direct intellectual property of the "AIToday" group without licensing consent...',

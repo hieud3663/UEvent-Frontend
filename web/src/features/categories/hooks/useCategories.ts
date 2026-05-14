@@ -34,7 +34,7 @@ export function useCategories(): UseCategoriesResult {
           return;
         }
 
-        setError('Failed to load categories');
+        setError('Không thể tải danh mục');
       } finally {
         if (isMounted) {
           setIsLoading(false);

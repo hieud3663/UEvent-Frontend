@@ -11,7 +11,7 @@ import {
   getUserById,
 } from '@/features/users/services/users.service';
 import type { User } from '@/features/users/types';
-import { ConfirmActionDialog, ErrorState, ListSkeleton } from '@/core/components';
+import { AdminSelect, ConfirmActionDialog, ErrorState, ListSkeleton } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 export default function BanUserPage() {
@@ -72,11 +72,11 @@ export default function BanUserPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 pb-20">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-0 pb-20 sm:p-6">
       {/* Focused Modal Card */}
-      <div className="max-w-xl w-full bg-white/70 backdrop-blur-3xl border border-white/40 rounded-[32px] shadow-2xl shadow-slate-200/50 overflow-hidden">
+      <div className="w-full max-w-xl overflow-hidden rounded-[28px] border border-white/40 bg-white/70 shadow-2xl shadow-slate-200/50 backdrop-blur-3xl sm:rounded-[32px]">
         {/* Modal Header (iOS Style) */}
-        <div className="px-8 py-6 flex items-center justify-between border-b border-black/5">
+        <div className="flex flex-col gap-3 border-b border-black/5 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
           <button 
             onClick={() => router.back()}
             className="flex items-center text-slate-400 hover:text-slate-600 transition-colors"
@@ -85,12 +85,12 @@ export default function BanUserPage() {
             <span className="text-sm font-semibold">Quay lại</span>
           </button>
           <h1 className="text-lg font-bold text-slate-900 tracking-tight">Xác nhận khóa tài khoản</h1>
-          <div className="w-12"></div> {/* Spacer for center alignment */}
+          <div className="hidden w-12 sm:block"></div> {/* Spacer for center alignment */}
         </div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           {/* User Context Section */}
-          <div className="flex items-center gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100 mb-8">
+          <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-red-100 bg-red-50/50 p-4 sm:flex-row sm:items-center">
             <div className="relative h-14 w-14 rounded-full border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-slate-200">
               {user.avatar ? (
                 <Image src={user.avatar} alt="User avatar" fill sizes="56px" className="w-full h-full object-cover" />
@@ -106,7 +106,7 @@ export default function BanUserPage() {
                 ID: {user.studentId} • {user.email}
               </p>
             </div>
-            <div className="ml-auto">
+            <div className="sm:ml-auto">
               <span className="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-black uppercase rounded-md whitespace-nowrap">
                 Sắp khóa
               </span>
@@ -119,17 +119,13 @@ export default function BanUserPage() {
               <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">
                 Lý do khóa tài khoản
               </label>
-              <select
+              <AdminSelect
                 value={banReason}
-                onChange={(event) => setBanReason(event.target.value)}
-                className="w-full bg-slate-200/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 text-slate-700 font-medium outline-none appearance-none"
-              >
-                {banReasonOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setBanReason}
+                options={banReasonOptions}
+                ariaLabel="Chọn lý do khóa tài khoản"
+                triggerClassName="h-auto rounded-2xl border-none bg-slate-200/50 px-4 py-3 text-slate-700 focus:ring-2 focus:ring-amber-500"
+              />
             </div>
 
             <div>
@@ -150,7 +146,7 @@ export default function BanUserPage() {
         </div>
 
         {/* Modal Actions */}
-        <div className="px-8 py-6 bg-white/80 backdrop-blur-md border-t border-black/5 flex flex-col md:flex-row gap-3">
+        <div className="flex flex-col gap-3 border-t border-black/5 bg-white/80 px-4 py-5 backdrop-blur-md sm:px-8 sm:py-6 md:flex-row">
           <Link 
             href="/users"
             className="flex-1 order-2 md:order-1 py-3 px-6 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all active:scale-95 text-center"
