@@ -34,7 +34,7 @@ export function useSupportTickets(filters: TicketFilters = {}): UseSupportTicket
           return;
         }
 
-        setError('Failed to load support tickets');
+        setError('Không thể tải danh sách ticket hỗ trợ.');
       } finally {
         if (isMounted) {
           setIsLoading(false);

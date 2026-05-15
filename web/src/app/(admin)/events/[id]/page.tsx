@@ -176,9 +176,6 @@ export default function EventReviewDetailPage() {
             <span className={getStatusBadgeClassName(event.status)}>
               {formatStatusLabel(event.status)}
             </span>
-            <span className="text-xs font-medium text-slate-500">
-              Không hiển thị thao tác duyệt lại cho trạng thái này.
-            </span>
           </div>
         )}
       </header>
