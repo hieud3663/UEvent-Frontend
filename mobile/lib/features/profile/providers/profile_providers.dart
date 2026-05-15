@@ -10,6 +10,11 @@ class ProfileOverviewModel {
   const ProfileOverviewModel({required this.user, required this.events});
 }
 
+final userProfileProvider = FutureProvider<UserModel>((ref) async {
+  final profileService = ref.read(profileServiceProvider);
+  return profileService.getMyProfile();
+});
+
 final profileOverviewProvider = FutureProvider<ProfileOverviewModel>((ref) async {
   final profileService = ref.read(profileServiceProvider);
   final eventService = ref.read(eventServiceProvider);
