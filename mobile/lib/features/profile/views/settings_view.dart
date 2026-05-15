@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
@@ -6,8 +8,9 @@ import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/features/profile/widgets/settings_group.dart';
 import 'package:frontend/features/profile/widgets/settings_tiles.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 
-class SettingsView extends StatefulWidget {
+class SettingsView extends ConsumerStatefulWidget {
   final int currentNavIndex;
   final ValueChanged<int>? onNavTap;
   final VoidCallback? onBack;
@@ -38,10 +41,10 @@ class SettingsView extends StatefulWidget {
   });
 
   @override
-  State<SettingsView> createState() => _SettingsViewState();
+  ConsumerState<SettingsView> createState() => _SettingsViewState();
 }
 
-class _SettingsViewState extends State<SettingsView> {
+class _SettingsViewState extends ConsumerState<SettingsView> {
   bool _pushNotifications = true;
   bool _passkeyLogin = false;
 
@@ -93,64 +96,82 @@ class _SettingsViewState extends State<SettingsView> {
                   child: Column(
                     children: [
                       // Profile Header
-                      Column(
-                        children: [
-                          Stack(
-                            children: [
-                              Container(
-                                width: 96,
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.background, width: 4),
-                                  gradient: const LinearGradient(
-                                    colors: [AppColors.primary, Color(0xFFFEF08A)],
-                                  ),
-                                ),
-                                padding: const EdgeInsets.all(2),
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                  ),
-                                  child: const Icon(Icons.person, size: 48, color: AppColors.outline),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
+                      ref.watch(userProfileProvider).when(
+                        data: (user) => Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 96,
+                                  height: 96,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: AppColors.primary,
-                                    border: Border.all(color: AppColors.background, width: 2),
+                                    border: Border.all(color: AppColors.background, width: 4),
+                                    gradient: const LinearGradient(
+                                      colors: [AppColors.primary, Color(0xFFFEF08A)],
+                                    ),
                                   ),
-                                  child: const Icon(Icons.photo_camera, size: 16, color: Colors.white),
+                                  padding: const EdgeInsets.all(2),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                    ),
+                                    child: user.avatarUrl != null
+                                        ? ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl: user.avatarUrl!,
+                                              fit: BoxFit.cover,
+                                              errorWidget: (context, url, error) => const Icon(Icons.person, size: 48, color: AppColors.outline),
+                                            ),
+                                          )
+                                        : const Icon(Icons.person, size: 48, color: AppColors.outline),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Alex Rivera', style: AppTextStyles.titleLarge),
-                          const SizedBox(height: 4),
-                          Text('alex.rivera@uevents.com', style: AppTextStyles.bodyMedium),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: widget.onEditProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                              elevation: 4,
-                              shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.primary,
+                                      border: Border.all(color: AppColors.background, width: 2),
+                                    ),
+                                    child: const Icon(Icons.photo_camera, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
+                            const SizedBox(height: 16),
+                            Text(user.fullName, style: AppTextStyles.titleLarge),
+                            const SizedBox(height: 4),
+                            Text(user.email, style: AppTextStyles.bodyMedium),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: widget.onEditProfile,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                                elevation: 4,
+                                shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                              ),
+                              child: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                        loading: () => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                        error: (err, stack) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          child: Center(child: Text('Error loading profile: $err')),
+                        ),
                       ),
 
                       // Account Group
@@ -285,15 +306,10 @@ class _SettingsViewState extends State<SettingsView> {
           
           // Fixed Bottom Bar mock (for representation if it's the main settings screen, 
           // usually this is part of Scaffold's bottomNavigationBar, but we'll include it here aligned with design)
-          Positioned(
-            bottom: 24,
-            left: 0,
-            right: 0,
-            child: GlassBottomNavBar(
-              currentIndex: widget.currentNavIndex,
-              items: GlassBottomNavBar.defaultItems,
-              onTap: widget.onNavTap ?? (_) {},
-            ),
+          GlassBottomNavBar(
+            currentIndex: widget.currentNavIndex,
+            items: GlassBottomNavBar.defaultItems,
+            onTap: widget.onNavTap ?? (_) {},
           ),
         ],
       ),

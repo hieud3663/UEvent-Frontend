@@ -1,5 +1,3 @@
-// File: lib/main.dart
-
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 
 // Auth Flow
+import 'package:frontend/features/auth/models/auth_failure.dart';
+import 'package:frontend/features/auth/models/auth_method.dart';
+import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/splash_view.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
 import 'package:frontend/features/auth/views/otp_verification_view.dart';
@@ -94,19 +95,54 @@ PageRoute<T> _fastRoute<T>({required WidgetBuilder builder}) {
 // Each function captures the builder's `ctx` for subsequent navigation.
 // ════════════════════════════════════════════════════════════════════
 
-void _navigateToLogin(BuildContext context) {
+/// Triggers the Keycloak PKCE sign-in flow for the given [method],
+/// then navigates to AppShell on success or shows a snackbar on failure.
+Future<void> _handleSignIn(
+  BuildContext context,
+  WidgetRef ref,
+  AuthMethod method, {
+  String? loginHint,
+}) async {
+  final session =
+      await ref.read(authControllerProvider.notifier).signIn(method, loginHint: loginHint);
+  if (!context.mounted) return;
+
+  if (session != null) {
+    _navigateToAppShell(context);
+  } else {
+    // Read the error from the controller state for the snackbar.
+    final state = ref.read(authControllerProvider);
+    final message = state.whenOrNull(
+          error: (err, _) =>
+              err is AuthFailure ? err.displayMessage : err.toString(),
+        ) ??
+        'Đăng nhập thất bại.';
+
+    // Don't show a snackbar for user-cancelled — it's expected.
+    if (state.error is! AuthFailureCancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+}
+
+void _navigateToLogin(BuildContext context, WidgetRef ref) {
   Navigator.of(context).pushAndRemoveUntil(
     _fastRoute(
-      builder: (ctx) => LoginView(
-        onLoginWithEmail: () => _navigateToOtp(ctx),
-        onLoginWithGoogle: () => _navigateToAppShell(ctx),
-        onLoginWithPasskey: () => _navigateToPasskeySetup(ctx),
+      builder: (ctx) => Consumer(
+        builder: (ctx, loginRef, _) => LoginView(
+          onLoginWithEmail: (email) => _handleSignIn(ctx, loginRef, AuthMethod.email, loginHint: email),
+          onLoginWithGoogle: () => _handleSignIn(ctx, loginRef, AuthMethod.google),
+          onLoginWithPasskey: () => _handleSignIn(ctx, loginRef, AuthMethod.passkey),
+        ),
       ),
     ),
     (route) => false,
   );
 }
 
+// Retained for potential future use (post-login profile setup, email change OTP).
 void _navigateToOtp(BuildContext context) {
   Navigator.of(context).push(_fastRoute(
     builder: (ctx) => OtpVerificationView(
@@ -146,19 +182,29 @@ void _navigateToAppShell(BuildContext context) {
 // APP ROOT
 // ════════════════════════════════════════════════════════════════════
 
-class UEventsApp extends StatelessWidget {
+class UEventsApp extends ConsumerWidget {
   const UEventsApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // Splash → Login → OTP → ProfileSetup → AppShell
+      // Splash → check stored session → Login or AppShell
       home: Builder(
         builder: (context) => SplashView(
-          onInitializationComplete: () => _navigateToLogin(context),
+          onInitializationComplete: () {
+            // Check if a valid session exists from a previous run.
+            final authState = ref.read(authControllerProvider);
+            final session = authState.whenData((s) => s).value;
+            final hasSession = session != null && !session.isExpired;
+            if (hasSession) {
+              _navigateToAppShell(context);
+            } else {
+              _navigateToLogin(context, ref);
+            }
+          },
         ),
       ),
     );
@@ -486,7 +532,25 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _signOut() {
-    _navigateToLogin(context);
+    // Sign out is handled in _AppShellState which doesn't have WidgetRef.
+    // We navigate to a transient route that triggers sign-out via Consumer.
+    Navigator.of(context).pushAndRemoveUntil(
+      _fastRoute(
+        builder: (_) => Consumer(
+          builder: (ctx, ref, _) {
+            // Fire sign-out and navigate to login.
+            Future.microtask(() async {
+              await ref.read(authControllerProvider.notifier).signOut();
+              if (ctx.mounted) _navigateToLogin(ctx, ref);
+            });
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          },
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   // ── Build ──

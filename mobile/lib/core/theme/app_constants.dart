@@ -50,7 +50,7 @@ class AppConstants {
 
   // ── Featured Card ──
   static const double featuredCardHeight = 320.0;
-  static const double bentoCardHeight = 152.0;
+  static const double bentoCardHeight = 180.0;
 
   // ── Event Card Vertical ──
   static const double eventCardImageHeight = 224.0;

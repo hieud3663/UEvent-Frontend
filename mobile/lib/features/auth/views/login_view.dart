@@ -6,8 +6,8 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/widgets/social_login_button.dart';
 
-class LoginView extends StatelessWidget {
-  final VoidCallback? onLoginWithEmail;
+class LoginView extends StatefulWidget {
+  final void Function(String email)? onLoginWithEmail;
   final VoidCallback? onLoginWithGoogle;
   final VoidCallback? onLoginWithPasskey;
 
@@ -17,6 +17,19 @@ class LoginView extends StatelessWidget {
     this.onLoginWithGoogle,
     this.onLoginWithPasskey,
   });
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,6 +135,7 @@ class LoginView extends StatelessWidget {
                                   ),
                                 ),
                                 child: TextField(
+                                  controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: InputDecoration(
                                     hintText: 'yourname@university.edu',
@@ -139,7 +153,11 @@ class LoginView extends StatelessWidget {
                               const SizedBox(height: 24),
                               PrimaryButton(
                                 label: 'Tiếp tục với Email',
-                                onPressed: onLoginWithEmail,
+                                onPressed: () {
+                                  if (widget.onLoginWithEmail != null) {
+                                    widget.onLoginWithEmail!(_emailController.text.trim());
+                                  }
+                                },
                               ),
                               const SizedBox(height: 24),
 
@@ -171,13 +189,13 @@ class LoginView extends StatelessWidget {
                               SocialLoginButton(
                                 label: 'Tiếp tục với Google',
                                 iconPath: 'assets/images/google_icon.png',
-                                onPressed: onLoginWithGoogle,
+                                onPressed: widget.onLoginWithGoogle,
                               ),
                               const SizedBox(height: 16),
 
                               // Passkey option
                               GestureDetector(
-                                onTap: onLoginWithPasskey,
+                                onTap: widget.onLoginWithPasskey,
                                 child: Container(
                                   height: 48,
                                   alignment: Alignment.center,

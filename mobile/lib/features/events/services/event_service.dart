@@ -11,7 +11,7 @@ class EventService {
   EventService(this._apiClient);
 
   Future<List<EventModel>> getEvents({Map<String, dynamic>? queryParams}) async {
-    if (EnvConfig.useMockData) {
+    if (true) {
       await Future.delayed(const Duration(seconds: 1)); // Simulate network latency
       return MockEventData.list;
     }
@@ -26,7 +26,7 @@ class EventService {
   }
 
   Future<EventModel> getEventDetail(String eventId) async {
-    if (EnvConfig.useMockData) {
+    if (true) {
       await Future.delayed(const Duration(milliseconds: 800));
       return MockEventData.list.firstWhere((e) => e.id == eventId);
     }
