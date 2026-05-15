@@ -34,7 +34,7 @@ export function useNotifications(filters: NotificationFilters = {}): UseNotifica
           return;
         }
 
-        setError('Failed to load notifications');
+        setError('Không thể tải danh sách thông báo.');
       } finally {
         if (isMounted) {
           setIsLoading(false);

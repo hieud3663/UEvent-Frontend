@@ -1,27 +1,23 @@
 // File: src/app/(admin)/notifications/create/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AdminSelect, ConfirmActionDialog } from '@/core/components';
 import {
+  getNotificationById,
   publishNotification,
   saveNotificationDraft,
+  updateNotificationById,
 } from '@/features/notifications/services/notifications.service';
+import type { AudienceType, Notification, NotificationType } from '@/features/notifications/types';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 import {
   ChevronRight,
   Send,
   Clock,
-  Eye,
-  History,
-  Sparkles,
-  Bold,
-  Italic,
-  Link as LinkIcon,
-  Smile,
   RocketIcon,
   Wifi,
   Battery,
@@ -33,40 +29,126 @@ type ScheduleType = 'now' | 'later';
 
 export default function CreateNotificationPage() {
   const router = useRouter();
+  const [notificationId, setNotificationId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
-  const [audience, setAudience] = useState('all');
-  const [deliveryMethods, setDeliveryMethods] = useState({
-    push: true,
-    email: false,
-    inbox: true,
-  });
+  const [audience, setAudience] = useState<AudienceType>('all');
+  const [notificationType, setNotificationType] = useState<NotificationType>('announcement');
   const [message, setMessage] = useState('');
   const [scheduleType, setScheduleType] = useState<ScheduleType>('now');
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
-  const [pendingAction, setPendingAction] = useState<'draft' | 'send' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'draft' | 'send' | 'update' | null>(null);
+  const [isLoadingNotification, setIsLoadingNotification] = useState(false);
   const audienceOptions = [
     { value: 'all', label: 'Tất cả người dùng' },
     { value: 'students', label: 'Sinh viên' },
     { value: 'organizers', label: 'Nhà tổ chức' },
-    { value: 'specific', label: 'Sự kiện cụ thể' },
+    { value: 'admins', label: 'Quản trị viên' },
+  ] as const;
+  const notificationTypeOptions = [
+    { value: 'announcement', label: 'Thông báo' },
+    { value: 'alert', label: 'Cảnh báo' },
+    { value: 'reminder', label: 'Nhắc lịch' },
+    { value: 'promotion', label: 'Ưu đãi' },
+    { value: 'invite', label: 'Lời mời' },
+    { value: 'ticket_confirm', label: 'Xác nhận vé' },
   ] as const;
   const baseInputClass =
     'w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10';
-
-  const toggleDeliveryMethod = (method: keyof typeof deliveryMethods) => {
-    setDeliveryMethods((prev) => ({ ...prev, [method]: !prev[method] }));
-  };
 
   const buildNotificationPayload = () => ({
     title,
     message,
     audience,
+    type: notificationType,
     scheduleType,
     scheduleDate,
     scheduleTime,
-    deliveryMethods,
   });
+
+  const isEditMode = notificationId !== null;
+
+  useEffect(() => {
+    const notificationIdParam = new URLSearchParams(window.location.search).get('notificationId');
+    setNotificationId(notificationIdParam);
+
+    if (!notificationIdParam) {
+      return;
+    }
+
+    const resolvedNotificationId = notificationIdParam;
+    let isMounted = true;
+
+    async function loadNotification() {
+      try {
+        setIsLoadingNotification(true);
+        const notification = await getNotificationById(resolvedNotificationId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (notification.status !== 'draft' && notification.status !== 'scheduled') {
+          toast.error('Chỉ được chỉnh sửa thông báo bản nháp hoặc đã lên lịch.');
+          router.push('/notifications');
+          return;
+        }
+
+        hydrateNotificationForm(notification);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Không thể tải thông báo.');
+        router.push('/notifications');
+      } finally {
+        if (isMounted) {
+          setIsLoadingNotification(false);
+        }
+      }
+    }
+
+    void loadNotification();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  const hydrateNotificationForm = (notification: Notification) => {
+    setTitle(notification.title);
+    setMessage(notification.message);
+    setAudience(notification.audience);
+    setNotificationType(notification.type);
+
+    if (notification.scheduledAt) {
+      const { date, time } = getLocalDateTimeParts(notification.scheduledAt);
+      setScheduleType('later');
+      setScheduleDate(date);
+      setScheduleTime(time);
+      return;
+    }
+
+    setScheduleType('now');
+    setScheduleDate('');
+    setScheduleTime('');
+  };
+
+  const validateNotificationForm = () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error('Vui lòng nhập tiêu đề và nội dung thông báo.');
+      return false;
+    }
+
+    if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
+      toast.error('Vui lòng chọn ngày và giờ lên lịch.');
+      return false;
+    }
+
+    if (scheduleType === 'later' && getScheduledDateTime(scheduleDate, scheduleTime) <= new Date()) {
+      toast.error('Thời điểm gửi phải ở trong tương lai.');
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSaveDraft = async () => {
     await runActionWithToast(() => saveNotificationDraft(buildNotificationPayload()), {
@@ -77,18 +159,7 @@ export default function CreateNotificationPage() {
   };
 
   const handleSendNotification = async () => {
-    if (!title.trim() || !message.trim()) {
-      toast.error('Vui lòng nhập tiêu đề và nội dung trước khi gửi.');
-      return;
-    }
-
-    if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
-      toast.error('Vui lòng chọn ít nhất một kênh gửi.');
-      return;
-    }
-
-    if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
-      toast.error('Vui lòng chọn ngày và giờ lên lịch.');
+    if (!validateNotificationForm()) {
       return;
     }
 
@@ -101,27 +172,38 @@ export default function CreateNotificationPage() {
     router.push('/notifications');
   };
 
+  const handleUpdateNotification = async () => {
+    if (!notificationId || !validateNotificationForm()) {
+      return;
+    }
+
+    await runActionWithToast(() => updateNotificationById(notificationId, buildNotificationPayload()), {
+      loading: 'Đang cập nhật thông báo...',
+      success: 'Đã cập nhật thông báo.',
+      error: 'Không thể cập nhật thông báo.',
+    });
+
+    router.push('/notifications');
+  };
+
   const handleRequestSaveDraft = () => {
     setPendingAction('draft');
   };
 
   const handleRequestSendNotification = () => {
-    if (!title.trim() || !message.trim()) {
-      toast.error('Vui lòng nhập tiêu đề và nội dung trước khi gửi.');
-      return;
-    }
-
-    if (!deliveryMethods.push && !deliveryMethods.email && !deliveryMethods.inbox) {
-      toast.error('Vui lòng chọn ít nhất một kênh gửi.');
-      return;
-    }
-
-    if (scheduleType === 'later' && (!scheduleDate || !scheduleTime)) {
-      toast.error('Vui lòng chọn ngày và giờ lên lịch.');
+    if (!validateNotificationForm()) {
       return;
     }
 
     setPendingAction('send');
+  };
+
+  const handleRequestUpdateNotification = () => {
+    if (!validateNotificationForm()) {
+      return;
+    }
+
+    setPendingAction('update');
   };
 
   const handleConfirmAction = async () => {
@@ -131,6 +213,10 @@ export default function CreateNotificationPage() {
 
     if (pendingAction === 'send') {
       await handleSendNotification();
+    }
+
+    if (pendingAction === 'update') {
+      await handleUpdateNotification();
     }
 
     setPendingAction(null);
@@ -145,10 +231,10 @@ export default function CreateNotificationPage() {
             Thông báo
           </Link>
           <ChevronRight className="w-3 h-3" />
-          <span className="text-slate-600">Tạo mới</span>
+          <span className="text-slate-600">{isEditMode ? 'Chỉnh sửa' : 'Tạo mới'}</span>
         </nav>
-        <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-          Tạo thông báo mới
+        <h2 className="text-2xl font-bold tracking-tight text-on-surface">
+          {isEditMode ? 'Chỉnh sửa thông báo' : 'Tạo thông báo mới'}
         </h2>
       </div>
 
@@ -160,6 +246,13 @@ export default function CreateNotificationPage() {
             <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#FFB800]/5 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl"></div>
 
+            {isLoadingNotification ? (
+              <div className="relative z-10 grid gap-4">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-16 animate-pulse rounded-2xl bg-white/60" />
+                ))}
+              </div>
+            ) : (
             <form className="space-y-8 relative z-10">
               {/* Notification Title */}
               <div className="space-y-2">
@@ -190,41 +283,19 @@ export default function CreateNotificationPage() {
                   />
                 </div>
 
-                {/* Delivery Method */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 ml-1">
-                    Kênh gửi
+                    Loại thông báo
                   </label>
-                  <div className="flex flex-wrap gap-3">
-                    <label className="flex items-center gap-2 bg-white/60 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-white transition-all">
-                      <input
-                        type="checkbox"
-                        checked={deliveryMethods.push}
-                        onChange={() => toggleDeliveryMethod('push')}
-                        className="w-4 h-4 rounded text-[#FFB800] focus:ring-[#FFB800] border-slate-300"
-                      />
-                      <span className="text-xs font-semibold text-slate-600">Push</span>
-                    </label>
-                    <label className="flex items-center gap-2 bg-white/60 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-white transition-all">
-                      <input
-                        type="checkbox"
-                        checked={deliveryMethods.email}
-                        onChange={() => toggleDeliveryMethod('email')}
-                        className="w-4 h-4 rounded text-[#FFB800] focus:ring-[#FFB800] border-slate-300"
-                      />
-                      <span className="text-xs font-semibold text-slate-600">Email</span>
-                    </label>
-                    <label className="flex items-center gap-2 bg-white/60 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-white transition-all">
-                      <input
-                        type="checkbox"
-                        checked={deliveryMethods.inbox}
-                        onChange={() => toggleDeliveryMethod('inbox')}
-                        className="w-4 h-4 rounded text-[#FFB800] focus:ring-[#FFB800] border-slate-300"
-                      />
-                      <span className="text-xs font-semibold text-slate-600">Hộp thư ứng dụng</span>
-                    </label>
-                  </div>
+                  <AdminSelect
+                    value={notificationType}
+                    onChange={setNotificationType}
+                    options={notificationTypeOptions}
+                    ariaLabel="Chọn loại thông báo"
+                    triggerClassName="h-auto cursor-pointer rounded-2xl bg-white/70 py-3.5 pl-4 pr-3 focus:border-[#FFB800] focus:ring-[#FFB800]/10"
+                  />
                 </div>
+
               </div>
 
               {/* Message Body */}
@@ -233,36 +304,6 @@ export default function CreateNotificationPage() {
                   Nội dung thông báo
                 </label>
                 <div className="bg-white/60 border border-slate-200 rounded-3xl overflow-hidden focus-within:border-[#FFB800] transition-all">
-                  <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100 flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => toast.info('Công cụ soạn thảo định dạng sẽ được bổ sung trong dịch vụ editor.')}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
-                    >
-                      <Bold className="w-[18px] h-[18px]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toast.info('Công cụ soạn thảo định dạng sẽ được bổ sung trong dịch vụ editor.')}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
-                    >
-                      <Italic className="w-[18px] h-[18px]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toast.info('Hộp chèn liên kết sẽ được bổ sung sau.')}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
-                    >
-                      <LinkIcon className="w-[18px] h-[18px]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toast.info('Bộ chọn biểu tượng cảm xúc sẽ được bổ sung sau.')}
-                      className="text-slate-400 hover:text-slate-900 transition-colors ml-auto"
-                    >
-                      <Smile className="w-[18px] h-[18px]" />
-                    </button>
-                  </div>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -330,6 +371,7 @@ export default function CreateNotificationPage() {
                       <input
                         type="date"
                         value={scheduleDate}
+                        min={getTodayInputDate()}
                         onChange={(e) => setScheduleDate(e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10"
                       />
@@ -348,15 +390,19 @@ export default function CreateNotificationPage() {
 
               {/* Actions */}
               <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 md:flex-row md:items-center md:justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleRequestSaveDraft();
-                  }}
-                  className="px-8 py-3.5 rounded-2xl border border-slate-200 bg-white/50 text-slate-600 font-bold text-sm hover:bg-white transition-all active:scale-95"
-                >
-                  Lưu bản nháp
-                </button>
+                {isEditMode ? (
+                  <span className="text-xs font-semibold text-slate-400">Chỉ có thể chỉnh sửa thông báo bản nháp hoặc đã lên lịch.</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleRequestSaveDraft();
+                    }}
+                    className="px-8 py-3.5 rounded-2xl border border-slate-200 bg-white/50 text-slate-600 font-bold text-sm hover:bg-white transition-all active:scale-95"
+                  >
+                    Lưu bản nháp
+                  </button>
+                )}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <button
                     type="button"
@@ -368,22 +414,28 @@ export default function CreateNotificationPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (isEditMode) {
+                        handleRequestUpdateNotification();
+                        return;
+                      }
+
                       handleRequestSendNotification();
                     }}
-                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFB800] px-8 py-3.5 text-sm font-black text-white shadow-xl shadow-[#FFB800]/30 transition-all hover:scale-[1.02] hover:saturate-150 active:scale-95 sm:px-10"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFB800] px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-[#FFB800]/30 transition-all hover:scale-[1.02] hover:saturate-150 active:scale-95 sm:px-10"
                   >
-                    <span>Gửi thông báo</span>
+                    <span>{isEditMode ? 'Cập nhật thông báo' : 'Gửi thông báo'}</span>
                     <RocketIcon className="w-[18px] h-[18px]" />
                   </button>
                 </div>
               </div>
             </form>
+            )}
           </div>
 
           {/* Preview Card */}
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Xem trước nhanh
               </h4>
               <span className="text-[10px] text-slate-400 font-medium">Thiết bị: iPhone 15 Pro</span>
@@ -427,35 +479,6 @@ export default function CreateNotificationPage() {
         </div>
       </div>
 
-      {/* Bottom Action Bar (Contextual) */}
-      <div className="fixed bottom-24 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 overflow-x-auto rounded-full border border-white/40 px-2 py-2 shadow-2xl glass-panel sm:bottom-8">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => toast.info('Chế độ xem trước đang được bật.')}
-            className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
-          >
-            <Eye className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => toast.info('Bảng lịch sử thông báo sẽ được bổ sung sau.')}
-            className="p-3 text-slate-400 hover:text-[#FFB800] transition-colors rounded-full hover:bg-white/50"
-          >
-            <History className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="h-6 w-[1px] bg-slate-200 mx-1"></div>
-        <button
-          type="button"
-          onClick={() => toast.success('Trình tối ưu AI đã gợi ý giọng văn phù hợp hơn.')}
-          className="bg-[#FFB800] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:saturate-150 transition-all active:scale-95 shadow-lg shadow-[#FFB800]/20"
-        >
-          <Sparkles className="w-4 h-4" />
-          Tối ưu AI
-        </button>
-      </div>
-
       <ConfirmActionDialog
         open={pendingAction !== null}
         onOpenChange={(open) => {
@@ -463,9 +486,17 @@ export default function CreateNotificationPage() {
             setPendingAction(null);
           }
         }}
-        title={pendingAction === 'draft' ? 'Xác nhận lưu bản nháp' : 'Xác nhận gửi thông báo'}
+        title={
+          pendingAction === 'draft'
+            ? 'Xác nhận lưu bản nháp'
+            : pendingAction === 'update'
+              ? 'Xác nhận cập nhật thông báo'
+              : 'Xác nhận gửi thông báo'
+        }
         description={pendingAction === 'draft'
           ? 'Bạn sắp lưu bản nháp thông báo. Dữ liệu hiện tại sẽ được ghi đè vào bản nháp trước đó nếu có.'
+          : pendingAction === 'update'
+            ? 'Bạn sắp cập nhật thông báo bản nháp hoặc đã lên lịch. Nội dung mới sẽ thay thế dữ liệu hiện tại.'
           : 'Bạn sắp gửi hoặc lên lịch thông báo cho người dùng. Hành động này có thể không hoàn tác sau khi thực hiện.'}
         confirmLabel="Xác nhận"
         cancelLabel="Hủy"
@@ -475,4 +506,31 @@ export default function CreateNotificationPage() {
       />
     </>
   );
+}
+
+function getLocalDateTimeParts(isoDate: string): { date: string; time: string } {
+  const date = new Date(isoDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+
+  return {
+    date: `${year}-${month}-${day}`,
+    time: `${hour}:${minute}`,
+  };
+}
+
+function getScheduledDateTime(date: string, time: string): Date {
+  return new Date(`${date}T${time}:00`);
+}
+
+function getTodayInputDate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }

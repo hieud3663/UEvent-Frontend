@@ -1,45 +1,52 @@
-// File: src/app/(admin)/support/[id]/page.tsx
 'use client';
 
-import { use, useEffect, useState } from 'react';
-import {
-  Send,
-  User,
-  Bold,
-  Italic,
-  Link as LinkIcon,
-  Paperclip,
-  Smile,
-  ShieldCheck,
-  CircleCheck,
-  Forward
-} from 'lucide-react';
+import { use, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, CircleCheck, Forward, Send, ShieldCheck, User } from 'lucide-react';
+import { AdminSelect, Card, ConfirmActionDialog, ErrorState } from '@/core/components';
 import {
   escalateSupportTicket,
   getTicketById,
-  getTickets,
   markSupportTicketResolved,
   sendSupportReply,
+  updateSupportTicket,
 } from '@/features/support/services/support.service';
-import { ConfirmActionDialog } from '@/core/components';
+import { getUsers } from '@/features/users/services/users.service';
 import { cn } from '@/core/lib/utils';
 import type { Ticket, TicketMessage, TicketPriority, TicketStatus } from '@/features/support/types';
+import type { User as AdminUser } from '@/features/users/types';
 import { toast } from 'sonner';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
+const UNASSIGNED_ASSIGNEE = '__unassigned';
+
 const supportPriorityConfig: Record<TicketPriority, { label: string; color: string }> = {
-  low: { label: 'Low', color: 'text-slate-600' },
-  medium: { label: 'Medium', color: 'text-blue-600' },
-  high: { label: 'High', color: 'text-red-500' },
-  urgent: { label: 'Urgent', color: 'text-red-600' },
+  low: { label: 'Thấp', color: 'text-slate-600' },
+  medium: { label: 'Trung bình', color: 'text-blue-600' },
+  high: { label: 'Cao', color: 'text-red-500' },
+  urgent: { label: 'Khẩn cấp', color: 'text-red-600' },
 };
 
 const supportDetailStatusConfig: Record<TicketStatus, { label: string; color: string }> = {
-  open: { label: 'Open', color: 'text-blue-600' },
-  in_progress: { label: 'InProgress', color: 'text-amber-600' },
-  resolved: { label: 'Resolved', color: 'text-emerald-600' },
-  closed: { label: 'Closed', color: 'text-slate-600' },
+  open: { label: 'Đang chờ', color: 'text-blue-600' },
+  in_progress: { label: 'Đang xử lý', color: 'text-amber-600' },
+  resolved: { label: 'Đã xử lý', color: 'text-emerald-600' },
+  closed: { label: 'Đã đóng', color: 'text-slate-600' },
 };
+
+const statusOptions = [
+  { value: 'open', label: 'Đang chờ' },
+  { value: 'in_progress', label: 'Đang xử lý' },
+  { value: 'resolved', label: 'Đã xử lý' },
+  { value: 'closed', label: 'Đã đóng' },
+] as const;
+
+const priorityOptions = [
+  { value: 'low', label: 'Thấp' },
+  { value: 'medium', label: 'Trung bình' },
+  { value: 'high', label: 'Cao' },
+  { value: 'urgent', label: 'Khẩn cấp' },
+] as const;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -49,12 +56,60 @@ export default function SupportDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const [isOnline] = useState(true);
+  const [assignees, setAssignees] = useState<AdminUser[]>([]);
   const [pendingTicketAction, setPendingTicketAction] = useState<'resolve' | 'escalate' | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAssignees, setIsLoadingAssignees] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTicket = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const currentTicket = await getTicketById(resolvedParams.id);
+      setTicket(currentTicket);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải chi tiết ticket.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    void loadTicket();
+  }, [loadTicket]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAssignees() {
+      try {
+        setIsLoadingAssignees(true);
+        const response = await getUsers({ role: 'admin', status: 'active', pageSize: 100 });
+        if (isMounted) {
+          setAssignees(response.users);
+        }
+      } catch {
+        if (isMounted) {
+          toast.error('Không thể tải danh sách người phụ trách.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAssignees(false);
+        }
+      }
+    }
+
+    void loadAssignees();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSendReply = async () => {
     if (!newMessage.trim()) {
-      toast.error('Please enter a reply before sending.');
+      toast.error('Vui lòng nhập nội dung phản hồi trước khi gửi.');
       return;
     }
 
@@ -63,89 +118,83 @@ export default function SupportDetailPage({ params }: PageProps) {
     }
 
     const replyContent = newMessage.trim();
-    const previousTicket = ticket;
-
-    const optimisticMessage: TicketMessage = {
-      id: `msg-${Date.now()}`,
-      content: replyContent,
-      isStaff: true,
-      authorName: 'Support Agent',
-      createdAt: new Date().toISOString(),
-    };
-
-    setTicket((prev) => {
-      if (!prev) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        status: prev.status === 'open' ? 'in_progress' : prev.status,
-        messages: [...prev.messages, optimisticMessage],
-        updatedAt: new Date().toISOString(),
-      };
+    await runActionWithToast(async () => {
+      const updatedTicket = await sendSupportReply(ticket.id, replyContent);
+      setTicket(updatedTicket);
+      setNewMessage('');
+    }, {
+      loading: 'Đang gửi phản hồi...',
+      success: 'Đã gửi phản hồi cho người dùng.',
+      error: 'Không thể gửi phản hồi.',
     });
-
-    setNewMessage('');
-
-    try {
-      await runActionWithToast(() => sendSupportReply(ticket.id, replyContent), {
-        loading: 'Sending reply...',
-        success: 'Reply sent successfully.',
-        error: 'Failed to send reply.',
-      });
-    } catch {
-      setTicket(previousTicket);
-      setNewMessage(replyContent);
-    }
   };
 
   const handleMarkResolved = async () => {
-    if (!ticket) {
-      return;
-    }
+    if (!ticket) return;
 
-    const previousTicket = ticket;
-    setTicket((prev) => (prev ? { ...prev, status: 'resolved', updatedAt: new Date().toISOString() } : prev));
-
-    try {
-      await runActionWithToast(() => markSupportTicketResolved(ticket.id), {
-        loading: 'Updating ticket status...',
-        success: 'Ticket marked as resolved.',
-        error: 'Failed to update ticket status.',
-      });
-    } catch {
-      setTicket(previousTicket);
-    }
+    await runActionWithToast(async () => {
+      const updatedTicket = await markSupportTicketResolved(ticket.id, 'Quản trị viên đã đánh dấu ticket đã xử lý.');
+      setTicket(updatedTicket);
+    }, {
+      loading: 'Đang cập nhật trạng thái ticket...',
+      success: 'Ticket đã được đánh dấu đã xử lý.',
+      error: 'Không thể cập nhật trạng thái ticket.',
+    });
   };
 
   const handleEscalate = async () => {
-    if (!ticket) {
-      return;
-    }
+    if (!ticket) return;
 
-    const previousTicket = ticket;
+    await runActionWithToast(async () => {
+      const updatedTicket = await escalateSupportTicket(ticket.id, 'Quản trị viên nâng mức ưu tiên từ trang chi tiết.');
+      setTicket(updatedTicket);
+    }, {
+      loading: 'Đang nâng mức ưu tiên...',
+      success: 'Đã nâng mức ưu tiên ticket.',
+      error: 'Không thể nâng mức ưu tiên ticket.',
+    });
+  };
 
-    setTicket((prev) =>
-      prev
-        ? {
-            ...prev,
-            priority: 'urgent',
-            status: prev.status === 'resolved' || prev.status === 'closed' ? prev.status : 'in_progress',
-            updatedAt: new Date().toISOString(),
-          }
-        : prev
-    );
+  const handleUpdateStatus = async (status: TicketStatus) => {
+    if (!ticket || status === ticket.status) return;
 
-    try {
-      await runActionWithToast(() => escalateSupportTicket(ticket.id), {
-        loading: 'Escalating ticket...',
-        success: 'Ticket escalated to high-priority queue.',
-        error: 'Failed to escalate ticket.',
-      });
-    } catch {
-      setTicket(previousTicket);
-    }
+    await runActionWithToast(async () => {
+      const updatedTicket = await updateSupportTicket(ticket.id, { status });
+      setTicket(updatedTicket);
+    }, {
+      loading: 'Đang cập nhật trạng thái...',
+      success: 'Đã cập nhật trạng thái ticket.',
+      error: 'Không thể cập nhật trạng thái.',
+    });
+  };
+
+  const handleUpdatePriority = async (priority: TicketPriority) => {
+    if (!ticket || priority === ticket.priority) return;
+
+    await runActionWithToast(async () => {
+      const updatedTicket = await updateSupportTicket(ticket.id, { priority });
+      setTicket(updatedTicket);
+    }, {
+      loading: 'Đang cập nhật độ ưu tiên...',
+      success: 'Đã cập nhật độ ưu tiên ticket.',
+      error: 'Không thể cập nhật độ ưu tiên.',
+    });
+  };
+
+  const handleUpdateAssignee = async (assigneeId: string) => {
+    if (!ticket) return;
+
+    const nextAssigneeId = assigneeId === UNASSIGNED_ASSIGNEE ? null : assigneeId;
+    if ((ticket.assignedToId ?? null) === nextAssigneeId) return;
+
+    await runActionWithToast(async () => {
+      const updatedTicket = await updateSupportTicket(ticket.id, { assignedTo: nextAssigneeId });
+      setTicket(updatedTicket);
+    }, {
+      loading: 'Đang cập nhật người phụ trách...',
+      success: nextAssigneeId ? 'Đã gán người phụ trách ticket.' : 'Đã bỏ gán người phụ trách ticket.',
+      error: 'Không thể cập nhật người phụ trách.',
+    });
   };
 
   const handleConfirmTicketAction = async () => {
@@ -160,34 +209,21 @@ export default function SupportDetailPage({ params }: PageProps) {
     setPendingTicketAction(null);
   };
 
-  useEffect(() => {
-    let isMounted = true;
+  if (isLoading) {
+    return <div className="p-6 text-sm text-slate-500">Đang tải chi tiết ticket...</div>;
+  }
 
-    async function loadTicket() {
-      const currentTicket = await getTicketById(resolvedParams.id);
-
-      if (currentTicket) {
-        if (isMounted) {
-          setTicket(currentTicket);
-        }
-        return;
-      }
-
-      const ticketsResponse = await getTickets();
-      if (isMounted) {
-        setTicket(ticketsResponse[0] ?? null);
-      }
-    }
-
-    void loadTicket();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [resolvedParams.id]);
-
-  if (!ticket) {
-    return <div className="p-6 text-sm text-slate-500">Loading ticket...</div>;
+  if (error || !ticket) {
+    return (
+      <ErrorState
+        title="Không thể tải ticket"
+        message={error ?? 'Ticket không tồn tại hoặc đã bị xóa.'}
+        retryLabel="Tải lại"
+        onRetry={() => {
+          void loadTicket();
+        }}
+      />
+    );
   }
 
   const priority = supportPriorityConfig[ticket.priority];
@@ -195,211 +231,153 @@ export default function SupportDetailPage({ params }: PageProps) {
   const detailContext = ticket.detailContext ?? {
     eventsCount: 0,
     ticketsCount: 0,
-    relatedEventName: 'N/A',
-    channel: 'N/A',
+    relatedEventName: 'Không có sự kiện liên quan',
+    channel: 'Ứng dụng web',
   };
+  const assigneeOptions = [
+    { value: UNASSIGNED_ASSIGNEE, label: 'Chưa gán' },
+    ...assignees.map((assignee) => ({
+      value: assignee.id,
+      label: assignee.name,
+      description: assignee.email,
+    })),
+  ];
+  const assignedToValue = ticket.assignedToId ?? UNASSIGNED_ASSIGNEE;
 
   return (
-    <div className="flex gap-8 flex-1 p-8">
-      {/* Left Column: Chat Interface */}
-      <div className="flex-1 flex flex-col gap-6">
-        {/* Chat Feed */}
-        <div className="flex-1 flex flex-col gap-6 max-w-4xl">
-          {/* User Message */}
-          {ticket.messages.map((message, index) => (
-            <div key={message.id}>
-              <MessageBubble message={message} />
-
-              {/* System Status Tag - show after first user message */}
-              {index === 0 && !message.isStaff && (
-                <div className="flex justify-center my-6">
-                  <span className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-white/40">
-                    Ticket assigned to you
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+    <div className="mx-auto grid w-full max-w-7xl gap-6 pb-24 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <section className="min-w-0 space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <Link href="/support" className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-amber-600">
+              <ArrowLeft className="h-4 w-4" />
+              Quay lại danh sách
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight text-on-surface">{ticket.subject}</h1>
+            <p className="mt-2 max-w-2xl text-sm font-medium text-on-surface-variant">{ticket.description}</p>
+          </div>
+          <span className={cn('inline-flex w-fit rounded-full px-3 py-1 text-xs font-bold', status.color, 'bg-white shadow-sm')}>
+            {status.label}
+          </span>
         </div>
 
-        {/* Reply Area */}
-        {ticket.status !== 'closed' && (
-          <div className="glass-panel p-6 rounded-[32px] border border-white/40 shadow-xl mt-auto">
-            <div className="flex flex-col gap-4">
-              {/* Formatting Toolbar */}
-              <div className="flex items-center gap-4 text-slate-400 px-2">
-                <button
-                  className="hover:text-primary transition-colors"
-                  type="button"
-                  onClick={() => toast.info('Formatting controls will be available soon.')}
-                >
-                  <Bold className="w-4 h-4" />
-                </button>
-                <button
-                  className="hover:text-primary transition-colors"
-                  type="button"
-                  onClick={() => toast.info('Formatting controls will be available soon.')}
-                >
-                  <Italic className="w-4 h-4" />
-                </button>
-                <button
-                  className="hover:text-primary transition-colors"
-                  type="button"
-                  onClick={() => toast.info('Link insertion modal is coming soon.')}
-                >
-                  <LinkIcon className="w-4 h-4" />
-                </button>
-                <button
-                  className="hover:text-primary transition-colors"
-                  type="button"
-                  onClick={() => toast.info('Attachment uploader is coming soon.')}
-                >
-                  <Paperclip className="w-4 h-4" />
-                </button>
-                <div className="h-4 w-[1px] bg-slate-200"></div>
-                <button
-                  className="hover:text-primary transition-colors"
-                  type="button"
-                  onClick={() => toast.info('Emoji picker is coming soon.')}
-                >
-                  <Smile className="w-4 h-4" />
-                </button>
+        <Card className="border border-white/70 bg-white/75 p-4 shadow-sm backdrop-blur-xl sm:p-6">
+          <div className="space-y-5">
+            {ticket.messages.length === 0 ? (
+              <p className="text-sm text-slate-500">Ticket chưa có trao đổi nào.</p>
+            ) : (
+              ticket.messages.map((message) => <MessageBubble key={message.id} message={message} />)
+            )}
+          </div>
+        </Card>
+
+        {ticket.status !== 'closed' ? (
+          <Card className="border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur-xl sm:p-5">
+            <textarea
+              className="min-h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+              placeholder={`Nhập phản hồi cho ${ticket.userName}...`}
+              value={newMessage}
+              onChange={(event) => setNewMessage(event.target.value)}
+            />
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-500">Phản hồi sẽ được lưu vào lịch sử ticket và ghi audit.</p>
+              <button
+                onClick={() => {
+                  void handleSendReply();
+                }}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600"
+                type="button"
+              >
+                Gửi phản hồi
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </Card>
+        ) : null}
+      </section>
+
+      <aside className="space-y-5 xl:sticky xl:top-6 xl:self-start">
+        <Card className="border border-white/70 bg-white/80 p-5 text-center shadow-sm backdrop-blur-xl">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
+            <User className="h-10 w-10" />
+          </div>
+          <h2 className="mt-4 text-lg font-bold text-on-surface">{ticket.userName}</h2>
+          <p className="text-sm text-slate-500">{ticket.userEmail}</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
+            <Metric label="Sự kiện" value={detailContext.eventsCount} />
+            <Metric label="Ticket" value={detailContext.ticketsCount} />
+          </div>
+        </Card>
+
+        <Card className="border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Ngữ cảnh xử lý</h3>
+          <div className="mt-4 space-y-4">
+            <div>
+              <p className="text-xs font-bold text-slate-500">Kênh tiếp nhận</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">{detailContext.channel}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500">Sự kiện liên quan</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">{detailContext.relatedEventName}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div>
+                <p className="mb-2 text-xs font-bold text-slate-500">Trạng thái</p>
+                <AdminSelect value={ticket.status} onChange={handleUpdateStatus} options={statusOptions} ariaLabel="Cập nhật trạng thái ticket" />
               </div>
-
-              {/* Textarea */}
-              <textarea
-                className="w-full bg-slate-100/50 border-none rounded-2xl focus:ring-2 focus:ring-primary-container/30 text-sm placeholder:text-slate-400 p-4 resize-none"
-                placeholder={`Type your reply to ${ticket.userName}...`}
-                rows={3}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-              />
-
-              {/* Bottom Bar - Online Status & Send Button */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className={cn("w-2 h-2 rounded-full", isOnline ? "bg-green-500" : "bg-slate-300")}></span>
-                  <span className="text-[10px] font-bold uppercase text-slate-500">
-                    {isOnline ? `${ticket.userName.split(' ')[0]} is online` : 'Offline'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    void handleSendReply();
-                  }}
-                  className="bg-amber-500 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center gap-2 active:scale-95 transition-all"
-                  type="button"
-                >
-                  <span>Send Reply</span>
-                  <Send className="w-4 h-4" />
-                </button>
+              <div>
+                <p className="mb-2 text-xs font-bold text-slate-500">Độ ưu tiên</p>
+                <AdminSelect value={ticket.priority} onChange={handleUpdatePriority} options={priorityOptions} ariaLabel="Cập nhật độ ưu tiên ticket" />
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Right Column: Student Info & Ticket Meta */}
-      <aside className="w-80 flex flex-col gap-6">
-        {/* Profile Info */}
-        <section className="glass-panel p-6 rounded-[32px] border border-white/40 shadow-sm flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-xl mb-4 transform -rotate-3">
-            <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-              <User className="w-12 h-12 text-slate-400" />
-            </div>
-          </div>
-          <h3 className="font-headline text-lg font-bold text-slate-900">{ticket.userName}</h3>
-          <p className="text-xs font-bold text-primary mb-4">ID: #{ticket.userId}</p>
-
-          {/* Stats */}
-          <div className="w-full flex justify-around border-t border-white/40 pt-4 mt-2">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Events</span>
-              <span className="text-sm font-bold">{detailContext.eventsCount}</span>
-            </div>
-            <div className="w-[1px] bg-white/40"></div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Tickets</span>
-              <span className="text-sm font-bold">{detailContext.ticketsCount}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Ticket Details - Inquiry Context */}
-        <section className="glass-panel p-6 rounded-[32px] border border-white/40 shadow-sm">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
-            Inquiry Context
-          </h4>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-slate-500">Related Event</span>
-              <span className="text-xs font-semibold text-slate-900">
-                {detailContext.relatedEventName}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-slate-500">Status</span>
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "w-2 h-2 rounded-full",
-                  ticket.status === 'open' ? 'bg-blue-500' :
-                  ticket.status === 'in_progress' ? 'bg-amber-500' :
-                  ticket.status === 'resolved' ? 'bg-emerald-500' : 'bg-slate-500'
-                )}></span>
-                <span className={cn("text-xs font-bold", status.color)}>
-                  {status.label}
-                </span>
+              <div className="sm:col-span-2 xl:col-span-1">
+                <p className="mb-2 text-xs font-bold text-slate-500">Người phụ trách</p>
+                <AdminSelect
+                  value={assignedToValue}
+                  onChange={handleUpdateAssignee}
+                  options={assigneeOptions}
+                  ariaLabel="Gán người phụ trách ticket"
+                  disabled={isLoadingAssignees}
+                />
               </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-slate-500">Priority</span>
-              <span className={cn("text-xs font-bold", priority.color)}>
-                {priority.label}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-slate-500">Channel</span>
-              <span className="text-xs font-semibold text-slate-900">{detailContext.channel}</span>
-            </div>
+            <p className="text-sm font-bold text-slate-700">
+              Phụ trách hiện tại: {ticket.assignedTo ?? 'Chưa gán'}
+            </p>
+            <p className={cn('text-sm font-bold', priority.color)}>Ưu tiên hiện tại: {priority.label}</p>
           </div>
-        </section>
+        </Card>
 
-        {/* Actions */}
-        <section className="flex flex-col gap-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
           <button
-            onClick={() => {
-              setPendingTicketAction('resolve');
-            }}
-            className="w-full py-3 glass-panel hover:bg-white text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/40 transition-all flex items-center justify-center gap-2"
+            onClick={() => setPendingTicketAction('resolve')}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/70 bg-white/80 px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-white"
             type="button"
           >
-            <CircleCheck className="w-4 h-4" />
-            Mark as Resolved
+            <CircleCheck className="h-4 w-4" />
+            Đánh dấu đã xử lý
           </button>
           <button
-            onClick={() => {
-              setPendingTicketAction('escalate');
-            }}
-            className="w-full py-3 glass-panel hover:bg-white text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/40 transition-all flex items-center justify-center gap-2"
+            onClick={() => setPendingTicketAction('escalate')}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-red-600"
             type="button"
           >
-            <Forward className="w-4 h-4" />
-            Escalate Ticket
+            <Forward className="h-4 w-4" />
+            Nâng ưu tiên
           </button>
-        </section>
+        </div>
       </aside>
 
       <ConfirmActionDialog
         open={pendingTicketAction !== null}
         onOpenChange={(open) => {
-          if (!open) {
-            setPendingTicketAction(null);
-          }
+          if (!open) setPendingTicketAction(null);
         }}
-        title={pendingTicketAction === 'resolve' ? 'Xác nhận đánh dấu đã xử lý' : 'Xác nhận nâng mức ưu tiên'}
-        description={pendingTicketAction === 'resolve'
-          ? 'Bạn sắp đánh dấu ticket này đã được xử lý. Hành động này có thể ảnh hưởng luồng làm việc của đội hỗ trợ.'
-          : 'Bạn sắp nâng mức ưu tiên ticket lên mức khẩn cấp. Hành động này có thể tác động đến thứ tự xử lý hiện tại.'}
+        title={pendingTicketAction === 'resolve' ? 'Xác nhận xử lý ticket' : 'Xác nhận nâng mức ưu tiên'}
+        description={
+          pendingTicketAction === 'resolve'
+            ? 'Ticket sẽ được chuyển sang trạng thái đã xử lý và được ghi vào audit.'
+            : 'Ticket sẽ được nâng lên mức ưu tiên kế tiếp và được ghi vào audit.'
+        }
         confirmLabel="Xác nhận"
         cancelLabel="Hủy"
         variant={pendingTicketAction === 'resolve' ? 'default' : 'danger'}
@@ -411,54 +389,53 @@ export default function SupportDetailPage({ params }: PageProps) {
   );
 }
 
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="mt-1 text-lg font-black text-slate-950">{value.toLocaleString('vi-VN')}</p>
+    </div>
+  );
+}
+
 function MessageBubble({ message }: { message: TicketMessage }) {
-  // Format time
   const messageDate = new Date(message.createdAt);
-  const timeStr = messageDate.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+  const timeText = new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(messageDate);
 
   if (message.isStaff) {
-    // Admin Reply
     return (
-      <div className="flex items-start gap-4 flex-row-reverse">
-        <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
-          <ShieldCheck className="w-5 h-5 text-white" fill="currentColor" />
+      <div className="flex items-start gap-3 sm:flex-row-reverse">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white">
+          <ShieldCheck className="h-5 w-5" />
         </div>
-        <div className="flex flex-col gap-1 items-end">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] text-slate-400">{timeStr}</span>
+        <div className="min-w-0 sm:text-right">
+          <div className="mb-1 flex flex-wrap items-center gap-2 sm:justify-end">
             <span className="text-xs font-bold text-slate-900">{message.authorName}</span>
+            <span className="text-[11px] text-slate-400">{timeText}</span>
           </div>
-          <div className="bg-primary-container text-on-primary-container p-4 rounded-2xl rounded-tr-none shadow-lg shadow-primary-container/10 max-w-md">
-            <p className="text-sm leading-relaxed">
-              {message.content}
-            </p>
+          <div className="rounded-2xl rounded-tr-sm bg-amber-100 px-4 py-3 text-left text-sm leading-relaxed text-slate-800 shadow-sm">
+            {message.content}
           </div>
         </div>
       </div>
     );
   }
 
-  // User Message
   return (
-    <div className="flex items-start gap-4">
-      <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
-        <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-          <User className="w-5 h-5 text-slate-400" />
-        </div>
+    <div className="flex items-start gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+        <User className="h-5 w-5" />
       </div>
-      <div className="flex flex-col gap-1 items-start">
-        <div className="flex items-center gap-2 mb-1">
+      <div className="min-w-0">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-slate-900">{message.authorName}</span>
-          <span className="text-[10px] text-slate-400">{timeStr}</span>
+          <span className="text-[11px] text-slate-400">{timeText}</span>
         </div>
-        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-white/60 max-w-md">
-          <p className="text-sm text-on-surface leading-relaxed">
-            {message.content}
-          </p>
+        <div className="rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-sm ring-1 ring-slate-100">
+          {message.content}
         </div>
       </div>
     </div>

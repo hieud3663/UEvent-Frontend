@@ -1,414 +1,357 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Filter, Timer, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock3, Filter, MessageSquareReply, RotateCcw, Search, ShieldAlert } from 'lucide-react';
+import { AdminSelect, Card, EmptyState, ErrorState } from '@/core/components';
 import {
   getSupportStats,
-  getTickets,
+  getTicketsPage,
+  type TicketFilters,
 } from '@/features/support/services/support.service';
 import { cn } from '@/core/lib/utils';
-import type { Ticket, TicketStatus } from '@/features/support/types';
-import { runActionWithToast } from '@/core/lib/runActionWithToast';
+import type { SupportStats, Ticket, TicketCategory, TicketPriority, TicketStatus } from '@/features/support/types';
 
-const supportStatusConfig: Record<
-  TicketStatus,
-  { label: string; variant: 'success' | 'warning' | 'info' | 'neutral' }
-> = {
-  open: { label: 'Đang chờ', variant: 'warning' },
-  in_progress: { label: 'Đang xử lý', variant: 'info' },
-  resolved: { label: 'Đã xử lý', variant: 'success' },
-  closed: { label: 'Đã đóng', variant: 'neutral' },
+const supportStatusConfig: Record<TicketStatus, { label: string; className: string }> = {
+  open: { label: 'Đang chờ', className: 'bg-amber-100 text-amber-700' },
+  in_progress: { label: 'Đang xử lý', className: 'bg-blue-100 text-blue-700' },
+  resolved: { label: 'Đã xử lý', className: 'bg-emerald-100 text-emerald-700' },
+  closed: { label: 'Đã đóng', className: 'bg-slate-100 text-slate-700' },
 };
 
-type FilterType = 'all' | 'pending' | 'in_progress';
-type QueueType = 'all' | 'technical' | 'billing' | 'general';
+const supportPriorityConfig: Record<TicketPriority, { label: string; className: string }> = {
+  low: { label: 'Thấp', className: 'text-slate-600' },
+  medium: { label: 'Trung bình', className: 'text-blue-600' },
+  high: { label: 'Cao', className: 'text-red-500' },
+  urgent: { label: 'Khẩn cấp', className: 'text-red-600' },
+};
+
+const categoryOptions = [
+  { value: 'all', label: 'Tất cả nhóm' },
+  { value: 'account', label: 'Tài khoản' },
+  { value: 'event', label: 'Sự kiện' },
+  { value: 'payment', label: 'Thanh toán' },
+  { value: 'technical', label: 'Kỹ thuật' },
+  { value: 'other', label: 'Khác' },
+] as const;
+
+const statusOptions = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'open', label: 'Đang chờ' },
+  { value: 'in_progress', label: 'Đang xử lý' },
+  { value: 'resolved', label: 'Đã xử lý' },
+  { value: 'closed', label: 'Đã đóng' },
+] as const;
+
+const priorityOptions = [
+  { value: 'all', label: 'Mọi độ ưu tiên' },
+  { value: 'urgent', label: 'Khẩn cấp' },
+  { value: 'high', label: 'Cao' },
+  { value: 'medium', label: 'Trung bình' },
+  { value: 'low', label: 'Thấp' },
+] as const;
+
+const pageSize = 8;
 
 export default function SupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [stats, setStats] = useState<Awaited<ReturnType<typeof getSupportStats>> | null>(null);
-  const [filterType, setFilterType] = useState<FilterType>('all');
-  const [queueType, setQueueType] = useState<QueueType>('all');
+  const [stats, setStats] = useState<SupportStats | null>(null);
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState<'all' | TicketStatus>('all');
+  const [priority, setPriority] = useState<'all' | TicketPriority>('all');
+  const [category, setCategory] = useState<'all' | TicketCategory>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadSupportPageData() {
-      const [ticketsResponse, supportStats] = await Promise.all([getTickets(), getSupportStats()]);
-
-      if (!isMounted) {
-        return;
-      }
-
-      setTickets(ticketsResponse);
-      setStats(supportStats);
-    }
-
-    void loadSupportPageData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  if (!stats) {
-    return <div className="p-6 text-sm text-slate-500">Đang tải yêu cầu hỗ trợ...</div>;
-  }
-
-  // Filter tickets based on selected filters
-  const filteredTickets = tickets.filter((ticket) => {
-    if (filterType === 'pending' && ticket.status !== 'open') return false;
-    if (filterType === 'in_progress' && ticket.status !== 'in_progress') return false;
-
-    if (queueType === 'technical' && ticket.category !== 'technical') return false;
-    if (queueType === 'billing' && ticket.category !== 'payment') return false;
-    if (queueType === 'general' && ticket.category !== 'other') return false;
-
-    return true;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / itemsPerPage));
-  const paginatedTickets = filteredTickets.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const filters = useMemo<TicketFilters>(
+    () => ({
+      keyword,
+      status: status === 'all' ? undefined : status,
+      priority: priority === 'all' ? undefined : priority,
+      category: category === 'all' ? undefined : category,
+      ordering: '-updated_at',
+      page: currentPage,
+      pageSize,
+    }),
+    [category, currentPage, keyword, priority, status]
   );
 
-  const totalTickets = tickets.length;
-  const pendingInquiries = stats.openTickets;
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [ticketsResponse, supportStats] = await Promise.all([
+        getTicketsPage(filters),
+        getSupportStats(),
+      ]);
+      setTickets(ticketsResponse.tickets);
+      setTotal(ticketsResponse.total);
+      setTotalPages(ticketsResponse.totalPages);
+      setStats(supportStats);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không thể tải danh sách hỗ trợ.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters]);
 
-  const handleFilter = async () => {
-    await runActionWithToast(async () => Promise.resolve(), {
-      loading: 'Đang chuẩn bị bộ lọc hỗ trợ...',
-      success: 'Bảng lọc hỗ trợ đã sẵn sàng.',
-      error: 'Không thể mở bộ lọc hỗ trợ.',
-    });
+  const hasActiveFilters =
+    keyword.trim() !== '' ||
+    status !== 'all' ||
+    priority !== 'all' ||
+    category !== 'all';
+
+  const handleRefreshFilters = () => {
+    if (!hasActiveFilters) {
+      void loadData();
+      return;
+    }
+
+    setKeyword('');
+    setStatus('all');
+    setPriority('all');
+    setCategory('all');
+    setCurrentPage(1);
   };
 
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, keyword, priority, status]);
+
+  const firstVisible = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastVisible = Math.min(currentPage * pageSize, total);
+  const pageNumbers = buildVisiblePages(currentPage, totalPages);
+
   return (
-    <div className="space-y-8 pb-32">
-      {/* Header Section */}
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-24">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Hỗ trợ &amp; yêu cầu
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-on-surface">
+            Hỗ trợ người dùng
           </h1>
-          <p className="text-slate-500 mt-1">
-            Quản lý và phản hồi câu hỏi, yêu cầu hỗ trợ từ người dùng.
+          <p className="mt-1 max-w-2xl text-sm font-medium text-on-surface-variant">
+            Theo dõi, phân loại và xử lý ticket hỗ trợ bằng dữ liệu thật từ hệ thống.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Status Filter Toggle */}
-          <div className="flex max-w-full overflow-x-auto rounded-full border border-white/80 bg-white/60 p-1 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <button
-              onClick={() => setFilterType('all')}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-xs font-bold transition-all',
-                filterType === 'all'
-                  ? 'bg-amber-500 text-white'
-                  : 'text-slate-500 hover:bg-slate-100'
-              )}
-            >
-              TẤT CẢ
-            </button>
-            <button
-              onClick={() => setFilterType('pending')}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-xs font-bold transition-all',
-                filterType === 'pending'
-                  ? 'bg-amber-500 text-white'
-                  : 'text-slate-500 hover:bg-slate-100'
-              )}
-            >
-              ĐANG CHỜ
-            </button>
-            <button
-              onClick={() => setFilterType('in_progress')}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-xs font-bold transition-all',
-                filterType === 'in_progress'
-                  ? 'bg-amber-500 text-white'
-                  : 'text-slate-500 hover:bg-slate-100'
-              )}
-            >
-              ĐANG XỬ LÝ
-            </button>
-          </div>
+      </div>
 
-          {/* Filter Button */}
-          <button 
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SupportStatCard label="Đang chờ" value={stats?.openTickets ?? 0} icon={ShieldAlert} />
+        <SupportStatCard label="Đang xử lý" value={stats?.inProgress ?? 0} icon={MessageSquareReply} />
+        <SupportStatCard label="Đã xử lý hôm nay" value={stats?.resolvedToday ?? 0} icon={Clock3} />
+        <SupportStatCard label="Phản hồi trung bình" value={stats?.avgResponseTime ?? '0 phút'} icon={Filter} />
+      </div>
+
+      <Card className="relative z-30 border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur-xl sm:p-5">
+        <div className="grid gap-3 lg:grid-cols-[minmax(16rem,1fr)_11rem_11rem_11rem_auto]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+              placeholder="Tìm theo tiêu đề, mô tả hoặc email"
+            />
+          </label>
+          <AdminSelect value={status} onChange={setStatus} options={statusOptions} ariaLabel="Lọc trạng thái ticket" />
+          <AdminSelect value={priority} onChange={setPriority} options={priorityOptions} ariaLabel="Lọc độ ưu tiên ticket" />
+          <AdminSelect value={category} onChange={setCategory} options={categoryOptions} ariaLabel="Lọc nhóm ticket" />
+          <button
             type="button"
-            onClick={() => {
-              void handleFilter();
-            }}
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-white/80 text-sm font-semibold text-slate-700 hover:scale-[1.02] transition-transform"
+            onClick={handleRefreshFilters}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+            title="Làm mới bộ lọc"
           >
-            <Filter className="w-4 h-4" />
-            Lọc
+            <RotateCcw className="h-4 w-4" />
+            <span className="lg:sr-only xl:not-sr-only">Làm mới</span>
           </button>
         </div>
-      </div>
+      </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-        {/* Total Tickets */}
-        <div className="col-span-1 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/40">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-            Tổng yêu cầu
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-slate-900">{totalTickets.toLocaleString('en-US')}</span>
+      {error ? (
+        <ErrorState
+          title="Không thể tải ticket hỗ trợ"
+          message={error}
+          retryLabel="Tải lại"
+          onRetry={() => {
+            void loadData();
+          }}
+        />
+      ) : null}
+
+      {!error ? (
+        <Card className="relative z-0 overflow-hidden border border-white/70 bg-white/75 shadow-sm backdrop-blur-xl">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Danh sách ticket</p>
+              <p className="mt-1 text-sm text-slate-600">
+                Hiển thị {firstVisible}-{lastVisible} trong {total.toLocaleString('vi-VN')} ticket
+              </p>
+            </div>
+            <p className="text-sm font-bold text-slate-600">Trang {currentPage}/{totalPages}</p>
           </div>
-          <p className="text-xs text-green-600 font-medium mt-2">+12% trong tuần này</p>
-        </div>
 
-        {/* Pending Inquiries */}
-        <div className="col-span-1 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/40">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-            Yêu cầu đang chờ
-          </p>
-          <span className="text-4xl font-extrabold text-slate-900">{pendingInquiries}</span>
-          <p className="text-xs text-amber-600 font-medium mt-2">Cần ưu tiên xử lý</p>
-        </div>
+          {isLoading ? (
+            <div className="grid gap-3 p-4 sm:p-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-28 animate-pulse rounded-2xl bg-slate-100" />
+              ))}
+            </div>
+          ) : tickets.length === 0 ? (
+            <EmptyState
+              title="Không có ticket phù hợp"
+              description="Thử đổi bộ lọc hoặc từ khóa tìm kiếm để xem thêm yêu cầu hỗ trợ."
+              className="m-4 bg-white/70 sm:m-6"
+            />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {tickets.map((ticket) => (
+                <TicketRow key={ticket.id} ticket={ticket} />
+              ))}
+            </div>
+          )}
 
-        {/* Avg. Response Time - Large Card */}
-        <div className="relative overflow-hidden rounded-2xl border border-amber-400 bg-amber-500 p-6 shadow-lg sm:col-span-2">
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-amber-100 uppercase tracking-widest mb-2">
-              Thời gian phản hồi TB
+          <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
+            <p className="text-xs font-medium text-slate-500">
+              Dữ liệu được phân trang từ API, không dùng danh sách mẫu.
             </p>
-            <span className="text-4xl font-extrabold text-white">2,4 giờ</span>
-            <p className="text-xs text-amber-100 font-medium mt-2">
-              Cải thiện 15 phút so với hôm qua
-            </p>
-          </div>
-          <Timer className="absolute -right-4 -bottom-4 w-36 h-36 text-amber-400/30 rotate-12" />
-        </div>
-      </div>
-
-      {/* Support Table */}
-      <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/40 shadow-lg backdrop-blur-xl">
-        <div className="overflow-x-auto">
-        <table className="min-w-[860px] w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50">
-              <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Người dùng
-              </th>
-              <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest w-1/3">
-                Chủ đề / câu hỏi
-              </th>
-              <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Ngày
-              </th>
-              <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Trạng thái
-              </th>
-              <th className="px-8 py-5 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-right">
-                Thao tác
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/40">
-            {paginatedTickets.map((ticket) => (
-              <TicketRow key={ticket.id} ticket={ticket} />
-            ))}
-          </tbody>
-        </table>
-        </div>
-
-        {/* Pagination Section */}
-        <div className="flex flex-col gap-3 bg-slate-50/50 px-4 py-4 sm:px-8 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs font-medium text-slate-500">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến{' '}
-            {Math.min(currentPage * itemsPerPage, filteredTickets.length)} trong{' '}
-            {totalTickets.toLocaleString('vi-VN')} yêu cầu
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {[...Array(Math.min(3, totalPages))].map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={cn(
-                  'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors',
-                  currentPage === i + 1
-                    ? 'bg-amber-500 text-white'
-                    : 'border border-slate-200 text-slate-600 hover:bg-white'
-                )}
+            <div className="flex flex-wrap gap-2">
+              <PageButton disabled={currentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </PageButton>
+              {pageNumbers.map((pageNumber) => (
+                <PageButton
+                  key={pageNumber}
+                  active={pageNumber === currentPage}
+                  onClick={() => setCurrentPage(pageNumber)}
+                >
+                  {pageNumber}
+                </PageButton>
+              ))}
+              <PageButton
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
               >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+                <ChevronRight className="h-4 w-4" />
+              </PageButton>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Floating Category/Filter Nav */}
-      <div className="fixed bottom-24 left-1/2 z-30 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 overflow-x-auto rounded-full border border-white/60 bg-white/70 p-2 shadow-lg backdrop-blur-xl [scrollbar-width:none] sm:bottom-8 [&::-webkit-scrollbar]:hidden">
-        <span className="px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest border-r border-slate-200 mr-2">
-          Loại hàng đợi
-        </span>
-        <button
-          onClick={() => setQueueType('all')}
-          className={cn(
-            'px-4 py-2 rounded-full text-xs font-bold transition-colors',
-            queueType === 'all'
-              ? 'bg-amber-500 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          )}
-        >
-          Tất cả
-        </button>
-        <button
-          onClick={() => setQueueType('technical')}
-          className={cn(
-            'px-4 py-2 rounded-full text-xs font-bold transition-colors',
-            queueType === 'technical'
-              ? 'bg-amber-500 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          )}
-        >
-          Kỹ thuật
-        </button>
-        <button
-          onClick={() => setQueueType('billing')}
-          className={cn(
-            'px-4 py-2 rounded-full text-xs font-bold transition-colors',
-            queueType === 'billing'
-              ? 'bg-amber-500 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          )}
-        >
-          Thanh toán
-        </button>
-        <button
-          onClick={() => setQueueType('general')}
-          className={cn(
-            'px-4 py-2 rounded-full text-xs font-bold transition-colors',
-            queueType === 'general'
-              ? 'bg-amber-500 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          )}
-        >
-          Chung
-        </button>
-      </div>
+        </Card>
+      ) : null}
     </div>
+  );
+}
+
+function SupportStatCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  icon: typeof Clock3;
+}) {
+  return (
+    <Card className="border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
+          <p className="mt-3 text-2xl font-black text-slate-950">{typeof value === 'number' ? value.toLocaleString('vi-VN') : value}</p>
+        </div>
+        <span className="rounded-2xl bg-amber-100 p-3 text-amber-600">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+    </Card>
   );
 }
 
 function TicketRow({ ticket }: { ticket: Ticket }) {
   const status = supportStatusConfig[ticket.status];
-
-  // Extract ticket number from ID (e.g., TKT-001 -> #001)
-  const ticketNumber = `#${ticket.id.replace('TKT-', '443')}`;
-
-  // Get first message preview (truncated)
+  const priority = supportPriorityConfig[ticket.priority];
   const preview = ticket.messages[0]?.content || ticket.description;
 
-  // Format date
-  const date = new Date(ticket.createdAt);
-  const formattedDate = date.toLocaleDateString('vi-VN', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-  const formattedTime = date.toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
   return (
-    <tr className="group hover:bg-white/60 transition-colors">
-      {/* User Column */}
-      <td className="px-8 py-6">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden relative">
-            {/* Placeholder avatar with initials */}
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-200 to-amber-400 text-slate-700 font-bold text-sm">
-              {ticket.userName.split(' ').map(n => n[0]).join('')}
-            </div>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-900">{ticket.userName}</p>
-            <p className="text-xs text-slate-500">ID: {ticketNumber}</p>
-          </div>
+    <article className="grid gap-4 px-4 py-5 transition hover:bg-white/80 sm:px-6 lg:grid-cols-[minmax(0,1fr)_13rem_8rem] lg:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="min-w-0 truncate text-base font-bold text-on-surface">{ticket.subject}</h2>
+          <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold', status.className)}>
+            {status.label}
+          </span>
         </div>
-      </td>
-
-      {/* Subject Column */}
-      <td className="px-8 py-6">
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-slate-800 truncate">{ticket.subject}</p>
-          <p className="text-xs text-slate-600 line-clamp-1 italic">
-            &quot;{preview}&quot;
-          </p>
+        <p className="mt-2 line-clamp-2 text-sm text-slate-600">{preview}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+          <span className="font-semibold text-slate-700">{ticket.userName}</span>
+          <span>{ticket.userEmail}</span>
+          <span>{new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ticket.createdAt))}</span>
         </div>
-      </td>
+      </div>
 
-      {/* Date Column */}
-      <td className="px-8 py-6">
-        <p className="text-xs font-medium text-slate-500">{formattedDate}</p>
-        <p className="text-[10px] text-slate-400">{formattedTime}</p>
-      </td>
+      <div className="flex flex-wrap gap-2 lg:block lg:space-y-2">
+        <p className={cn('text-sm font-bold', priority.className)}>Ưu tiên: {priority.label}</p>
+        <p className="text-sm text-slate-600">Nhóm: {translateCategory(ticket.category)}</p>
+        <p className="text-sm text-slate-600">Phụ trách: {ticket.assignedTo || 'Chưa gán'}</p>
+      </div>
 
-      {/* Status Column */}
-      <td className="px-8 py-6">
-        <span className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider',
-          status.variant === 'success' && 'bg-green-100 text-green-700',
-          status.variant === 'warning' && 'bg-amber-100 text-amber-700',
-          status.variant === 'info' && 'bg-blue-100 text-blue-700',
-          status.variant === 'neutral' && 'bg-slate-100 text-slate-700'
-        )}>
-          <span className={cn(
-            'w-1.5 h-1.5 rounded-full',
-            status.variant === 'success' && 'bg-green-500',
-            status.variant === 'warning' && 'bg-amber-500',
-            status.variant === 'info' && 'bg-blue-500',
-            status.variant === 'neutral' && 'bg-slate-500'
-          )} />
-          {status.label}
-        </span>
-      </td>
-
-      {/* Actions Column */}
-      <td className="px-8 py-6 text-right">
-        {ticket.status === 'open' ? (
-          <Link href={`/support/${ticket.id}`}>
-            <button className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:scale-[1.05] transition-transform active:scale-95 shadow-md shadow-amber-200">
-              Trả lời
-            </button>
-          </Link>
-        ) : ticket.status === 'in_progress' ? (
-          <Link href={`/support/${ticket.id}`}>
-            <button className="bg-white border border-amber-500 text-amber-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-50 transition-colors">
-              Phản hồi
-            </button>
-          </Link>
-        ) : (
-          <Link href={`/support/${ticket.id}`}>
-            <button className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
-          </Link>
-        )}
-      </td>
-    </tr>
+      <Link
+        href={`/support/${ticket.id}`}
+        className="inline-flex h-10 items-center justify-center rounded-xl bg-amber-500 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600"
+      >
+        Xử lý
+      </Link>
+    </article>
   );
+}
+
+function PageButton({
+  children,
+  active = false,
+  disabled = false,
+  onClick,
+}: {
+  children: ReactNode;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'flex h-9 min-w-9 items-center justify-center rounded-xl border px-3 text-sm font-bold transition',
+        active ? 'border-amber-500 bg-amber-500 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-amber-300',
+        disabled && 'cursor-not-allowed opacity-50'
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function buildVisiblePages(currentPage: number, totalPages: number): number[] {
+  const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const end = Math.min(totalPages, start + 4);
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+}
+
+function translateCategory(category: TicketCategory): string {
+  const labels: Record<TicketCategory, string> = {
+    account: 'Tài khoản',
+    event: 'Sự kiện',
+    payment: 'Thanh toán',
+    technical: 'Kỹ thuật',
+    other: 'Khác',
+  };
+  return labels[category];
 }
