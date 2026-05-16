@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDashboardGrowthSeries, getDashboardStats, getQueueActivities } from '../services/dashboard.service';
-import type { DashboardGrowthPoint, DashboardStatItem, QueueActivityItem } from '../types';
+import { getDashboardOverview } from '../services/dashboard.service';
+import type { DashboardAuditSummary, DashboardGrowthPoint, DashboardStatItem, QueueActivityItem } from '../types';
 
 interface DashboardOverviewResult {
   stats: DashboardStatItem[];
   queue: QueueActivityItem[];
   growthSeries: DashboardGrowthPoint[];
+  auditSummary: DashboardAuditSummary | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -16,6 +17,7 @@ export function useDashboardOverview(): DashboardOverviewResult {
   const [stats, setStats] = useState<DashboardStatItem[]>([]);
   const [queue, setQueue] = useState<QueueActivityItem[]>([]);
   const [growthSeries, setGrowthSeries] = useState<DashboardGrowthPoint[]>([]);
+  const [auditSummary, setAuditSummary] = useState<DashboardAuditSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,26 +27,23 @@ export function useDashboardOverview(): DashboardOverviewResult {
     async function loadOverview() {
       try {
         setIsLoading(true);
-        const [nextStats, nextQueue, nextGrowthSeries] = await Promise.all([
-          getDashboardStats(),
-          getQueueActivities(),
-          getDashboardGrowthSeries(),
-        ]);
+        const overview = await getDashboardOverview();
 
         if (!isMounted) {
           return;
         }
 
-        setStats(nextStats);
-        setQueue(nextQueue);
-        setGrowthSeries(nextGrowthSeries);
+        setStats(overview.stats);
+        setQueue(overview.queue);
+        setGrowthSeries(overview.growthSeries);
+        setAuditSummary(overview.auditSummary);
         setError(null);
-      } catch {
+      } catch (loadError) {
         if (!isMounted) {
           return;
         }
 
-        setError('Failed to load dashboard overview');
+        setError(loadError instanceof Error ? loadError.message : 'Không thể tải tổng quan hệ thống.');
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -59,5 +58,5 @@ export function useDashboardOverview(): DashboardOverviewResult {
     };
   }, []);
 
-  return { stats, queue, growthSeries, isLoading, error };
+  return { stats, queue, growthSeries, auditSummary, isLoading, error };
 }
