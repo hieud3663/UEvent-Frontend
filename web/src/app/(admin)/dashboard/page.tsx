@@ -2,22 +2,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Ticket, CalendarCheck, Banknote, Plus, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, Ticket, CalendarCheck, Headphones, Plus, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { ErrorState } from '@/core/components';
 import { StatsCard } from '@/features/dashboard/components';
 import { useDashboardOverview } from '@/features/dashboard/hooks/useDashboardOverview';
 import { cn } from '@/core/lib/utils';
-import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const { stats, queue, growthSeries, isLoading, error } = useDashboardOverview();
+  const { stats, queue, growthSeries, auditSummary, isLoading, error } = useDashboardOverview();
 
   const statIconMap = {
     users: Users,
     registrations: Ticket,
     events: CalendarCheck,
-    revenue: Banknote,
+    support: Headphones,
   } as const;
 
   const queueGradientMap: Record<string, string> = {
@@ -25,20 +25,19 @@ export default function DashboardPage() {
     'queue-2': 'from-amber-300 to-amber-500',
   };
 
-  const handleOpenQueue = async (queueId: string, queueLabel: string) => {
-    await runActionWithToast(async () => Promise.resolve(queueId), {
-      loading: `Đang mở ${queueLabel}...`,
-      success: `${queueLabel} đã sẵn sàng.`,
-      error: `Không thể mở ${queueLabel}.`,
-    });
-  };
-
   if (isLoading) {
     return <div className="p-6 text-sm text-slate-500">Đang tải tổng quan hệ thống...</div>;
   }
 
   if (error) {
-    return <div className="p-6 text-sm text-red-500">{error}</div>;
+    return (
+      <ErrorState
+        title="Không thể tải bảng điều khiển"
+        message={error}
+        retryLabel="Thử lại"
+        onRetry={() => window.location.reload()}
+      />
+    );
   }
 
   const pendingQueueItems = queue.filter((item) => item.status === 'pending').slice(0, 2);
@@ -161,12 +160,9 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 p-4 space-y-3">
             {pendingQueueItems.map((item) => (
-              <button
+              <Link
                 key={item.id}
-                type="button"
-                onClick={() => {
-                  void handleOpenQueue(item.id, item.title);
-                }}
+                href={item.href}
                 className="group w-full p-4 rounded-2xl bg-white/50 hover:bg-white transition-all cursor-pointer border border-transparent hover:border-amber-100 text-left"
               >
                 <div className="flex gap-4 items-center">
@@ -184,10 +180,10 @@ export default function DashboardPage() {
                   </div>
                   <ArrowRight className="text-amber-500 w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-              </button>
+              </Link>
             ))}
             {latestCompletedItem && (
-              <div className="p-4 rounded-2xl bg-slate-50/50">
+              <Link href={latestCompletedItem.href} className="block p-4 rounded-2xl bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="flex gap-4 items-center">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="text-emerald-600 w-5 h-5" />
@@ -196,10 +192,27 @@ export default function DashboardPage() {
                     <p className="text-sm font-bold">{latestCompletedItem.title}</p>
                     <p className="text-xs text-slate-500">{latestCompletedItem.subtitle}</p>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap">2 giờ trước</span>
+                  <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap">Hoàn tất</span>
                 </div>
-              </div>
+              </Link>
             )}
+            {auditSummary ? (
+              <Link href="/settings" className="block rounded-2xl border border-blue-100 bg-blue-50/70 p-4 transition-colors hover:bg-blue-50">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900">Nhật ký kiểm toán</p>
+                    <p className="text-xs text-slate-500">
+                      {auditSummary.status === 'available'
+                        ? `${auditSummary.totalEvents.toLocaleString('vi-VN')} bản ghi trong 24 giờ.`
+                        : 'OpenSearch audit chưa sẵn sàng.'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ) : null}
           </div>
           <div className="p-4 mt-auto">
             <Link 
