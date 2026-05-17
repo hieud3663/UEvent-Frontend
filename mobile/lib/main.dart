@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ import 'package:frontend/features/events/views/discovery_view.dart';
 import 'package:frontend/features/events/views/invite_guests_view.dart';
 import 'package:frontend/features/events/views/send_notification_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
+import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
 import 'package:frontend/features/ticketing/views/my_tickets_view.dart';
 import 'package:frontend/features/events/views/empty_search_view.dart';
@@ -103,8 +105,9 @@ Future<void> _handleSignIn(
   AuthMethod method, {
   String? loginHint,
 }) async {
-  final session =
-      await ref.read(authControllerProvider.notifier).signIn(method, loginHint: loginHint);
+  final session = await ref
+      .read(authControllerProvider.notifier)
+      .signIn(method, loginHint: loginHint);
   if (!context.mounted) return;
 
   if (session != null) {
@@ -112,7 +115,8 @@ Future<void> _handleSignIn(
   } else {
     // Read the error from the controller state for the snackbar.
     final state = ref.read(authControllerProvider);
-    final message = state.whenOrNull(
+    final message =
+        state.whenOrNull(
           error: (err, _) =>
               err is AuthFailure ? err.displayMessage : err.toString(),
         ) ??
@@ -120,9 +124,9 @@ Future<void> _handleSignIn(
 
     // Don't show a snackbar for user-cancelled — it's expected.
     if (state.error is! AuthFailureCancelled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 }
@@ -132,9 +136,12 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
     _fastRoute(
       builder: (ctx) => Consumer(
         builder: (ctx, loginRef, _) => LoginView(
-          onLoginWithEmail: (email) => _handleSignIn(ctx, loginRef, AuthMethod.email, loginHint: email),
-          onLoginWithGoogle: () => _handleSignIn(ctx, loginRef, AuthMethod.google),
-          onLoginWithPasskey: () => _handleSignIn(ctx, loginRef, AuthMethod.passkey),
+          onLoginWithEmail: (email) =>
+              _handleSignIn(ctx, loginRef, AuthMethod.email, loginHint: email),
+          onLoginWithGoogle: () =>
+              _handleSignIn(ctx, loginRef, AuthMethod.google),
+          onLoginWithPasskey: () =>
+              _handleSignIn(ctx, loginRef, AuthMethod.passkey),
         ),
       ),
     ),
@@ -143,32 +150,40 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
 }
 
 // Retained for potential future use (post-login profile setup, email change OTP).
+// ignore: unused_element
 void _navigateToOtp(BuildContext context) {
-  Navigator.of(context).push(_fastRoute(
-    builder: (ctx) => OtpVerificationView(
-      onVerify: () => _navigateToProfileSetup(ctx),
-      onBack: () => Navigator.of(ctx).pop(),
-      onResend: () {}, // TODO: Implement OTP resend logic
+  Navigator.of(context).push(
+    _fastRoute(
+      builder: (ctx) => OtpVerificationView(
+        onVerify: () => _navigateToProfileSetup(ctx),
+        onBack: () => Navigator.of(ctx).pop(),
+        onResend: () {}, // TODO: Implement OTP resend logic
+      ),
     ),
-  ));
+  );
 }
 
 void _navigateToProfileSetup(BuildContext context) {
-  Navigator.of(context).push(_fastRoute(
-    builder: (ctx) => ProfileSetupView(
-      onComplete: () => _navigateToAppShell(ctx),
-      onBack: () => Navigator.of(ctx).pop(),
+  Navigator.of(context).push(
+    _fastRoute(
+      builder: (ctx) => ProfileSetupView(
+        onComplete: () => _navigateToAppShell(ctx),
+        onBack: () => Navigator.of(ctx).pop(),
+      ),
     ),
-  ));
+  );
 }
 
+// ignore: unused_element
 void _navigateToPasskeySetup(BuildContext context) {
-  Navigator.of(context).push(_fastRoute(
-    builder: (ctx) => PasskeySetupView(
-      onBack: () => Navigator.of(ctx).pop(),
-      onCreatePasskey: () => _navigateToAppShell(ctx),
+  Navigator.of(context).push(
+    _fastRoute(
+      builder: (ctx) => PasskeySetupView(
+        onBack: () => Navigator.of(ctx).pop(),
+        onCreatePasskey: () => _navigateToAppShell(ctx),
+      ),
     ),
-  ));
+  );
 }
 
 void _navigateToAppShell(BuildContext context) {
@@ -216,15 +231,27 @@ class UEventsApp extends ConsumerWidget {
 // ════════════════════════════════════════════════════════════════════
 
 /// App shell that manages bottom nav tab switching + push navigation.
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        ref
+            .read(pushNotificationControllerProvider.notifier)
+            .registerCurrentDevice(),
+      );
+    });
+  }
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
@@ -233,41 +260,46 @@ class _AppShellState extends State<AppShell> {
   // ── Push Navigation (General) ──
 
   void _pushNotifications() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => NotificationsView(
-        currentNavIndex: _currentIndex,
-        onNavTap: (i) {
-          Navigator.of(context).pop();
-          _onNavTap(i);
-        },
-        onBack: () => Navigator.of(context).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) => NotificationsView(
+          currentNavIndex: _currentIndex,
+          onNavTap: (i) {
+            Navigator.of(context).pop();
+            _onNavTap(i);
+          },
+          onBack: () => Navigator.of(context).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushProfile() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => UserProfileView(
-        onBack: () => Navigator.of(context).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) =>
+            UserProfileView(onBack: () => Navigator.of(context).pop()),
       ),
-    ));
+    );
   }
 
   void _pushEmptySearch() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => EmptySearchView(
-        currentNavIndex: _currentIndex,
-        onNavTap: (i) {
-          Navigator.of(context).pop();
-          _onNavTap(i);
-        },
-        onBack: () => Navigator.of(context).pop(),
-        onGoHome: () {
-          Navigator.of(context).pop();
-          _onNavTap(0);
-        },
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) => EmptySearchView(
+          currentNavIndex: _currentIndex,
+          onNavTap: (i) {
+            Navigator.of(context).pop();
+            _onNavTap(i);
+          },
+          onBack: () => Navigator.of(context).pop(),
+          onGoHome: () {
+            Navigator.of(context).pop();
+            _onNavTap(0);
+          },
+        ),
       ),
-    ));
+    );
   }
 
   // ── Attendee Flow ──
@@ -275,26 +307,33 @@ class _AppShellState extends State<AppShell> {
   void _pushEventDetail(EventModel event) {
     if (event.isOrganizer) {
       // User is the organizer - show organizer view
-      Navigator.of(context).push(_fastRoute(
-        builder: (ctx) => EventDetailOrganizerView(
-          onBack: () => Navigator.of(ctx).pop(),
-          onCheckIn: _pushQrScanner,
-          onInvite: () => _pushInviteGuests(event), // TODO: Navigate to invite screen
-          onNotify: () => _pushSendNotification(event), // TODO: Navigate to send notification screen
-          onManage: _pushManageEventHub,
-          onShare: () => ShareEventSheet.show(ctx),
+      Navigator.of(context).push(
+        _fastRoute(
+          builder: (ctx) => EventDetailOrganizerView(
+            onBack: () => Navigator.of(ctx).pop(),
+            onCheckIn: _pushQrScanner,
+            onInvite: () =>
+                _pushInviteGuests(event), // TODO: Navigate to invite screen
+            onNotify: () => _pushSendNotification(
+              event,
+            ), // TODO: Navigate to send notification screen
+            onManage: _pushManageEventHub,
+            onShare: () => ShareEventSheet.show(ctx),
+          ),
         ),
-      ));
+      );
     } else {
       // User is attendee/discovering - show attendee view
-      Navigator.of(context).push(_fastRoute(
-        builder: (ctx) => EventDetailScreen(
-          onBack: () => Navigator.of(ctx).pop(),
-          onShare: () => ShareEventSheet.show(ctx),
-          onRegister: () => _pushRegistrationConfirmation(ctx),
-          onAskQuestion: () => _pushAskQuestion(ctx),
+      Navigator.of(context).push(
+        _fastRoute(
+          builder: (ctx) => EventDetailScreen(
+            onBack: () => Navigator.of(ctx).pop(),
+            onShare: () => ShareEventSheet.show(ctx),
+            onRegister: () => _pushRegistrationConfirmation(ctx),
+            onAskQuestion: () => _pushAskQuestion(ctx),
+          ),
         ),
-      ));
+      );
     }
   }
 
@@ -310,35 +349,41 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _pushRegistrationSuccess(BuildContext ctx) {
-    Navigator.of(ctx).push(_fastRoute(
-      builder: (_) => RegistrationSuccessScreen(
-        eventName: 'Global Developer Summit 2024',
-        ticketId: '#UE-98210',
-        onViewTicket: () => Navigator.of(ctx).pop(),
-        onAddToWallet: () {},
+    Navigator.of(ctx).push(
+      _fastRoute(
+        builder: (_) => RegistrationSuccessScreen(
+          eventName: 'Global Developer Summit 2024',
+          ticketId: '#UE-98210',
+          onViewTicket: () => Navigator.of(ctx).pop(),
+          onAddToWallet: () {},
+        ),
       ),
-    ));
+    );
   }
 
   void _pushAskQuestion(BuildContext ctx) {
-    Navigator.of(ctx).push(_fastRoute(
-      builder: (_) => AskQuestionScreen(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSend: (q, anon, notify) {},
+    Navigator.of(ctx).push(
+      _fastRoute(
+        builder: (_) => AskQuestionScreen(
+          onBack: () => Navigator.of(ctx).pop(),
+          onSend: (q, anon, notify) {},
+        ),
       ),
-    ));
+    );
   }
 
   // ── Ticketing Flow ──
 
   void _pushTicketDetail(TicketModel ticket) {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => TicketDetailView(
-        ticket: ticket,
-        onBack: () => Navigator.of(ctx).pop(),
-        onCancelTap: () => _showCancelConfirmation(ctx, ticket),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => TicketDetailView(
+          ticket: ticket,
+          onBack: () => Navigator.of(ctx).pop(),
+          onCancelTap: () => _showCancelConfirmation(ctx, ticket),
+        ),
       ),
-    ));
+    );
   }
 
   void _showCancelConfirmation(BuildContext ctx, TicketModel ticket) {
@@ -347,188 +392,212 @@ class _AppShellState extends State<AppShell> {
       eventName: ticket.eventName,
       onConfirm: () {
         Navigator.of(ctx).pop(); // close sheet
-        CancelErrorDialog.show(ctx); 
+        CancelErrorDialog.show(ctx);
       },
     );
   }
 
   void _pushPastEventDetail(TicketModel ticket) {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => PastEventDetailView(
-        ticket: ticket,
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => PastEventDetailView(
+          ticket: ticket,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   // ── Organizer Flow ──
 
   void _pushCreateEvent() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => CreateEventView(
-        onBack: () => Navigator.of(context).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) =>
+            CreateEventView(onBack: () => Navigator.of(context).pop()),
       ),
-    ));
+    );
   }
 
   void _pushInviteGuests(EventModel event) {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => InviteGuestsView(
-        onBack: () => Navigator.of(context).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) =>
+            InviteGuestsView(onBack: () => Navigator.of(context).pop()),
       ),
-    ));
+    );
   }
 
   void _pushSendNotification(EventModel event) {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => SendNotificationView(
-        onBack: () => Navigator.of(context).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) =>
+            SendNotificationView(onBack: () => Navigator.of(context).pop()),
       ),
-    ));
+    );
   }
 
-
   void _pushManageEventHub() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (_) => ManageEventHubView(
-        onBack: () => Navigator.of(context).pop(),
-        onEditDetailsTap: _pushEditEventDetails,
-        onManageTeamTap: _pushManageTeam,
-        onArchiveTap: _pushArchiveEvent,
-        onAttendeeListTap: _pushAttendeeList,
-        onRegistrationQuestionsTap: _pushRegistrationQuestions,
-        onParticipantCheckInTap: _pushQrScanner,
-        onExportAttendeeListTap: _pushExportAttendeeList,
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (_) => ManageEventHubView(
+          onBack: () => Navigator.of(context).pop(),
+          onEditDetailsTap: _pushEditEventDetails,
+          onManageTeamTap: _pushManageTeam,
+          onArchiveTap: _pushArchiveEvent,
+          onAttendeeListTap: _pushAttendeeList,
+          onRegistrationQuestionsTap: _pushRegistrationQuestions,
+          onParticipantCheckInTap: _pushQrScanner,
+          onExportAttendeeListTap: _pushExportAttendeeList,
+        ),
       ),
-    ));
+    );
   }
 
   void _pushEditEventDetails() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => EditEventDetailsView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            EditEventDetailsView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushManageTeam() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => ManageTeamView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => ManageTeamView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushArchiveEvent() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => ArchiveEventView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            ArchiveEventView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushAttendeeList() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => AttendeeListView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            AttendeeListView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushExportAttendeeList() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => ExportAttendeeListView(
-        onClose: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            ExportAttendeeListView(onClose: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushRegistrationQuestions() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => RegistrationQuestionsView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onQuestionTap: () => _pushQuestionDetail(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => RegistrationQuestionsView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onQuestionTap: () => _pushQuestionDetail(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushQuestionDetail() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => QuestionDetailView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            QuestionDetailView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushQrScanner() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => QrScannerView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => QrScannerView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   // ── Profile / Settings Sub-Navigation ──
 
   void _pushEditProfile() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => EditProfileView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSave: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => EditProfileView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onSave: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushChangeEmail() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => ChangeEmailView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSave: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => ChangeEmailView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onSave: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushPasskeyLogin() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => PasskeySetupView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onCreatePasskey: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => PasskeySetupView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onCreatePasskey: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushHelpCenter() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => HelpCenterView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => HelpCenterView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushSendFeedback() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => SendFeedbackView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSubmit: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => SendFeedbackView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onSubmit: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _pushPrivacyPolicy() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => PrivacyPolicyView(
-        onBack: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) =>
+            PrivacyPolicyView(onBack: () => Navigator.of(ctx).pop()),
       ),
-    ));
+    );
   }
 
   void _pushSyncContacts() {
-    Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => SyncContactsView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSync: () => Navigator.of(ctx).pop(),
+    Navigator.of(context).push(
+      _fastRoute(
+        builder: (ctx) => SyncContactsView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onSync: () => Navigator.of(ctx).pop(),
+        ),
       ),
-    ));
+    );
   }
 
   void _signOut() {
@@ -540,6 +609,9 @@ class _AppShellState extends State<AppShell> {
           builder: (ctx, ref, _) {
             // Fire sign-out and navigate to login.
             Future.microtask(() async {
+              await ref
+                  .read(pushNotificationControllerProvider.notifier)
+                  .unregisterCurrentDevice();
               await ref.read(authControllerProvider.notifier).signOut();
               if (ctx.mounted) _navigateToLogin(ctx, ref);
             });
@@ -605,4 +677,3 @@ class _AppShellState extends State<AppShell> {
     );
   }
 }
-
