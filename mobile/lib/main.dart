@@ -10,7 +10,10 @@ import 'package:frontend/core/theme/app_theme.dart';
 // Auth Flow
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
+import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
+import 'package:frontend/features/auth/providers/otp_providers.dart';
+import 'package:frontend/features/auth/controller/otp_controller.dart';
 import 'package:frontend/features/auth/views/splash_view.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
 import 'package:frontend/features/auth/views/otp_verification_view.dart';
@@ -35,6 +38,7 @@ import 'package:frontend/features/profile/views/help_center_view.dart';
 import 'package:frontend/features/profile/views/send_feedback_view.dart';
 import 'package:frontend/features/profile/views/privacy_policy_view.dart';
 import 'package:frontend/features/profile/views/sync_contacts_view.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 
 // Event Attendee & General
 import 'package:frontend/features/events/views/event_detail_screen.dart';
@@ -95,22 +99,51 @@ PageRoute<T> _fastRoute<T>({required WidgetBuilder builder}) {
 // Each function captures the builder's `ctx` for subsequent navigation.
 // ════════════════════════════════════════════════════════════════════
 
+/// Fetches the user profile and routes to ProfileSetupView or AppShell
+/// depending on whether [isProfileComplete] is true.
+///
+/// Called after both a fresh sign-in and a session restore, ensuring the
+/// check runs every time the app reaches an authenticated state.
+Future<void> _routeAfterAuth(BuildContext context, WidgetRef ref) async {
+  try {
+    final profileService = ref.read(profileServiceProvider);
+    final user = await profileService.getMyProfile();
+    if (!context.mounted) return;
+
+    if (user.isProfileComplete) {
+      _navigateToAppShell(context);
+    } else {
+      _navigateToProfileSetup(context);
+    }
+  } catch (_) {
+    // Nếu không lấy được profile (mạng lỗi, token hết hạn, v.v.),
+    // vẫn cho vào Home — ApiClient interceptor sẽ xử lý 401 tự động.
+    if (context.mounted) _navigateToAppShell(context);
+  }
+}
+
 /// Triggers the Keycloak PKCE sign-in flow for the given [method],
-/// then navigates to AppShell on success or shows a snackbar on failure.
+/// then checks profile completion and navigates accordingly.
 Future<void> _handleSignIn(
   BuildContext context,
   WidgetRef ref,
   AuthMethod method, {
   String? loginHint,
 }) async {
+  // Email method → native OTP flow (không dùng Keycloak browser)
+  if (method == AuthMethod.email) {
+    _navigateToOtp(context, ref, email: loginHint ?? '');
+    return;
+  }
+
+  // Google / Passkey → PKCE browser flow như cũ
   final session =
       await ref.read(authControllerProvider.notifier).signIn(method, loginHint: loginHint);
   if (!context.mounted) return;
 
   if (session != null) {
-    _navigateToAppShell(context);
+    await _routeAfterAuth(context, ref);
   } else {
-    // Read the error from the controller state for the snackbar.
     final state = ref.read(authControllerProvider);
     final message = state.whenOrNull(
           error: (err, _) =>
@@ -118,7 +151,6 @@ Future<void> _handleSignIn(
         ) ??
         'Đăng nhập thất bại.';
 
-    // Don't show a snackbar for user-cancelled — it's expected.
     if (state.error is! AuthFailureCancelled) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -142,24 +174,88 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
   );
 }
 
-// Retained for potential future use (post-login profile setup, email change OTP).
-void _navigateToOtp(BuildContext context) {
+/// Điều hướng đến OTP screen và wire toàn bộ luồng Send → Verify.
+///
+/// [email] là địa chỉ user đã nhập ở LoginView.
+/// OtpController tự động gửi OTP khi push xong.
+void _navigateToOtp(BuildContext context, WidgetRef ref, {required String email}) {
+  // Reset controller trước khi bắt đầu flow mới
+  ref.read(otpControllerProvider.notifier).reset();
+
   Navigator.of(context).push(_fastRoute(
-    builder: (ctx) => OtpVerificationView(
-      onVerify: () => _navigateToProfileSetup(ctx),
-      onBack: () => Navigator.of(ctx).pop(),
-      onResend: () {}, // TODO: Implement OTP resend logic
+    builder: (ctx) => Consumer(
+      builder: (ctx, otpRef, _) {
+        final otpState = otpRef.watch(otpControllerProvider);
+
+        // Gửi OTP ngay khi màn hình mount
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (otpRef.read(otpControllerProvider) is OtpIdle) {
+            otpRef.read(otpControllerProvider.notifier).sendOtp(email);
+          }
+        });
+
+        // Lấy metadata từ state
+        final sentEmail = switch (otpState) {
+          OtpSent(email: final e) => e,
+          OtpVerifying() => email,
+          OtpVerified() => email,
+          OtpError() => email,
+          _ => email,
+        };
+        final canResendAt = otpState is OtpSent ? otpState.canResendAt : null;
+        final isVerifying = otpState is OtpVerifying;
+
+        // Điều hướng sau khi verify xong
+        if (otpState is OtpVerified) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (ctx.mounted) await _routeAfterAuth(ctx, otpRef);
+          });
+        }
+
+        // Hiển thị error snackbar nếu có
+        if (otpState is OtpError) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(otpState.message)),
+              );
+            }
+          });
+        }
+
+        return OtpVerificationView(
+          email: sentEmail,
+          canResendAt: canResendAt,
+          isVerifying: isVerifying,
+          onCompleted: (code) =>
+              otpRef.read(otpControllerProvider.notifier).verifyOtp(code),
+          onResend: () =>
+              otpRef.read(otpControllerProvider.notifier).sendOtp(sentEmail),
+          onBack: () => Navigator.of(ctx).pop(),
+        );
+      },
     ),
   ));
 }
 
 void _navigateToProfileSetup(BuildContext context) {
-  Navigator.of(context).push(_fastRoute(
-    builder: (ctx) => ProfileSetupView(
-      onComplete: () => _navigateToAppShell(ctx),
-      onBack: () => Navigator.of(ctx).pop(),
+  // pushAndRemoveUntil: user không thể back về Login sau khi đã xác thực.
+  Navigator.of(context).pushAndRemoveUntil(
+    _fastRoute(
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) => ProfileSetupView(
+          profileService: ref.read(profileServiceProvider),
+          onComplete: () async {
+            // Sau khi lưu profile, invalidate cache và về Home.
+            ref.invalidate(profileServiceProvider);
+            if (ctx.mounted) _navigateToAppShell(ctx);
+          },
+          // Không có onBack — user bắt buộc phải hoàn thiện hồ sơ
+        ),
+      ),
     ),
-  ));
+    (route) => false,
+  );
 }
 
 void _navigateToPasskeySetup(BuildContext context) {
@@ -191,16 +287,19 @@ class UEventsApp extends ConsumerWidget {
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // Splash → check stored session → Login or AppShell
+      // Splash → check stored session → Login, ProfileSetup, or AppShell
       home: Builder(
         builder: (context) => SplashView(
-          onInitializationComplete: () {
+          onInitializationComplete: () async {
             // Check if a valid session exists from a previous run.
             final authState = ref.read(authControllerProvider);
             final session = authState.whenData((s) => s).value;
             final hasSession = session != null && !session.isExpired;
+            if (!context.mounted) return;
+
             if (hasSession) {
-              _navigateToAppShell(context);
+              // Session còn hạn → check profile trước khi vào Home.
+              await _routeAfterAuth(context, ref);
             } else {
               _navigateToLogin(context, ref);
             }
@@ -472,9 +571,21 @@ class _AppShellState extends State<AppShell> {
 
   void _pushEditProfile() {
     Navigator.of(context).push(_fastRoute(
-      builder: (ctx) => EditProfileView(
-        onBack: () => Navigator.of(ctx).pop(),
-        onSave: () => Navigator.of(ctx).pop(),
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) {
+          final currentUser = ref.read(userProfileProvider).value;
+          return EditProfileView(
+            user: currentUser,
+            profileService: ref.read(profileServiceProvider),
+            onBack: () => Navigator.of(ctx).pop(),
+            onSaved: () {
+              // Invalidate cache để Settings + Profile views refresh data mới
+              ref.invalidate(userProfileProvider);
+              ref.invalidate(profileOverviewProvider);
+              Navigator.of(ctx).pop();
+            },
+          );
+        },
       ),
     ));
   }
