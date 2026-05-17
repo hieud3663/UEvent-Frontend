@@ -1,3 +1,5 @@
+// File: lib/features/auth/views/profile_setup_view.dart
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
@@ -5,13 +7,25 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/features/auth/models/user_model.dart';
+import 'package:frontend/features/profile/services/profile_service.dart';
 
+/// Màn hình hoàn thiện hồ sơ — bắt buộc cho user mới.
+///
+/// [profileService] — dùng để gọi PATCH /auth/profile/
+/// [initialUser]    — dữ liệu hiện tại từ backend (có thể null nếu chưa fetch được)
+/// [onComplete]     — callback sau khi lưu thành công
+/// [onBack]         — callback nút back (null = ẩn nút)
 class ProfileSetupView extends StatefulWidget {
+  final ProfileService? profileService;
+  final UserModel? initialUser;
   final VoidCallback? onComplete;
   final VoidCallback? onBack;
 
   const ProfileSetupView({
     super.key,
+    this.profileService,
+    this.initialUser,
     this.onComplete,
     this.onBack,
   });
@@ -21,7 +35,78 @@ class ProfileSetupView extends StatefulWidget {
 }
 
 class _ProfileSetupViewState extends State<ProfileSetupView> {
-  String? _selectedKhoa;
+  late final TextEditingController _fullNameCtrl;
+  late final TextEditingController _studentCodeCtrl;
+  late final TextEditingController _classNameCtrl;
+  late final TextEditingController _clubCtrl;
+  String? _selectedFaculty;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = widget.initialUser;
+    _fullNameCtrl = TextEditingController(text: user?.fullName ?? '');
+    _studentCodeCtrl = TextEditingController(text: user?.studentCode ?? '');
+    _classNameCtrl = TextEditingController(text: user?.className ?? '');
+    _clubCtrl = TextEditingController();
+    _selectedFaculty = user?.faculty;
+  }
+
+  @override
+  void dispose() {
+    _fullNameCtrl.dispose();
+    _studentCodeCtrl.dispose();
+    _classNameCtrl.dispose();
+    _clubCtrl.dispose();
+    super.dispose();
+  }
+
+  bool get _isFormValid =>
+      _fullNameCtrl.text.trim().isNotEmpty &&
+      _studentCodeCtrl.text.trim().isNotEmpty &&
+      _selectedFaculty != null;
+
+  Future<void> _handleSubmit() async {
+    if (!_isFormValid || _isSaving) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final updateData = <String, dynamic>{
+        'full_name': _fullNameCtrl.text.trim(),
+        'student_code': _studentCodeCtrl.text.trim(),
+        'faculty': _selectedFaculty,
+      };
+
+      // Chỉ gửi class_name nếu có nhập
+      final className = _classNameCtrl.text.trim();
+      if (className.isNotEmpty) {
+        updateData['class_name'] = className;
+      }
+
+      if (widget.profileService != null) {
+        await widget.profileService!.updateProfile(updateData);
+      }
+
+      if (mounted) {
+        widget.onComplete?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lưu thất bại: $e'),
+            backgroundColor: Colors.red.shade400,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,28 +136,31 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                   const SizedBox(height: 40),
 
                   // Form Fields
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'HỌ TÊN',
                     placeholder: 'Nhập họ và tên',
+                    controller: _fullNameCtrl,
                   ),
                   const SizedBox(height: 20),
 
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'MÃ SỐ SINH VIÊN (MSSV)',
                     placeholder: 'Nhập MSSV',
+                    controller: _studentCodeCtrl,
                   ),
                   const SizedBox(height: 20),
 
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'LỚP',
                     placeholder: 'Nhập lớp sinh hoạt',
+                    controller: _classNameCtrl,
                   ),
                   const SizedBox(height: 20),
 
                   GlassDropdownField<String>(
                     label: 'KHOA',
                     placeholder: 'Chọn khoa của bạn',
-                    value: _selectedKhoa,
+                    value: _selectedFaculty,
                     items: const [
                       GlassDropdownItem(value: 'cntt', label: 'Công nghệ thông tin'),
                       GlassDropdownItem(value: 'kt', label: 'Kinh tế'),
@@ -85,13 +173,14 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                       GlassDropdownItem(value: 'moi-truong', label: 'Môi trường & Tài nguyên'),
                       GlassDropdownItem(value: 'khoa-hoc', label: 'Khoa học ứng dụng'),
                     ],
-                    onChanged: (val) => setState(() => _selectedKhoa = val),
+                    onChanged: (val) => setState(() => _selectedFaculty = val),
                   ),
                   const SizedBox(height: 20),
 
                   GlassInputField(
                     label: 'CÂU LẠC BỘ ĐANG THAM GIA',
                     placeholder: 'Tên câu lạc bộ (nếu có)',
+                    controller: _clubCtrl,
                     labelTrailing: Text(
                       'Tùy chọn',
                       style: AppTextStyles.bodySmall,
@@ -163,14 +252,17 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          GestureDetector(
-                            onTap: widget.onBack,
-                            child: const SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: Icon(Icons.chevron_left),
-                            ),
-                          ),
+                          if (widget.onBack != null)
+                            GestureDetector(
+                              onTap: widget.onBack,
+                              child: const SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: Icon(Icons.chevron_left),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 40),
                           Text(
                             'Hoàn thiện hồ sơ',
                             style: AppTextStyles.titleMedium,
@@ -209,9 +301,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                     ),
                   ),
                   child: PrimaryButton(
-                    label: 'Hoàn tất',
-                    icon: Icons.arrow_forward,
-                    onPressed: widget.onComplete,
+                    label: _isSaving ? 'Đang lưu...' : 'Hoàn tất',
+                    icon: _isSaving ? null : Icons.arrow_forward,
+                    onPressed: (_isFormValid && !_isSaving) ? _handleSubmit : null,
                   ),
                 ),
               ),

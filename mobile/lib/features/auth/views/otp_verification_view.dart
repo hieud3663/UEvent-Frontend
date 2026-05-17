@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
@@ -5,17 +6,94 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/widgets/otp_input_row.dart';
 
-class OtpVerificationView extends StatelessWidget {
-  final VoidCallback? onVerify;
+/// View xác thực OTP.
+///
+/// [email]         — địa chỉ email đã gửi OTP (hiển thị cho user).
+/// [canResendAt]   — thời điểm cho phép gửi lại (null = có thể gửi ngay).
+/// [isVerifying]   — true khi đang gọi API verify (disable nút).
+/// [onCompleted]   — callback khi user nhập đủ 6 số, truyền code ra ngoài.
+/// [onResend]      — callback khi user nhấn "Gửi lại".
+/// [onBack]        — callback nút back.
+class OtpVerificationView extends StatefulWidget {
+  final String email;
+  final DateTime? canResendAt;
+  final bool isVerifying;
+  final ValueChanged<String>? onCompleted;
   final VoidCallback? onResend;
   final VoidCallback? onBack;
 
   const OtpVerificationView({
     super.key,
-    this.onVerify,
+    required this.email,
+    this.canResendAt,
+    this.isVerifying = false,
+    this.onCompleted,
     this.onResend,
     this.onBack,
   });
+
+  @override
+  State<OtpVerificationView> createState() => _OtpVerificationViewState();
+}
+
+class _OtpVerificationViewState extends State<OtpVerificationView> {
+  Timer? _timer;
+  int _remainingSeconds = 0;
+  String _collectedCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(OtpVerificationView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.canResendAt != widget.canResendAt) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (widget.canResendAt == null) {
+      setState(() => _remainingSeconds = 0);
+      return;
+    }
+    final diff = widget.canResendAt!.difference(DateTime.now()).inSeconds;
+    setState(() => _remainingSeconds = diff.clamp(0, 9999));
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _remainingSeconds = (_remainingSeconds - 1).clamp(0, 9999);
+      });
+      if (_remainingSeconds <= 0) _timer?.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  bool get _canResend => _remainingSeconds <= 0;
+
+  String get _timerLabel {
+    final m = _remainingSeconds ~/ 60;
+    final s = _remainingSeconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  double get _timerProgress =>
+      _remainingSeconds > 0 ? _remainingSeconds / 60.0 : 0.0;
+
+  void _onOtpCompleted(String code) {
+    setState(() => _collectedCode = code);
+    widget.onCompleted?.call(code);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,14 +140,14 @@ class OtpVerificationView extends StatelessWidget {
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Column(
                       children: [
-                        // Top App Bar inside Card
+                        // Top App Bar
                         Padding(
                           padding: const EdgeInsets.all(24),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               GestureDetector(
-                                onTap: onBack,
+                                onTap: widget.onBack,
                                 child: Container(
                                   width: 40,
                                   height: 40,
@@ -90,7 +168,7 @@ class OtpVerificationView extends StatelessWidget {
                                   color: AppColors.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(width: 40), // Spacer for center alignment
+                              const SizedBox(width: 40),
                             ],
                           ),
                         ),
@@ -101,34 +179,51 @@ class OtpVerificationView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                                Text(
-                                  'Mã xác nhận',
-                                  style: AppTextStyles.headlineLarge.copyWith(
-                                    fontSize: 32,
-                                  ),
+                              Text(
+                                'Mã xác nhận',
+                                style: AppTextStyles.headlineLarge.copyWith(
+                                  fontSize: 32,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Chúng tôi vừa gửi mã OTP gồm 6 chữ số đến địa chỉ email của bạn.',
+                              ),
+                              const SizedBox(height: 12),
+                              RichText(
+                                text: TextSpan(
                                   style: AppTextStyles.bodyMedium,
-                                ),
-                                const SizedBox(height: 48),
-
-                                // OTP Row
-                                const OtpInputRow(length: 6),
-                                
-                                const SizedBox(height: 48),
-
-                                PrimaryButton(
-                                  label: 'Xác nhận',
-                                  onPressed: onVerify,
-                                ),
-
-                                const SizedBox(height: 48),
-
-                                // Resend & Timer
-                                Column(
                                   children: [
+                                    const TextSpan(text: 'Chúng tôi đã gửi mã OTP đến '),
+                                    TextSpan(
+                                      text: widget.email,
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 48),
+
+                              // OTP Input
+                              OtpInputRow(
+                                length: 6,
+                                onCompleted: _onOtpCompleted,
+                              ),
+
+                              const SizedBox(height: 48),
+
+                              PrimaryButton(
+                                label: widget.isVerifying ? 'Đang xác thực...' : 'Xác nhận',
+                                onPressed: (widget.isVerifying || _collectedCode.length < 6)
+                                    ? null
+                                    : () => widget.onCompleted?.call(_collectedCode),
+                              ),
+
+                              const SizedBox(height: 48),
+
+                              // Countdown + Resend
+                              Column(
+                                children: [
+                                  if (!_canResend) ...[
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 16,
@@ -145,15 +240,17 @@ class OtpVerificationView extends StatelessWidget {
                                             width: 20,
                                             height: 20,
                                             child: CircularProgressIndicator(
-                                              value: 0.3, // Example value
+                                              value: _timerProgress,
                                               backgroundColor: AppColors.outlineVariant,
-                                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                                AppColors.primary,
+                                              ),
                                               strokeWidth: 2.5,
                                             ),
                                           ),
                                           const SizedBox(width: 12),
                                           Text(
-                                            '02:59',
+                                            _timerLabel,
                                             style: AppTextStyles.labelMedium.copyWith(
                                               color: AppColors.onSurface,
                                               fontWeight: FontWeight.w700,
@@ -162,24 +259,30 @@ class OtpVerificationView extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 24),
-                                    GestureDetector(
-                                      onTap: onResend,
-                                      child: Text(
-                                        'Tôi không nhận được mã?',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                  GestureDetector(
+                                    onTap: _canResend ? widget.onResend : null,
+                                    child: Text(
+                                      _canResend
+                                          ? 'Gửi lại mã'
+                                          : 'Tôi không nhận được mã?',
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: _canResend
+                                            ? AppColors.primary
+                                            : AppColors.onSurfaceVariant,
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 40),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 40),
                             ],
                           ),
                         ),
 
-                        // Footer note
+                        // Footer
                         Padding(
                           padding: const EdgeInsets.only(bottom: 24),
                           child: Container(
@@ -228,3 +331,4 @@ class OtpVerificationView extends StatelessWidget {
     );
   }
 }
+
