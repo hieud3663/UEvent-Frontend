@@ -9,6 +9,7 @@ class UserModel {
   final String fullName;
   final String accountStatus;
   final String primaryRole;
+  final bool isProfileComplete;
   final String? phoneNumber;
   final String? studentCode;
   final String? faculty;
@@ -21,6 +22,7 @@ class UserModel {
     required this.fullName,
     required this.accountStatus,
     required this.primaryRole,
+    required this.isProfileComplete,
     this.phoneNumber,
     this.studentCode,
     this.faculty,
@@ -28,7 +30,8 @@ class UserModel {
     this.avatarUrl,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }

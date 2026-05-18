@@ -1,27 +1,117 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/features/auth/models/user_model.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 
-class ProfileSetupView extends StatefulWidget {
+class ProfileSetupView extends ConsumerStatefulWidget {
+  final UserModel? initialUser;
   final VoidCallback? onComplete;
   final VoidCallback? onBack;
 
   const ProfileSetupView({
     super.key,
+    this.initialUser,
     this.onComplete,
     this.onBack,
   });
 
   @override
-  State<ProfileSetupView> createState() => _ProfileSetupViewState();
+  ConsumerState<ProfileSetupView> createState() => _ProfileSetupViewState();
 }
 
-class _ProfileSetupViewState extends State<ProfileSetupView> {
+class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
+  final _fullNameController = TextEditingController();
+  final _studentCodeController = TextEditingController();
+  final _classNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   String? _selectedKhoa;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = widget.initialUser;
+    if (user != null) {
+      _fullNameController.text = user.fullName;
+      _studentCodeController.text = user.studentCode ?? '';
+      _classNameController.text = user.className ?? '';
+      _phoneController.text = user.phoneNumber ?? '';
+      _selectedKhoa = user.faculty;
+    }
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _studentCodeController.dispose();
+    _classNameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitProfile() async {
+    final fullName = _fullNameController.text.trim();
+    final studentCode = _studentCodeController.text.trim();
+    final faculty = _selectedKhoa?.trim() ?? '';
+
+    if (fullName.isEmpty || studentCode.isEmpty || faculty.isEmpty) {
+      _showMessage('Vui lòng nhập đầy đủ họ tên, mã số sinh viên và khoa.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(profileServiceProvider).updateProfile({
+        'full_name': fullName,
+        'student_code': studentCode,
+        'faculty': faculty,
+        'class_name': _classNameController.text.trim(),
+        'phone_number': _phoneController.text.trim(),
+      });
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(profileOverviewProvider);
+      widget.onComplete?.call();
+    } on DioException catch (error) {
+      _showMessage(_errorMessage(error));
+    } catch (_) {
+      _showMessage('Không thể cập nhật hồ sơ. Vui lòng thử lại.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  String _errorMessage(DioException error) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final message = data['message'] ?? data['detail'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message.trim();
+      }
+    }
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.';
+    }
+    return 'Không thể cập nhật hồ sơ. Vui lòng thử lại.';
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,21 +141,25 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                   const SizedBox(height: 40),
 
                   // Form Fields
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'HỌ TÊN',
                     placeholder: 'Nhập họ và tên',
+                    controller: _fullNameController,
                   ),
                   const SizedBox(height: 20),
 
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'MÃ SỐ SINH VIÊN (MSSV)',
                     placeholder: 'Nhập MSSV',
+                    controller: _studentCodeController,
+                    keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 20),
 
-                  const GlassInputField(
+                  GlassInputField(
                     label: 'LỚP',
                     placeholder: 'Nhập lớp sinh hoạt',
+                    controller: _classNameController,
                   ),
                   const SizedBox(height: 20),
 
@@ -74,24 +168,41 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                     placeholder: 'Chọn khoa của bạn',
                     value: _selectedKhoa,
                     items: const [
-                      GlassDropdownItem(value: 'cntt', label: 'Công nghệ thông tin'),
-                      GlassDropdownItem(value: 'kt', label: 'Kinh tế'),
-                      GlassDropdownItem(value: 'nn', label: 'Ngoại ngữ'),
-                      GlassDropdownItem(value: 'luat', label: 'Luật'),
-                      GlassDropdownItem(value: 'xd', label: 'Xây dựng'),
-                      GlassDropdownItem(value: 'dien', label: 'Điện - Điện tử'),
-                      GlassDropdownItem(value: 'co-khi', label: 'Cơ khí'),
-                      GlassDropdownItem(value: 'mt', label: 'Mỹ thuật công nghiệp'),
-                      GlassDropdownItem(value: 'moi-truong', label: 'Môi trường & Tài nguyên'),
-                      GlassDropdownItem(value: 'khoa-hoc', label: 'Khoa học ứng dụng'),
+                      GlassDropdownItem(
+                        value: 'Công nghệ thông tin',
+                        label: 'Công nghệ thông tin',
+                      ),
+                      GlassDropdownItem(value: 'Kinh tế', label: 'Kinh tế'),
+                      GlassDropdownItem(value: 'Ngoại ngữ', label: 'Ngoại ngữ'),
+                      GlassDropdownItem(value: 'Luật', label: 'Luật'),
+                      GlassDropdownItem(value: 'Xây dựng', label: 'Xây dựng'),
+                      GlassDropdownItem(
+                        value: 'Điện - Điện tử',
+                        label: 'Điện - Điện tử',
+                      ),
+                      GlassDropdownItem(value: 'Cơ khí', label: 'Cơ khí'),
+                      GlassDropdownItem(
+                        value: 'Mỹ thuật công nghiệp',
+                        label: 'Mỹ thuật công nghiệp',
+                      ),
+                      GlassDropdownItem(
+                        value: 'Môi trường & Tài nguyên',
+                        label: 'Môi trường & Tài nguyên',
+                      ),
+                      GlassDropdownItem(
+                        value: 'Khoa học ứng dụng',
+                        label: 'Khoa học ứng dụng',
+                      ),
                     ],
                     onChanged: (val) => setState(() => _selectedKhoa = val),
                   ),
                   const SizedBox(height: 20),
 
                   GlassInputField(
-                    label: 'CÂU LẠC BỘ ĐANG THAM GIA',
-                    placeholder: 'Tên câu lạc bộ (nếu có)',
+                    label: 'SỐ ĐIỆN THOẠI',
+                    placeholder: 'Nhập số điện thoại (nếu có)',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
                     labelTrailing: Text(
                       'Tùy chọn',
                       style: AppTextStyles.bodySmall,
@@ -105,7 +216,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                      border: Border.all(
+                        color: Colors.black.withValues(alpha: 0.05),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,9 +322,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                     ),
                   ),
                   child: PrimaryButton(
-                    label: 'Hoàn tất',
-                    icon: Icons.arrow_forward,
-                    onPressed: widget.onComplete,
+                    label: _isSubmitting ? 'Đang lưu...' : 'Hoàn tất',
+                    icon: _isSubmitting ? null : Icons.arrow_forward,
+                    onPressed: _isSubmitting ? null : _submitProfile,
                   ),
                 ),
               ),

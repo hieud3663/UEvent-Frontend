@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -13,6 +15,8 @@ class SplashView extends StatefulWidget {
 
 class _SplashViewState extends State<SplashView> {
   double _progress = 0.0;
+  int _progressStep = 0;
+  Timer? _loadingTimer;
 
   @override
   void initState() {
@@ -20,18 +24,36 @@ class _SplashViewState extends State<SplashView> {
     _simulateLoading();
   }
 
-  void _simulateLoading() async {
-    // Simulate loading progress
-    for (int i = 0; i <= 30; i += 10) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
+  @override
+  void dispose() {
+    _loadingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _simulateLoading() {
+    _scheduleProgressTick(const Duration(milliseconds: 300));
+  }
+
+  void _scheduleProgressTick(Duration delay) {
+    _loadingTimer?.cancel();
+    _loadingTimer = Timer(delay, () {
+      if (!mounted) return;
+
+      if (_progressStep <= 30) {
         setState(() {
-          _progress = i / 100.0;
+          _progress = _progressStep / 100.0;
         });
+        _progressStep += 10;
+        _scheduleProgressTick(const Duration(milliseconds: 300));
+        return;
       }
-    }
-    await Future.delayed(const Duration(milliseconds: 500));
-    widget.onInitializationComplete?.call();
+
+      _loadingTimer = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          widget.onInitializationComplete?.call();
+        }
+      });
+    });
   }
 
   @override
@@ -43,10 +65,7 @@ class _SplashViewState extends State<SplashView> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              AppColors.primaryDark,
-            ],
+            colors: [AppColors.primary, AppColors.primaryDark],
           ),
         ),
         child: Stack(
@@ -76,7 +95,7 @@ class _SplashViewState extends State<SplashView> {
                 ),
               ),
             ),
-            
+
             // Main Content
             SafeArea(
               child: Center(
@@ -100,7 +119,7 @@ class _SplashViewState extends State<SplashView> {
                             color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 32,
                             offset: const Offset(0, 8),
-                          )
+                          ),
                         ],
                       ),
                       child: const Center(
@@ -111,7 +130,7 @@ class _SplashViewState extends State<SplashView> {
                         ),
                       ),
                     ),
-                    
+
                     // Titles
                     Text(
                       'UEvents',
@@ -183,7 +202,7 @@ class _SplashViewState extends State<SplashView> {
                 ],
               ),
             ),
-            
+
             // Footer text
             Positioned(
               bottom: 32,

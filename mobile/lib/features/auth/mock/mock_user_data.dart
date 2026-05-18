@@ -7,6 +7,7 @@ class MockUserData {
     fullName: 'Nguyễn Văn A',
     accountStatus: 'active',
     primaryRole: 'student',
+    isProfileComplete: true,
     phoneNumber: '0123456789',
     studentCode: '2024001',
     faculty: 'Khoa Công nghệ Thông tin',

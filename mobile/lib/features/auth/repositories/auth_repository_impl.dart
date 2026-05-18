@@ -15,8 +15,26 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._service, this._local);
 
   @override
-  Future<AuthSessionModel> signIn(AuthMethod method, {String? loginHint}) async {
+  Future<AuthSessionModel> signIn(
+    AuthMethod method, {
+    String? loginHint,
+  }) async {
     final session = await _service.signIn(method, loginHint: loginHint);
+    await _local.writeSession(session);
+    return session;
+  }
+
+  @override
+  Future<void> requestEmailOtp(String email) {
+    return _service.requestEmailOtp(email);
+  }
+
+  @override
+  Future<AuthSessionModel> verifyEmailOtp({
+    required String email,
+    required String code,
+  }) async {
+    final session = await _service.verifyEmailOtp(email: email, code: code);
     await _local.writeSession(session);
     return session;
   }
@@ -45,6 +63,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
     if (current?.idToken != null) {
       await _service.endSession(current!.idToken!);
+    }
+    if (current?.method == AuthMethod.google) {
+      await _service.signOutGoogle();
     }
   }
 

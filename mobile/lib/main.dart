@@ -6,11 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 
 // Auth Flow
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
+import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/splash_view.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
@@ -26,6 +29,7 @@ import 'package:frontend/features/events/views/send_notification_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/ticketing/views/my_tickets_view.dart';
 import 'package:frontend/features/events/views/empty_search_view.dart';
 
@@ -111,7 +115,7 @@ Future<void> _handleSignIn(
   if (!context.mounted) return;
 
   if (session != null) {
-    _navigateToAppShell(context);
+    await _bootstrapProfileAndNavigate(context, ref, fromSplash: false);
   } else {
     // Read the error from the controller state for the snackbar.
     final state = ref.read(authControllerProvider);
@@ -122,13 +126,204 @@ Future<void> _handleSignIn(
         ) ??
         'Đăng nhập thất bại.';
 
-    // Don't show a snackbar for user-cancelled — it's expected.
-    if (state.error is! AuthFailureCancelled) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+    if (state.error is! AuthFailureCancelled || method == AuthMethod.google) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            state.error is AuthFailureCancelled && method == AuthMethod.google
+                ? 'Đăng nhập Google đã bị hủy hoặc cấu hình Google Sign-In chưa đúng.'
+                : message,
+          ),
+        ),
+      );
     }
   }
+}
+
+Future<void> _handleEmailOtpStart(
+  BuildContext context,
+  WidgetRef ref,
+  String email,
+) async {
+  final normalizedEmail = email.trim().toLowerCase();
+  if (!_isValidEmail(normalizedEmail)) {
+    _showSnackBar(context, 'Vui lòng nhập email hợp lệ.');
+    return;
+  }
+
+  final sent = await ref
+      .read(authControllerProvider.notifier)
+      .requestEmailOtp(normalizedEmail);
+  if (!context.mounted) return;
+
+  if (sent) {
+    _navigateToOtp(context, ref, normalizedEmail);
+    return;
+  }
+
+  _showSnackBar(context, _authStateErrorMessage(ref));
+}
+
+Future<void> _handleEmailOtpVerify(
+  BuildContext context,
+  WidgetRef ref, {
+  required String email,
+  required String code,
+}) async {
+  final session = await ref
+      .read(authControllerProvider.notifier)
+      .verifyEmailOtp(email: email, code: code);
+  if (!context.mounted) return;
+
+  if (session != null) {
+    await _bootstrapProfileAndNavigate(context, ref, fromSplash: false);
+    return;
+  }
+
+  _showSnackBar(context, _authStateErrorMessage(ref));
+}
+
+Future<void> _handleEmailOtpResend(
+  BuildContext context,
+  WidgetRef ref,
+  String email,
+) async {
+  final sent = await ref
+      .read(authControllerProvider.notifier)
+      .requestEmailOtp(email);
+  if (!context.mounted) return;
+
+  _showSnackBar(
+    context,
+    sent ? 'Mã OTP mới đã được gửi.' : _authStateErrorMessage(ref),
+  );
+}
+
+bool _isValidEmail(String value) {
+  return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
+}
+
+String _authStateErrorMessage(WidgetRef ref) {
+  final state = ref.read(authControllerProvider);
+  return state.whenOrNull(
+        error: (err, _) =>
+            err is AuthFailure ? err.displayMessage : err.toString(),
+      ) ??
+      'Đăng nhập thất bại. Vui lòng thử lại.';
+}
+
+Future<void> _handleInitialSession(BuildContext context, WidgetRef ref) async {
+  final session = await ref.read(authControllerProvider.future);
+  if (!context.mounted) return;
+
+  if (session == null) {
+    _navigateToLogin(context, ref);
+    return;
+  }
+
+  await _bootstrapProfileAndNavigate(context, ref, fromSplash: true);
+}
+
+Future<void> _bootstrapProfileAndNavigate(
+  BuildContext context,
+  WidgetRef ref, {
+  required bool fromSplash,
+}) async {
+  try {
+    final user = await ref.read(profileServiceProvider).getMyProfile();
+    if (!context.mounted) return;
+
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(profileOverviewProvider);
+
+    if (user.isProfileComplete) {
+      _navigateToAppShell(context);
+    } else {
+      _navigateToProfileSetup(context, ref: ref, initialUser: user);
+    }
+  } on DioException catch (error) {
+    await _handleProfileBootstrapFailure(
+      context,
+      ref,
+      error,
+      fromSplash: fromSplash,
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    _showSnackBar(context, 'Không thể tải hồ sơ. Vui lòng thử lại.');
+    if (fromSplash) {
+      _navigateToLogin(context, ref);
+    }
+  }
+}
+
+Future<void> _handleProfileBootstrapFailure(
+  BuildContext context,
+  WidgetRef ref,
+  DioException error, {
+  required bool fromSplash,
+}) async {
+  final statusCode = error.response?.statusCode;
+  final message = _profileBootstrapErrorMessage(error);
+  final shouldClearSession =
+      statusCode == 401 || statusCode == 403 || statusCode == 409;
+
+  if (shouldClearSession) {
+    await ref.read(authControllerProvider.notifier).forceSignOut();
+  }
+
+  if (!context.mounted) return;
+  _showSnackBar(context, message);
+
+  if (fromSplash || shouldClearSession) {
+    _navigateToLogin(context, ref);
+  }
+}
+
+String _profileBootstrapErrorMessage(DioException error) {
+  final rawMessage = _extractApiMessage(error.response?.data);
+  final normalized = rawMessage.toLowerCase();
+
+  if (normalized.contains('email') &&
+      (normalized.contains('verified') || normalized.contains('xác thực'))) {
+    return 'Email chưa được xác thực. Vui lòng xác thực email trước khi đăng nhập.';
+  }
+  if (error.response?.statusCode == 409 || normalized.contains('conflict')) {
+    return 'Tài khoản đang bị trùng dữ liệu. Vui lòng liên hệ quản trị viên.';
+  }
+  if (error.response?.statusCode == 401 || error.response?.statusCode == 403) {
+    return 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.';
+  }
+  if (error.type == DioExceptionType.connectionError ||
+      error.type == DioExceptionType.connectionTimeout ||
+      error.type == DioExceptionType.receiveTimeout) {
+    return 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng và thử lại.';
+  }
+
+  return rawMessage.isNotEmpty
+      ? rawMessage
+      : 'Không thể tải hồ sơ. Vui lòng thử lại.';
+}
+
+String _extractApiMessage(dynamic data) {
+  if (data is Map<String, dynamic>) {
+    final message = data['message'] ?? data['detail'];
+    if (message is String && message.trim().isNotEmpty) {
+      return message.trim();
+    }
+    final errors = data['errors'];
+    if (errors is Map<String, dynamic>) {
+      final detail = errors['detail'];
+      if (detail is String && detail.trim().isNotEmpty) {
+        return detail.trim();
+      }
+    }
+  }
+  return '';
+}
+
+void _showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 void _navigateToLogin(BuildContext context, WidgetRef ref) {
@@ -137,7 +332,7 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
       builder: (ctx) => Consumer(
         builder: (ctx, loginRef, _) => LoginView(
           onLoginWithEmail: (email) =>
-              _handleSignIn(ctx, loginRef, AuthMethod.email, loginHint: email),
+              _handleEmailOtpStart(ctx, loginRef, email),
           onLoginWithGoogle: () =>
               _handleSignIn(ctx, loginRef, AuthMethod.google),
           onLoginWithPasskey: () =>
@@ -149,25 +344,36 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
   );
 }
 
-// Retained for potential future use (post-login profile setup, email change OTP).
-// ignore: unused_element
-void _navigateToOtp(BuildContext context) {
+void _navigateToOtp(BuildContext context, WidgetRef ref, String email) {
   Navigator.of(context).push(
     _fastRoute(
       builder: (ctx) => OtpVerificationView(
-        onVerify: () => _navigateToProfileSetup(ctx),
+        email: email,
+        onVerify: (code) =>
+            _handleEmailOtpVerify(ctx, ref, email: email, code: code),
         onBack: () => Navigator.of(ctx).pop(),
-        onResend: () {}, // TODO: Implement OTP resend logic
+        onResend: () => _handleEmailOtpResend(ctx, ref, email),
       ),
     ),
   );
 }
 
-void _navigateToProfileSetup(BuildContext context) {
+void _navigateToProfileSetup(
+  BuildContext context, {
+  WidgetRef? ref,
+  UserModel? initialUser,
+}) {
   Navigator.of(context).push(
     _fastRoute(
       builder: (ctx) => ProfileSetupView(
-        onComplete: () => _navigateToAppShell(ctx),
+        initialUser: initialUser,
+        onComplete: () {
+          if (ref == null) {
+            _navigateToAppShell(ctx);
+            return;
+          }
+          unawaited(_bootstrapProfileAndNavigate(ctx, ref, fromSplash: false));
+        },
         onBack: () => Navigator.of(ctx).pop(),
       ),
     ),
@@ -210,15 +416,7 @@ class UEventsApp extends ConsumerWidget {
       home: Builder(
         builder: (context) => SplashView(
           onInitializationComplete: () {
-            // Check if a valid session exists from a previous run.
-            final authState = ref.read(authControllerProvider);
-            final session = authState.whenData((s) => s).value;
-            final hasSession = session != null && !session.isExpired;
-            if (hasSession) {
-              _navigateToAppShell(context);
-            } else {
-              _navigateToLogin(context, ref);
-            }
+            unawaited(_handleInitialSession(context, ref));
           },
         ),
       ),
