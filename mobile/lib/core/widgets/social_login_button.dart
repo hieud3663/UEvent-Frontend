@@ -6,21 +6,25 @@ class SocialLoginButton extends StatelessWidget {
   final String label;
   final String iconPath;
   final VoidCallback? onPressed;
+  final bool isLoading;
 
   const SocialLoginButton({
     super.key,
     required this.label,
     required this.iconPath,
     this.onPressed,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null && !isLoading;
+
     return SizedBox(
       height: 56,
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: isEnabled ? onPressed : null,
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(Size.zero),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -43,14 +47,24 @@ class SocialLoginButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              iconPath,
-              width: 20,
-              height: 20,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.error, size: 20);
-              },
-            ),
+            if (isLoading)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
+                ),
+              )
+            else
+              Image.asset(
+                iconPath,
+                width: 20,
+                height: 20,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.error, size: 20);
+                },
+              ),
             const SizedBox(width: 12),
             Text(
               label,

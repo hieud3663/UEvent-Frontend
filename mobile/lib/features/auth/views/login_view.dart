@@ -11,7 +11,7 @@ import 'package:frontend/core/widgets/text_action_button.dart';
 
 class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
-  final VoidCallback? onLoginWithGoogle;
+  final FutureOr<void> Function()? onLoginWithGoogle;
   final VoidCallback? onLoginWithPasskey;
 
   const LoginView({
@@ -28,6 +28,9 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   bool _isSubmittingEmail = false;
+  bool _isSubmittingGoogle = false;
+
+  bool get _isBusy => _isSubmittingEmail || _isSubmittingGoogle;
 
   @override
   void dispose() {
@@ -36,7 +39,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _submitEmail() async {
-    if (_isSubmittingEmail || widget.onLoginWithEmail == null) return;
+    if (_isBusy || widget.onLoginWithEmail == null) return;
 
     setState(() => _isSubmittingEmail = true);
     try {
@@ -46,6 +49,19 @@ class _LoginViewState extends State<LoginView> {
     } finally {
       if (mounted) {
         setState(() => _isSubmittingEmail = false);
+      }
+    }
+  }
+
+  Future<void> _submitGoogle() async {
+    if (_isBusy || widget.onLoginWithGoogle == null) return;
+
+    setState(() => _isSubmittingGoogle = true);
+    try {
+      await Future.sync(widget.onLoginWithGoogle!);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingGoogle = false);
       }
     }
   }
@@ -152,7 +168,7 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                                 child: TextField(
                                   controller: _emailController,
-                                  enabled: !_isSubmittingEmail,
+                                  enabled: !_isBusy,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.done,
                                   onSubmitted: (_) => _submitEmail(),
@@ -174,9 +190,7 @@ class _LoginViewState extends State<LoginView> {
                                     ? 'Đang gửi mã...'
                                     : 'Tiếp tục với Email',
                                 isLoading: _isSubmittingEmail,
-                                onPressed: _isSubmittingEmail
-                                    ? null
-                                    : _submitEmail,
+                                onPressed: _isBusy ? null : _submitEmail,
                               ),
                               const SizedBox(height: 24),
                               Row(
@@ -206,17 +220,18 @@ class _LoginViewState extends State<LoginView> {
                               ),
                               const SizedBox(height: 24),
                               SocialLoginButton(
-                                label: 'Tiếp tục với Google',
+                                label: _isSubmittingGoogle
+                                    ? 'Đang mở Google...'
+                                    : 'Tiếp tục với Google',
                                 iconPath: 'assets/images/google_icon.png',
-                                onPressed: _isSubmittingEmail
-                                    ? null
-                                    : widget.onLoginWithGoogle,
+                                isLoading: _isSubmittingGoogle,
+                                onPressed: _isBusy ? null : _submitGoogle,
                               ),
                               const SizedBox(height: 16),
                               TextActionButton(
                                 label: 'Đăng nhập bằng Passkey',
                                 height: 48,
-                                onPressed: _isSubmittingEmail
+                                onPressed: _isBusy
                                     ? null
                                     : widget.onLoginWithPasskey,
                                 foregroundColor: AppColors.onSurfaceVariant,
@@ -237,9 +252,7 @@ class _LoginViewState extends State<LoginView> {
                                   ),
                                   TextActionButton(
                                     label: 'Đăng ký ngay',
-                                    onPressed: _isSubmittingEmail
-                                        ? null
-                                        : () {},
+                                    onPressed: _isBusy ? null : () {},
                                     foregroundColor: AppColors.primary,
                                     textStyle: AppTextStyles.bodySmall.copyWith(
                                       fontSize: 13,

@@ -145,6 +145,17 @@ class AuthService {
     }
   }
 
+  Future<void> logoutWithRefreshToken(String refreshToken) async {
+    try {
+      await _authDio.post<Map<String, dynamic>>(
+        '/auth/logout/',
+        data: {'refresh_token': refreshToken},
+      );
+    } catch (_) {
+      // Local logout is still authoritative if remote revocation fails.
+    }
+  }
+
   Future<void> signOutGoogle() async {
     try {
       await _ensureGoogleInitialized();

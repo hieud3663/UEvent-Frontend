@@ -61,6 +61,10 @@ class AuthRepositoryImpl implements AuthRepository {
     // the user should still be logged out of the app.
     await _local.clearSession();
 
+    if (current != null) {
+      await _service.logoutWithRefreshToken(current.refreshToken);
+    }
+
     if (current?.idToken != null) {
       await _service.endSession(current!.idToken!);
     }

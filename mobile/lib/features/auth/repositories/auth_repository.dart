@@ -25,7 +25,7 @@ abstract interface class AuthRepository {
   /// Throws [AuthFailureRefreshFailed] if the refresh token is invalid.
   Future<void> refreshTokens();
 
-  /// Signs out: hits Keycloak's end-session endpoint, then clears local storage.
+  /// Signs out: clears local storage and asks the server/Keycloak to revoke tokens.
   Future<void> signOut();
 
   /// Attempts to restore a session from secure storage.
