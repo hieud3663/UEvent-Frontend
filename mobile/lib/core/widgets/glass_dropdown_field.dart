@@ -30,16 +30,15 @@ class GlassDropdownField<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAndroid = Theme.of(context).platform == TargetPlatform.android;
 
-    // Find displayed text from selected value
     final selectedItem = items.cast<GlassDropdownItem<T>?>().firstWhere(
-          (item) => item?.value == value,
-          orElse: () => null,
-        );
+      (item) => item?.value == value,
+      orElse: () => null,
+    );
 
-    final content = GestureDetector(
-      onTap: () => _showBottomSheet(context),
-      child: Container(
-        padding: const EdgeInsets.all(20),
+    final content = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+      child: Ink(
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(AppConstants.radiusInput),
@@ -55,51 +54,52 @@ class GlassDropdownField<T> extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Label Row
-            if (labelTrailing != null)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label.toUpperCase(),
-                    style: AppTextStyles.inputLabel,
-                  ),
-                  labelTrailing!,
-                ],
-              )
-            else
-              Text(
-                label.toUpperCase(),
-                style: AppTextStyles.inputLabel,
-              ),
-            const SizedBox(height: 4),
-
-            // Value / Placeholder row
-            Row(
+        child: InkWell(
+          onTap: () => _showBottomSheet(context),
+          borderRadius: BorderRadius.circular(AppConstants.radiusInput),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    selectedItem?.label ?? placeholder ?? '',
-                    style: selectedItem != null
-                        ? AppTextStyles.bodyLarge
-                        : AppTextStyles.inputHint,
-                  ),
-                ),
-                AnimatedRotation(
-                  turns: 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(
-                    Icons.expand_more,
-                    color: AppColors.outline,
-                    size: 22,
-                  ),
+                if (labelTrailing != null)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        label.toUpperCase(),
+                        style: AppTextStyles.inputLabel,
+                      ),
+                      labelTrailing!,
+                    ],
+                  )
+                else
+                  Text(label.toUpperCase(), style: AppTextStyles.inputLabel),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        selectedItem?.label ?? placeholder ?? '',
+                        style: selectedItem != null
+                            ? AppTextStyles.bodyLarge
+                            : AppTextStyles.inputHint,
+                      ),
+                    ),
+                    AnimatedRotation(
+                      turns: 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(
+                        Icons.expand_more,
+                        color: AppColors.outline,
+                        size: 22,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -171,8 +171,7 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.6),
           width: 1,
@@ -188,7 +187,6 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 8),
             child: Container(
@@ -200,11 +198,8 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
               ),
             ),
           ),
-
-          // Title
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             child: Text(
               label.toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
@@ -213,13 +208,7 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
               ),
             ),
           ),
-
-          Divider(
-            height: 1,
-            color: Colors.black.withValues(alpha: 0.06),
-          ),
-
-          // Items list
+          Divider(height: 1, color: Colors.black.withValues(alpha: 0.06)),
           Flexible(
             child: ListView.builder(
               padding: EdgeInsets.only(bottom: bottomPadding + 16),
@@ -228,56 +217,64 @@ class _GlassDropdownSheet<T> extends StatelessWidget {
                 final item = items[index];
                 final isSelected = item.value == selectedValue;
 
-                return GestureDetector(
-                  onTap: () => onSelected(item.value),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.08)
-                          : Colors.transparent,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.black.withValues(alpha: 0.04),
+                return Semantics(
+                  button: true,
+                  selected: isSelected,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.08)
+                            : Colors.transparent,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.04),
+                          ),
                         ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        if (item.icon != null) ...[
-                          Icon(
-                            item.icon,
-                            size: 20,
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.onSurfaceVariant,
+                      child: InkWell(
+                        onTap: () => onSelected(item.value),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
                           ),
-                          const SizedBox(width: 16),
-                        ],
-                        Expanded(
-                          child: Text(
-                            item.label,
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.onSurface,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                            ),
+                          child: Row(
+                            children: [
+                              if (item.icon != null) ...[
+                                Icon(
+                                  item.icon,
+                                  size: 20,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 16),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  item.label,
+                                  style: AppTextStyles.bodyLarge.copyWith(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.onSurface,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.primary,
+                                  size: 22,
+                                ),
+                            ],
                           ),
                         ),
-                        if (isSelected)
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.primary,
-                            size: 22,
-                          ),
-                      ],
+                      ),
                     ),
                   ),
                 );

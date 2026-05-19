@@ -104,16 +104,19 @@ class GlassTopBar extends StatelessWidget {
   }
 
   Widget _buildIconButton(IconData icon, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.5),
-          shape: BoxShape.circle,
+    return Material(
+      color: Colors.white.withValues(alpha: 0.5),
+      shape: const CircleBorder(),
+      child: InkResponse(
+        onTap: onTap,
+        containedInkWell: true,
+        customBorder: const CircleBorder(),
+        radius: 20,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 20, color: AppColors.onSurface),
         ),
-        child: Icon(icon, size: 20, color: AppColors.onSurface),
       ),
     );
   }

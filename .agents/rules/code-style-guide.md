@@ -185,6 +185,15 @@ Anti-patterns:
   3. **Empty**: Show a meaningful empty state when the data list is empty. Reuse the existing `EmptyStateView` widget.
 - NEVER show a blank screen or an unhandled exception to the user.
 
+# Mobile Shared Widget Rules
+
+- Before implementing or modifying any Flutter page, screen, feature widget, or dialog under `mobile/lib/features`, audit the existing controls in that file for direct uses of `ElevatedButton`, `OutlinedButton`, `TextButton`, `IconButton`, `GestureDetector`, `InkWell`, and locally declared private button widgets such as `_PrimaryActionButton`, `_SecondaryActionButton`, or `_CircleIconButton`.
+- Prefer shared widgets from `mobile/lib/core/widgets` for app-standard controls: `PrimaryButton`, `SecondaryButton`, `GlassTopBar`, `GlassBottomNavBar`, `GlassSearchBar`, `GlassFilterChip`, `SegmentedToggle`, `GlassCheckboxTile`, `GlassRadioCard`, `GlassDropdownField`, `GlassActionTile`, `GlassInputField`, `GlassContainer`, and `SectionHeader`.
+- If a page needs a control style that is not covered by the shared core widgets, extend or add a reusable widget in `mobile/lib/core/widgets` first, keeping the current visual design unchanged, then replace the page-local implementation with that shared widget.
+- Do not add new page-local custom buttons or tappable controls when an equivalent shared widget exists. Page-local `GestureDetector`/`InkWell` controls are acceptable only for layout-specific interactions that are not reusable app controls.
+- When touching an existing page that already has page-local custom buttons or duplicated control styling, include migration to the closest shared widget in the same change unless it would materially expand the task scope; if deferred, call it out explicitly.
+- After refactoring shared widget usage, run `rg` on the touched files to confirm no avoidable page-local button/control implementations remain, then run the relevant Flutter analyze command.
+
 # OUTPUT FORMAT
 When generating code, always specify the file path at the top of each code block so it is clear where the file belongs.
 Example:

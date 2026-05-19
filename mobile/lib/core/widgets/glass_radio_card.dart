@@ -27,63 +27,72 @@ class GlassRadioCard<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(24),
-        borderRadius: 16,
-        blur: isSelected ? 40 : 12,
-        backgroundColor: isSelected 
-            ? Colors.white.withValues(alpha: 0.9) 
-            : Colors.white.withValues(alpha: 0.7),
-        border: Border.all(
-          color: isSelected 
-              ? AppColors.primary 
-              : Colors.white.withValues(alpha: 0.4),
-          width: isSelected ? 2.0 : 0.5,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? AppColors.primary
-                    : AppColors.surfaceVariant,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 28,
-                color: isSelected 
-                    ? AppColors.onPrimaryDark 
-                    : AppColors.navInactive,
-              ),
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => onChanged(value),
+          borderRadius: BorderRadius.circular(16),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(24),
+            borderRadius: 16,
+            blur: isSelected ? 40 : 12,
+            backgroundColor: isSelected
+                ? Colors.white.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.7),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : Colors.white.withValues(alpha: 0.4),
+              width: isSelected ? 2.0 : 0.5,
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: AppTextStyles.titleSmall.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.surfaceVariant,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 28,
+                    color: isSelected
+                        ? AppColors.onPrimaryDark
+                        : AppColors.navInactive,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: AppTextStyles.titleSmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle.toUpperCase(),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    fontSize: 10,
+                    letterSpacing: -0.2, // Tighter tracking per design
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle.toUpperCase(),
-              style: AppTextStyles.labelSmall.copyWith(
-                fontSize: 10,
-                letterSpacing: -0.2, // Tighter tracking per design
-                color: AppColors.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+          ),
         ),
       ),
     );

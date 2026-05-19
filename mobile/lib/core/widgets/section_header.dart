@@ -25,13 +25,17 @@ class SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: titleStyle ?? AppTextStyles.headlineMedium,
-        ),
+        Text(title, style: titleStyle ?? AppTextStyles.headlineMedium),
         if (actionText != null)
-          GestureDetector(
-            onTap: onActionTap,
+          TextButton(
+            onPressed: onActionTap,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              minimumSize: Size.zero,
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
             child: Text(
               actionText!,
               style: AppTextStyles.labelSmall.copyWith(

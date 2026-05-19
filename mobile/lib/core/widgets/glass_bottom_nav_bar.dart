@@ -2,10 +2,10 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/models/nav_item_model.dart';
 
 /// iOS 26 style glassmorphic floating bottom navigation bar.
 class GlassBottomNavBar extends StatelessWidget {
@@ -21,27 +21,27 @@ class GlassBottomNavBar extends StatelessWidget {
   });
 
   static List<NavItemModel> get defaultItems => const [
-        NavItemModel(
-          label: 'HOME',
-          icon: Icons.home_outlined,
-          activeIcon: Icons.home,
-        ),
-        NavItemModel(
-          label: 'DISCOVER',
-          icon: Icons.explore_outlined,
-          activeIcon: Icons.explore,
-        ),
-        NavItemModel(
-          label: 'TICKETS',
-          icon: Icons.confirmation_number_outlined,
-          activeIcon: Icons.confirmation_number,
-        ),
-        NavItemModel(
-          label: 'SETTINGS',
-          icon: Icons.settings_outlined,
-          activeIcon: Icons.settings,
-        ),
-      ];
+    NavItemModel(
+      label: 'HOME',
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+    ),
+    NavItemModel(
+      label: 'DISCOVER',
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore,
+    ),
+    NavItemModel(
+      label: 'TICKETS',
+      icon: Icons.confirmation_number_outlined,
+      activeIcon: Icons.confirmation_number,
+    ),
+    NavItemModel(
+      label: 'SETTINGS',
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -111,28 +111,37 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedScale(
-        scale: isActive ? 1.1 : 1.0,
-        duration: AppConstants.animFast,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isActive ? item.activeIcon : item.icon,
-              size: 26,
-              color: isActive ? AppColors.navActive : AppColors.navInactive,
+    return Semantics(
+      button: true,
+      selected: isActive,
+      child: Material(
+        color: Colors.transparent,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 34,
+          child: AnimatedScale(
+            scale: isActive ? 1.1 : 1.0,
+            duration: AppConstants.animFast,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isActive ? item.activeIcon : item.icon,
+                  size: 26,
+                  color: isActive ? AppColors.navActive : AppColors.navInactive,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.label,
+                  style: AppTextStyles.navLabel.copyWith(
+                    color: isActive
+                        ? AppColors.navActive
+                        : AppColors.navInactive,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              item.label,
-              style: AppTextStyles.navLabel.copyWith(
-                color: isActive ? AppColors.navActive : AppColors.navInactive,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

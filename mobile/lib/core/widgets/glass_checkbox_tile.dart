@@ -20,65 +20,75 @@ class GlassCheckboxTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: value 
-              ? AppColors.primary.withValues(alpha: 0.1) 
-              : Colors.white.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: value 
-                ? AppColors.primary 
-                : Colors.white.withValues(alpha: 0.4),
-            width: value ? 1.5 : 0.5,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: value
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: value
+                  ? AppColors.primary
+                  : Colors.white.withValues(alpha: 0.4),
+              width: value ? 1.5 : 0.5,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: value 
-                    ? AppColors.primary
-                    : AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: value ? AppColors.onPrimaryDark : AppColors.navInactive,
-                size: 20,
+          child: InkWell(
+            onTap: () => onChanged(!value),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: value
+                          ? AppColors.primary
+                          : AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: value
+                          ? AppColors.onPrimaryDark
+                          : AppColors.navInactive,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                  ),
+                  Checkbox(
+                    value: value,
+                    onChanged: onChanged,
+                    activeColor: AppColors.primary,
+                    checkColor: AppColors.onPrimaryDark,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    side: const BorderSide(
+                      color: AppColors.navInactive,
+                      width: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.onSurface,
-                ),
-              ),
-            ),
-            Checkbox(
-              value: value,
-              onChanged: onChanged,
-              activeColor: AppColors.primary,
-              checkColor: AppColors.onPrimaryDark,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              side: const BorderSide(
-                color: AppColors.navInactive,
-                width: 1.5,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

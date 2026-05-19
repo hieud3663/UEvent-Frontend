@@ -42,11 +42,7 @@ class GlassSearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.search,
-            color: AppColors.navInactive,
-            size: 20,
-          ),
+          const Icon(Icons.search, color: AppColors.navInactive, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -69,18 +65,21 @@ class GlassSearchBar extends StatelessWidget {
             ),
           ),
           if (onClear != null)
-            GestureDetector(
-              onTap: onClear,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  size: 14,
-                  color: AppColors.onSurfaceVariant,
+            Material(
+              color: Colors.white.withValues(alpha: 0.5),
+              shape: const CircleBorder(),
+              child: InkResponse(
+                onTap: onClear,
+                containedInkWell: true,
+                customBorder: const CircleBorder(),
+                radius: 11,
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),

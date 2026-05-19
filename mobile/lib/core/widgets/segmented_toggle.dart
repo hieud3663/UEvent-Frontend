@@ -27,32 +27,45 @@ class SegmentedToggle extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(options.length, (index) {
           final isSelected = index == selectedIndex;
-          return GestureDetector(
-            onTap: () => onSelect(index),
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
+          return Semantics(
+            button: true,
+            selected: isSelected,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: () => onSelect(index),
                 borderRadius: BorderRadius.circular(999),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Text(
-                options[index],
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isSelected ? AppColors.onPrimary : AppColors.navInactive,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Text(
+                    options[index],
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? AppColors.onPrimary
+                          : AppColors.navInactive,
+                    ),
+                  ),
                 ),
               ),
             ),

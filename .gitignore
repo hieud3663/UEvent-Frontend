@@ -62,7 +62,5 @@ mobile/pubspec.yaml
 package-lock.json
 .gitnexus
 .claude/skills/gitnexus/
-CLAUDE.md
-AGENTS.md
 mobile/android/app/google-services.json
 mobile/lib/firebase_options.dart
