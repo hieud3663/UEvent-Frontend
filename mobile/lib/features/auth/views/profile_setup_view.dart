@@ -7,6 +7,7 @@ import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
@@ -274,13 +275,10 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           if (widget.onBack != null)
-                            GestureDetector(
-                              onTap: widget.onBack,
-                              child: const SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: Icon(Icons.chevron_left),
-                              ),
+                            GlassIconButton(
+                              icon: Icons.chevron_left,
+                              onPressed: widget.onBack,
+                              backgroundColor: Colors.transparent,
                             )
                           else
                             const SizedBox(width: 40),
