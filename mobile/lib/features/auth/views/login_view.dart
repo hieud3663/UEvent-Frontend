@@ -6,11 +6,12 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
-import 'package:frontend/features/auth/widgets/social_login_button.dart';
+import 'package:frontend/core/widgets/social_login_button.dart';
+import 'package:frontend/core/widgets/text_action_button.dart';
 
 class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
-  final VoidCallback? onLoginWithGoogle;
+  final FutureOr<void> Function()? onLoginWithGoogle;
   final VoidCallback? onLoginWithPasskey;
 
   const LoginView({
@@ -27,6 +28,9 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   bool _isSubmittingEmail = false;
+  bool _isSubmittingGoogle = false;
+
+  bool get _isBusy => _isSubmittingEmail || _isSubmittingGoogle;
 
   @override
   void dispose() {
@@ -35,7 +39,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _submitEmail() async {
-    if (_isSubmittingEmail || widget.onLoginWithEmail == null) return;
+    if (_isBusy || widget.onLoginWithEmail == null) return;
 
     setState(() => _isSubmittingEmail = true);
     try {
@@ -45,6 +49,19 @@ class _LoginViewState extends State<LoginView> {
     } finally {
       if (mounted) {
         setState(() => _isSubmittingEmail = false);
+      }
+    }
+  }
+
+  Future<void> _submitGoogle() async {
+    if (_isBusy || widget.onLoginWithGoogle == null) return;
+
+    setState(() => _isSubmittingGoogle = true);
+    try {
+      await Future.sync(widget.onLoginWithGoogle!);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingGoogle = false);
       }
     }
   }
@@ -151,7 +168,7 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                                 child: TextField(
                                   controller: _emailController,
-                                  enabled: !_isSubmittingEmail,
+                                  enabled: !_isBusy,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.done,
                                   onSubmitted: (_) => _submitEmail(),
@@ -173,9 +190,7 @@ class _LoginViewState extends State<LoginView> {
                                     ? 'Đang gửi mã...'
                                     : 'Tiếp tục với Email',
                                 isLoading: _isSubmittingEmail,
-                                onPressed: _isSubmittingEmail
-                                    ? null
-                                    : _submitEmail,
+                                onPressed: _isBusy ? null : _submitEmail,
                               ),
                               const SizedBox(height: 24),
                               Row(
@@ -205,38 +220,24 @@ class _LoginViewState extends State<LoginView> {
                               ),
                               const SizedBox(height: 24),
                               SocialLoginButton(
-                                label: 'Tiếp tục với Google',
+                                label: _isSubmittingGoogle
+                                    ? 'Đang mở Google...'
+                                    : 'Tiếp tục với Google',
                                 iconPath: 'assets/images/google_icon.png',
-                                onPressed: _isSubmittingEmail
-                                    ? null
-                                    : widget.onLoginWithGoogle,
+                                isLoading: _isSubmittingGoogle,
+                                onPressed: _isBusy ? null : _submitGoogle,
                               ),
                               const SizedBox(height: 16),
-                              GestureDetector(
-                                onTap: _isSubmittingEmail
+                              TextActionButton(
+                                label: 'Đăng nhập bằng Passkey',
+                                height: 48,
+                                onPressed: _isBusy
                                     ? null
                                     : widget.onLoginWithPasskey,
-                                child: Container(
-                                  height: 48,
-                                  alignment: Alignment.center,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.fingerprint,
-                                        size: 20,
-                                        color: AppColors.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Đăng nhập bằng Passkey',
-                                        style: AppTextStyles.titleSmall
-                                            .copyWith(
-                                              color: AppColors.onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
+                                foregroundColor: AppColors.onSurfaceVariant,
+                                icon: const Icon(Icons.fingerprint, size: 20),
+                                textStyle: AppTextStyles.titleSmall.copyWith(
+                                  color: AppColors.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 32),
@@ -249,15 +250,14 @@ class _LoginViewState extends State<LoginView> {
                                       fontSize: 13,
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: _isSubmittingEmail ? null : () {},
-                                    child: Text(
-                                      'Đăng ký ngay',
-                                      style: AppTextStyles.bodySmall.copyWith(
-                                        fontSize: 13,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  TextActionButton(
+                                    label: 'Đăng ký ngay',
+                                    onPressed: _isBusy ? null : () {},
+                                    foregroundColor: AppColors.primary,
+                                    textStyle: AppTextStyles.bodySmall.copyWith(
+                                      fontSize: 13,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],

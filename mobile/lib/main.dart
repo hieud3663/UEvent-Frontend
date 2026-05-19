@@ -847,11 +847,19 @@ class _AppShellState extends ConsumerState<AppShell> {
           builder: (ctx, ref, _) {
             // Fire sign-out and navigate to login.
             Future.microtask(() async {
-              await ref
-                  .read(pushNotificationControllerProvider.notifier)
-                  .unregisterCurrentDevice();
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (ctx.mounted) _navigateToLogin(ctx, ref);
+              final session = await ref
+                  .read(authLocalDataSourceProvider)
+                  .readSession();
+              try {
+                if (session != null && !session.isExpired) {
+                  await ref
+                      .read(pushNotificationControllerProvider.notifier)
+                      .unregisterCurrentDevice();
+                }
+              } finally {
+                await ref.read(authControllerProvider.notifier).signOut();
+                if (ctx.mounted) _navigateToLogin(ctx, ref);
+              }
             });
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),

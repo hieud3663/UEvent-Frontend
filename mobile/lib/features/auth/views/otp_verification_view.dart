@@ -4,7 +4,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/core/widgets/text_action_button.dart';
 import 'package:frontend/features/auth/widgets/otp_input_row.dart';
 
 class OtpVerificationView extends StatefulWidget {
@@ -160,21 +162,13 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              GestureDetector(
-                                onTap: widget.isVerifying
+                              GlassIconButton(
+                                icon: Icons.chevron_left,
+                                onPressed: widget.isVerifying
                                     ? null
                                     : widget.onBack,
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.chevron_left,
-                                    color: AppColors.onSurface,
-                                  ),
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.5,
                                 ),
                               ),
                               Text(
@@ -285,16 +279,19 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                                     ),
                                   ),
                                   const SizedBox(height: 24),
-                                  GestureDetector(
-                                    onTap: _canResend ? widget.onResend : null,
-                                    child: Text(
-                                      resendLabel,
-                                      style: AppTextStyles.bodySmall.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: _canResend
-                                            ? AppColors.primary
-                                            : AppColors.onSurfaceVariant,
-                                      ),
+                                  TextActionButton(
+                                    label: resendLabel,
+                                    onPressed: _canResend
+                                        ? widget.onResend
+                                        : null,
+                                    foregroundColor: _canResend
+                                        ? AppColors.primary
+                                        : AppColors.onSurfaceVariant,
+                                    textStyle: AppTextStyles.bodySmall.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: _canResend
+                                          ? AppColors.primary
+                                          : AppColors.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
