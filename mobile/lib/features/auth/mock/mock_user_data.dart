@@ -15,6 +15,16 @@ class MockUserData {
     avatarUrl: 'https://i.pravatar.cc/300',
   );
 
+  /// Mock user chưa hoàn thiện hồ sơ — dùng để test ProfileSetupView.
+  static const UserModel incompleteUser = UserModel(
+    id: 'user-002',
+    email: 'new@utc2.edu.vn',
+    fullName: '',
+    accountStatus: 'active',
+    primaryRole: 'student',
+    isProfileComplete: false,
+  );
+
   static const AuthResponseModel mockAuthResponse = AuthResponseModel(
     accessToken: 'mock_jwt_token_12345',
     expiresIn: 3600,

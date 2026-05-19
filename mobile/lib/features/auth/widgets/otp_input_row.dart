@@ -51,6 +51,26 @@ class _OtpInputRowState extends State<OtpInputRow> {
     }
   }
 
+  void _handleChange(int index, String value) {
+    if (value.length > 1) {
+      final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+      for (var i = 0; i < widget.length; i++) {
+        _controllers[i].text = i < digits.length ? digits[i] : '';
+      }
+      final nextIndex = digits.length >= widget.length
+          ? widget.length - 1
+          : digits.length;
+      _focusNodes[nextIndex].requestFocus();
+    } else if (value.isNotEmpty && index < widget.length - 1) {
+      _focusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
+    } else {
+      _focusNodes[index].unfocus();
+    }
+    _emitCode();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -58,7 +78,7 @@ class _OtpInputRowState extends State<OtpInputRow> {
       children: List.generate(widget.length, (index) {
         return Flexible(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: AspectRatio(
               aspectRatio: 4 / 5,
               child: TextFormField(
@@ -105,25 +125,7 @@ class _OtpInputRowState extends State<OtpInputRow> {
                     ),
                   ),
                 ),
-                onChanged: (value) {
-                  if (value.length > 1) {
-                    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-                    for (var i = 0; i < widget.length; i++) {
-                      _controllers[i].text = i < digits.length ? digits[i] : '';
-                    }
-                    final nextIndex = digits.length >= widget.length
-                        ? widget.length - 1
-                        : digits.length;
-                    _focusNodes[nextIndex].requestFocus();
-                  } else if (value.isNotEmpty && index < widget.length - 1) {
-                    _focusNodes[index + 1].requestFocus();
-                  } else if (value.isEmpty && index > 0) {
-                    _focusNodes[index - 1].requestFocus();
-                  } else {
-                    _focusNodes[index].unfocus();
-                  }
-                  _emitCode();
-                },
+                onChanged: (value) => _handleChange(index, value),
               ),
             ),
           ),

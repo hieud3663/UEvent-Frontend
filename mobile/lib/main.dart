@@ -14,7 +14,9 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
+import 'package:frontend/features/auth/controller/otp_controller.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
+import 'package:frontend/features/auth/providers/otp_providers.dart';
 import 'package:frontend/features/auth/views/splash_view.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
 import 'package:frontend/features/auth/views/otp_verification_view.dart';
@@ -95,11 +97,11 @@ PageRoute<T> _fastRoute<T>({required WidgetBuilder builder}) {
   return MaterialPageRoute<T>(builder: builder);
 }
 
-// ════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------
 // AUTH FLOW NAVIGATION
 // Top-level functions reused by both initial auth flow AND sign-out.
 // Each function captures the builder's `ctx` for subsequent navigation.
-// ════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------
 
 /// Triggers the Keycloak PKCE sign-in flow for the given [method],
 /// then navigates to AppShell on success or shows a snackbar on failure.
@@ -109,6 +111,11 @@ Future<void> _handleSignIn(
   AuthMethod method, {
   String? loginHint,
 }) async {
+  if (method == AuthMethod.email) {
+    await _handleEmailOtpStart(context, ref, loginHint ?? '');
+    return;
+  }
+
   final session = await ref
       .read(authControllerProvider.notifier)
       .signIn(method, loginHint: loginHint);
@@ -151,65 +158,24 @@ Future<void> _handleEmailOtpStart(
     return;
   }
 
-  final sent = await ref
-      .read(authControllerProvider.notifier)
-      .requestEmailOtp(normalizedEmail);
+  final otpController = ref.read(otpControllerProvider.notifier);
+  otpController.reset();
+  await otpController.sendOtp(normalizedEmail);
   if (!context.mounted) return;
 
-  if (sent) {
-    _navigateToOtp(context, ref, normalizedEmail);
-    return;
+  final otpState = ref.read(otpControllerProvider);
+  switch (otpState) {
+    case OtpSent():
+      _navigateToOtp(context, ref, email: normalizedEmail, shouldReset: false);
+    case OtpError(message: final message):
+      _showSnackBar(context, message);
+    default:
+      _showSnackBar(context, 'Không gửi được mã OTP. Vui lòng thử lại.');
   }
-
-  _showSnackBar(context, _authStateErrorMessage(ref));
-}
-
-Future<void> _handleEmailOtpVerify(
-  BuildContext context,
-  WidgetRef ref, {
-  required String email,
-  required String code,
-}) async {
-  final session = await ref
-      .read(authControllerProvider.notifier)
-      .verifyEmailOtp(email: email, code: code);
-  if (!context.mounted) return;
-
-  if (session != null) {
-    await _bootstrapProfileAndNavigate(context, ref, fromSplash: false);
-    return;
-  }
-
-  _showSnackBar(context, _authStateErrorMessage(ref));
-}
-
-Future<void> _handleEmailOtpResend(
-  BuildContext context,
-  WidgetRef ref,
-  String email,
-) async {
-  final sent = await ref
-      .read(authControllerProvider.notifier)
-      .requestEmailOtp(email);
-  if (!context.mounted) return;
-
-  _showSnackBar(
-    context,
-    sent ? 'Mã OTP mới đã được gửi.' : _authStateErrorMessage(ref),
-  );
 }
 
 bool _isValidEmail(String value) {
   return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
-}
-
-String _authStateErrorMessage(WidgetRef ref) {
-  final state = ref.read(authControllerProvider);
-  return state.whenOrNull(
-        error: (err, _) =>
-            err is AuthFailure ? err.displayMessage : err.toString(),
-      ) ??
-      'Đăng nhập thất bại. Vui lòng thử lại.';
 }
 
 Future<void> _handleInitialSession(BuildContext context, WidgetRef ref) async {
@@ -344,15 +310,77 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
   );
 }
 
-void _navigateToOtp(BuildContext context, WidgetRef ref, String email) {
+void _navigateToOtp(
+  BuildContext context,
+  WidgetRef ref, {
+  required String email,
+  bool shouldReset = true,
+}) {
+  if (shouldReset) {
+    ref.read(otpControllerProvider.notifier).reset();
+  }
+
   Navigator.of(context).push(
     _fastRoute(
-      builder: (ctx) => OtpVerificationView(
-        email: email,
-        onVerify: (code) =>
-            _handleEmailOtpVerify(ctx, ref, email: email, code: code),
-        onBack: () => Navigator.of(ctx).pop(),
-        onResend: () => _handleEmailOtpResend(ctx, ref, email),
+      builder: (ctx) => Consumer(
+        builder: (ctx, otpRef, _) {
+          final otpState = otpRef.watch(otpControllerProvider);
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (otpRef.read(otpControllerProvider) is OtpIdle) {
+              otpRef.read(otpControllerProvider.notifier).sendOtp(email);
+            }
+          });
+
+          final sentEmail = switch (otpState) {
+            OtpSent(email: final value) => value,
+            OtpVerifying(email: final value) => value,
+            OtpError(email: final value) => value,
+            _ => email,
+          };
+          final canResendAt = switch (otpState) {
+            OtpSent(canResendAt: final value) => value,
+            OtpVerifying(canResendAt: final value) => value,
+            OtpError(canResendAt: final value) => value,
+            _ => null,
+          };
+          final isSending = otpState is OtpSending;
+          final isVerifying = otpState is OtpVerifying;
+
+          if (otpState is OtpVerified) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              if (ctx.mounted) {
+                await _bootstrapProfileAndNavigate(
+                  ctx,
+                  otpRef,
+                  fromSplash: false,
+                );
+              }
+            });
+          }
+
+          if (otpState is OtpError) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(
+                  ctx,
+                ).showSnackBar(SnackBar(content: Text(otpState.message)));
+              }
+            });
+          }
+
+          return OtpVerificationView(
+            email: sentEmail,
+            canResendAt: canResendAt,
+            isSending: isSending,
+            isVerifying: isVerifying,
+            onCompleted: (code) =>
+                otpRef.read(otpControllerProvider.notifier).verifyOtp(code),
+            onResend: () =>
+                otpRef.read(otpControllerProvider.notifier).sendOtp(sentEmail),
+            onBack: () => Navigator.of(ctx).pop(),
+          );
+        },
       ),
     ),
   );
@@ -363,10 +391,11 @@ void _navigateToProfileSetup(
   WidgetRef? ref,
   UserModel? initialUser,
 }) {
-  Navigator.of(context).push(
+  Navigator.of(context).pushAndRemoveUntil(
     _fastRoute(
       builder: (ctx) => ProfileSetupView(
         initialUser: initialUser,
+        profileService: ref?.read(profileServiceProvider),
         onComplete: () {
           if (ref == null) {
             _navigateToAppShell(ctx);
@@ -374,9 +403,9 @@ void _navigateToProfileSetup(
           }
           unawaited(_bootstrapProfileAndNavigate(ctx, ref, fromSplash: false));
         },
-        onBack: () => Navigator.of(ctx).pop(),
       ),
     ),
+    (route) => false,
   );
 }
 
@@ -399,9 +428,9 @@ void _navigateToAppShell(BuildContext context) {
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------
 // APP ROOT
-// ════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------
 
 class UEventsApp extends ConsumerWidget {
   const UEventsApp({super.key});
@@ -412,7 +441,7 @@ class UEventsApp extends ConsumerWidget {
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // Splash → check stored session → Login or AppShell
+      // Splash -> check stored session -> Login or AppShell
       home: Builder(
         builder: (context) => SplashView(
           onInitializationComplete: () {
@@ -424,9 +453,9 @@ class UEventsApp extends ConsumerWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════
-// APP SHELL – Bottom Nav Tabs + Push Navigation
-// ════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------
+// APP SHELL - Bottom Nav Tabs + Push Navigation
+// ---------------------------------------------------------------------
 
 /// App shell that manages bottom nav tab switching + push navigation.
 class AppShell extends ConsumerStatefulWidget {
@@ -455,7 +484,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     setState(() => _currentIndex = index);
   }
 
-  // ── Push Navigation (General) ──
+  // -- Push Navigation (General) --
 
   void _pushNotifications() {
     Navigator.of(context).push(
@@ -500,7 +529,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Attendee Flow ──
+  // -- Attendee Flow --
 
   void _pushEventDetail(EventModel event) {
     if (event.isOrganizer) {
@@ -570,7 +599,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Ticketing Flow ──
+  // -- Ticketing Flow --
 
   void _pushTicketDetail(TicketModel ticket) {
     Navigator.of(context).push(
@@ -606,7 +635,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Organizer Flow ──
+  // -- Organizer Flow --
 
   void _pushCreateEvent() {
     Navigator.of(context).push(
@@ -724,14 +753,25 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Profile / Settings Sub-Navigation ──
+  // -- Profile / Settings Sub-Navigation --
 
   void _pushEditProfile() {
     Navigator.of(context).push(
       _fastRoute(
-        builder: (ctx) => EditProfileView(
-          onBack: () => Navigator.of(ctx).pop(),
-          onSave: () => Navigator.of(ctx).pop(),
+        builder: (ctx) => Consumer(
+          builder: (ctx, ref, _) {
+            final currentUser = ref.read(userProfileProvider).value;
+            return EditProfileView(
+              user: currentUser,
+              profileService: ref.read(profileServiceProvider),
+              onBack: () => Navigator.of(ctx).pop(),
+              onSaved: () {
+                ref.invalidate(userProfileProvider);
+                ref.invalidate(profileOverviewProvider);
+                Navigator.of(ctx).pop();
+              },
+            );
+          },
         ),
       ),
     );
@@ -823,7 +863,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Build ──
+  // -- Build --
 
   @override
   Widget build(BuildContext context) {
@@ -860,7 +900,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         SettingsView(
           currentNavIndex: _currentIndex,
           onNavTap: _onNavTap,
-          onBack: () => _onNavTap(0), // Close → go Home
+          onBack: () => _onNavTap(0), // Close -> go Home
           onEditProfile: _pushEditProfile,
           onChangeEmail: _pushChangeEmail,
           onPasskeyLogin: _pushPasskeyLogin,

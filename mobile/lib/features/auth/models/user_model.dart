@@ -9,6 +9,7 @@ class UserModel {
   final String fullName;
   final String accountStatus;
   final String primaryRole;
+  @JsonKey(defaultValue: false)
   final bool isProfileComplete;
   final String? phoneNumber;
   final String? studentCode;
@@ -22,7 +23,7 @@ class UserModel {
     required this.fullName,
     required this.accountStatus,
     required this.primaryRole,
-    required this.isProfileComplete,
+    this.isProfileComplete = false,
     this.phoneNumber,
     this.studentCode,
     this.faculty,

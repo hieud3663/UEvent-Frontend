@@ -9,14 +9,20 @@ import 'package:frontend/features/auth/widgets/otp_input_row.dart';
 
 class OtpVerificationView extends StatefulWidget {
   final String email;
-  final Future<void> Function(String code)? onVerify;
-  final Future<void> Function()? onResend;
+  final DateTime? canResendAt;
+  final bool isSending;
+  final bool isVerifying;
+  final ValueChanged<String>? onCompleted;
+  final VoidCallback? onResend;
   final VoidCallback? onBack;
 
   const OtpVerificationView({
     super.key,
     required this.email,
-    this.onVerify,
+    this.canResendAt,
+    this.isSending = false,
+    this.isVerifying = false,
+    this.onCompleted,
     this.onResend,
     this.onBack,
   });
@@ -26,66 +32,85 @@ class OtpVerificationView extends StatefulWidget {
 }
 
 class _OtpVerificationViewState extends State<OtpVerificationView> {
+  Timer? _timer;
+  int _remainingSeconds = 0;
   String _code = '';
-  bool _isSubmitting = false;
-  bool _isResending = false;
-  int _cooldownSeconds = 60;
-  Timer? _cooldownTimer;
 
   @override
   void initState() {
     super.initState();
-    _startCooldown();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(OtpVerificationView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.canResendAt != widget.canResendAt) {
+      _startTimer();
+    }
   }
 
   @override
   void dispose() {
-    _cooldownTimer?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
-  void _startCooldown() {
-    _cooldownTimer?.cancel();
-    setState(() => _cooldownSeconds = 60);
-    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_cooldownSeconds <= 1) {
-        timer.cancel();
-        if (mounted) setState(() => _cooldownSeconds = 0);
-        return;
+  bool get _canSubmit =>
+      _code.length == 6 && !widget.isSending && !widget.isVerifying;
+
+  bool get _canResend =>
+      _remainingSeconds <= 0 && !widget.isSending && widget.onResend != null;
+
+  String get _timerLabel {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  double get _timerProgress {
+    if (_remainingSeconds <= 0) return 0;
+    return (_remainingSeconds / 60).clamp(0, 1).toDouble();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    final canResendAt = widget.canResendAt;
+    if (canResendAt == null) {
+      if (mounted) setState(() => _remainingSeconds = 0);
+      return;
+    }
+
+    void tick() {
+      final seconds = canResendAt.difference(DateTime.now()).inSeconds;
+      if (!mounted) return;
+      setState(() => _remainingSeconds = seconds.clamp(0, 9999));
+      if (_remainingSeconds <= 0) {
+        _timer?.cancel();
       }
-      if (mounted) setState(() => _cooldownSeconds -= 1);
-    });
+    }
+
+    tick();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
   }
 
-  Future<void> _submit() async {
-    if (_code.length != 6 || _isSubmitting || widget.onVerify == null) return;
-    setState(() => _isSubmitting = true);
-    try {
-      await widget.onVerify!(_code);
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
-  Future<void> _resend() async {
-    if (_cooldownSeconds > 0 || _isResending || widget.onResend == null) return;
-    setState(() => _isResending = true);
-    try {
-      await widget.onResend!();
-      if (mounted) _startCooldown();
-    } finally {
-      if (mounted) setState(() => _isResending = false);
-    }
+  void _submit() {
+    if (!_canSubmit) return;
+    widget.onCompleted?.call(_code);
   }
 
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _code.length == 6 && !_isSubmitting;
-    final resendLabel = _cooldownSeconds > 0
-        ? 'Gửi lại sau ${_cooldownSeconds}s'
-        : _isResending
+    final actionLabel = widget.isVerifying
+        ? 'Đang xác nhận...'
+        : widget.isSending
+        ? 'Đang gửi mã...'
+        : 'Xác nhận';
+    final resendLabel = widget.isSending
         ? 'Đang gửi lại...'
-        : 'Gửi lại mã';
+        : _canResend
+        ? 'Gửi lại mã'
+        : 'Gửi lại sau $_timerLabel';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -107,7 +132,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                 width: double.infinity,
                 constraints: const BoxConstraints(
                   maxWidth: 450,
-                  minHeight: 620,
+                  minHeight: 640,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.7),
@@ -136,7 +161,9 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               GestureDetector(
-                                onTap: _isSubmitting ? null : widget.onBack,
+                                onTap: widget.isVerifying
+                                    ? null
+                                    : widget.onBack,
                                 child: Container(
                                   width: 40,
                                   height: 40,
@@ -153,7 +180,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                               Text(
                                 'XÁC THỰC',
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  letterSpacing: 2.0,
+                                  letterSpacing: 2,
                                   color: AppColors.onSurfaceVariant,
                                 ),
                               ),
@@ -172,26 +199,42 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                                   fontSize: 32,
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Chúng tôi vừa gửi mã OTP gồm 6 chữ số đến ${widget.email}.',
-                                style: AppTextStyles.bodyMedium,
+                              const SizedBox(height: 12),
+                              RichText(
+                                text: TextSpan(
+                                  style: AppTextStyles.bodyMedium,
+                                  children: [
+                                    const TextSpan(
+                                      text:
+                                          'Chúng tôi vừa gửi mã OTP gồm 6 chữ số đến ',
+                                    ),
+                                    TextSpan(
+                                      text: widget.email,
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const TextSpan(text: '.'),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 44),
                               OtpInputRow(
                                 length: 6,
                                 onChanged: (value) =>
                                     setState(() => _code = value),
-                                onCompleted: (_) => _submit(),
+                                onCompleted: (code) {
+                                  setState(() => _code = code);
+                                  _submit();
+                                },
                               ),
                               const SizedBox(height: 40),
                               Opacity(
-                                opacity: canSubmit ? 1 : 0.55,
+                                opacity: _canSubmit ? 1 : 0.55,
                                 child: PrimaryButton(
-                                  label: _isSubmitting
-                                      ? 'Đang xác nhận...'
-                                      : 'Xác nhận',
-                                  onPressed: canSubmit ? _submit : null,
+                                  label: actionLabel,
+                                  onPressed: _canSubmit ? _submit : null,
                                 ),
                               ),
                               const SizedBox(height: 40),
@@ -208,27 +251,47 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                                       ),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
-                                    child: Text(
-                                      _cooldownSeconds > 0
-                                          ? 'Mã có hiệu lực trong ${_cooldownSeconds}s'
-                                          : 'Bạn có thể yêu cầu mã mới',
-                                      style: AppTextStyles.labelMedium.copyWith(
-                                        color: AppColors.onSurface,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_remainingSeconds > 0) ...[
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              value: _timerProgress,
+                                              backgroundColor:
+                                                  AppColors.outlineVariant,
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                    Color
+                                                  >(AppColors.primary),
+                                              strokeWidth: 2.5,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                        ],
+                                        Text(
+                                          _remainingSeconds > 0
+                                              ? 'Mã có hiệu lực trong $_timerLabel'
+                                              : 'Bạn có thể yêu cầu mã mới',
+                                          style: AppTextStyles.labelMedium
+                                              .copyWith(
+                                                color: AppColors.onSurface,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 24),
                                   GestureDetector(
-                                    onTap:
-                                        _cooldownSeconds == 0 && !_isResending
-                                        ? _resend
-                                        : null,
+                                    onTap: _canResend ? widget.onResend : null,
                                     child: Text(
                                       resendLabel,
                                       style: AppTextStyles.bodySmall.copyWith(
                                         fontWeight: FontWeight.w700,
-                                        color: _cooldownSeconds == 0
+                                        color: _canResend
                                             ? AppColors.primary
                                             : AppColors.onSurfaceVariant,
                                       ),
@@ -257,7 +320,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                             child: Text(
                               'MÃ HÓA BỞI UEVENTS',
                               style: AppTextStyles.labelSmall.copyWith(
-                                letterSpacing: 2.0,
+                                letterSpacing: 2,
                               ),
                             ),
                           ),

@@ -1,23 +1,27 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
+import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
+import 'package:frontend/features/profile/services/profile_service.dart';
 
 class ProfileSetupView extends ConsumerStatefulWidget {
+  final ProfileService? profileService;
   final UserModel? initialUser;
   final VoidCallback? onComplete;
   final VoidCallback? onBack;
 
   const ProfileSetupView({
     super.key,
+    this.profileService,
     this.initialUser,
     this.onComplete,
     this.onBack,
@@ -32,7 +36,7 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
   final _studentCodeController = TextEditingController();
   final _classNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  String? _selectedKhoa;
+  String? _selectedFaculty;
   bool _isSubmitting = false;
 
   @override
@@ -44,7 +48,7 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
       _studentCodeController.text = user.studentCode ?? '';
       _classNameController.text = user.className ?? '';
       _phoneController.text = user.phoneNumber ?? '';
-      _selectedKhoa = user.faculty;
+      _selectedFaculty = user.faculty;
     }
   }
 
@@ -57,25 +61,29 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
     super.dispose();
   }
 
-  Future<void> _submitProfile() async {
-    final fullName = _fullNameController.text.trim();
-    final studentCode = _studentCodeController.text.trim();
-    final faculty = _selectedKhoa?.trim() ?? '';
+  bool get _isFormValid =>
+      _fullNameController.text.trim().isNotEmpty &&
+      _studentCodeController.text.trim().isNotEmpty &&
+      (_selectedFaculty?.trim().isNotEmpty ?? false);
 
-    if (fullName.isEmpty || studentCode.isEmpty || faculty.isEmpty) {
+  Future<void> _submitProfile() async {
+    if (!_isFormValid || _isSubmitting) {
       _showMessage('Vui lòng nhập đầy đủ họ tên, mã số sinh viên và khoa.');
       return;
     }
 
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(profileServiceProvider).updateProfile({
-        'full_name': fullName,
-        'student_code': studentCode,
-        'faculty': faculty,
+      final ProfileService profileService =
+          widget.profileService ?? ref.read(profileServiceProvider);
+      await profileService.updateProfile({
+        'full_name': _fullNameController.text.trim(),
+        'student_code': _studentCodeController.text.trim(),
+        'faculty': _selectedFaculty!.trim(),
         'class_name': _classNameController.text.trim(),
         'phone_number': _phoneController.text.trim(),
       });
+
       ref.invalidate(userProfileProvider);
       ref.invalidate(profileOverviewProvider);
       widget.onComplete?.call();
@@ -119,14 +127,12 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Scrollable Content
           Positioned.fill(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 100, 24, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Titles
                   Text(
                     'Thông tin cá nhân',
                     style: AppTextStyles.headlineLarge.copyWith(fontSize: 32),
@@ -139,15 +145,12 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
-
-                  // Form Fields
                   GlassInputField(
                     label: 'HỌ TÊN',
                     placeholder: 'Nhập họ và tên',
                     controller: _fullNameController,
                   ),
                   const SizedBox(height: 20),
-
                   GlassInputField(
                     label: 'MÃ SỐ SINH VIÊN (MSSV)',
                     placeholder: 'Nhập MSSV',
@@ -155,18 +158,16 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 20),
-
                   GlassInputField(
                     label: 'LỚP',
                     placeholder: 'Nhập lớp sinh hoạt',
                     controller: _classNameController,
                   ),
                   const SizedBox(height: 20),
-
                   GlassDropdownField<String>(
                     label: 'KHOA',
                     placeholder: 'Chọn khoa của bạn',
-                    value: _selectedKhoa,
+                    value: _selectedFaculty,
                     items: const [
                       GlassDropdownItem(
                         value: 'Công nghệ thông tin',
@@ -194,10 +195,10 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                         label: 'Khoa học ứng dụng',
                       ),
                     ],
-                    onChanged: (val) => setState(() => _selectedKhoa = val),
+                    onChanged: (value) =>
+                        setState(() => _selectedFaculty = value),
                   ),
                   const SizedBox(height: 20),
-
                   GlassInputField(
                     label: 'SỐ ĐIỆN THOẠI',
                     placeholder: 'Nhập số điện thoại (nếu có)',
@@ -209,8 +210,6 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Privacy Notice
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -250,8 +249,6 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
               ),
             ),
           ),
-
-          // Glass App Bar Fixed
           Positioned(
             top: 0,
             left: 0,
@@ -276,14 +273,17 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          GestureDetector(
-                            onTap: widget.onBack,
-                            child: const SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: Icon(Icons.chevron_left),
-                            ),
-                          ),
+                          if (widget.onBack != null)
+                            GestureDetector(
+                              onTap: widget.onBack,
+                              child: const SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: Icon(Icons.chevron_left),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 40),
                           Text(
                             'Hoàn thiện hồ sơ',
                             style: AppTextStyles.titleMedium,
@@ -297,8 +297,6 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
               ),
             ),
           ),
-
-          // Glass Bottom Action Fixed
           Positioned(
             bottom: 0,
             left: 0,
