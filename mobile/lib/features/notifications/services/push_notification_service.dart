@@ -118,7 +118,8 @@ class PushNotificationService {
           channelDescription: 'Thông báo mới từ hệ thống UEvent.',
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          icon: 'ic_notification',
+          largeIcon: DrawableResourceAndroidBitmap('ic_notification_large'),
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
@@ -132,7 +133,7 @@ class PushNotificationService {
 
   Future<void> _initializeLocalNotifications() async {
     const initializationSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      android: AndroidInitializationSettings('ic_notification'),
       iOS: DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
