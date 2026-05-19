@@ -25,49 +25,73 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onPressed != null && !isLoading;
-    final child = GestureDetector(
-      onTap: isEnabled ? onPressed : null,
-      child: Container(
-        width: isFullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: BoxDecoration(
-          color: isEnabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.65),
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowPrimary.withValues(
-                alpha: isEnabled ? 1 : 0.35,
-              ),
-              blurRadius: 25,
-              offset: const Offset(0, 8),
+    final borderRadius = BorderRadius.circular(AppConstants.radiusMd);
+
+    final child = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowPrimary.withValues(
+              alpha: isEnabled ? 1 : 0.35,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-          children: [
-            if (isLoading) ...[
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.onPrimaryDark,
+            blurRadius: 25,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: isFullWidth ? double.infinity : null,
+        child: ElevatedButton(
+          onPressed: isEnabled ? onPressed : null,
+          style: ButtonStyle(
+            minimumSize: const WidgetStatePropertyAll(Size.zero),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: const WidgetStatePropertyAll(0),
+            shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            ),
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return AppColors.primary.withValues(alpha: 0.65);
+              }
+              return AppColors.primary;
+            }),
+            foregroundColor: const WidgetStatePropertyAll(
+              AppColors.onPrimaryDark,
+            ),
+            overlayColor: WidgetStatePropertyAll(
+              AppColors.onPrimaryDark.withValues(alpha: 0.08),
+            ),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: borderRadius),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              if (isLoading) ...[
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.onPrimaryDark,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
+              Text(label, style: AppTextStyles.buttonLarge),
+              if (icon != null && !isLoading) ...[
+                const SizedBox(width: 12),
+                Icon(icon, size: 20, color: AppColors.onPrimaryDark),
+              ],
             ],
-            Text(label, style: AppTextStyles.buttonLarge),
-            if (icon != null && !isLoading) ...[
-              const SizedBox(width: 12),
-              Icon(icon, size: 20, color: AppColors.onPrimaryDark),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -91,20 +115,32 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: isFullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 1,
+    return SizedBox(
+      width: isFullWidth ? double.infinity : null,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size.zero),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          ),
+          backgroundColor: WidgetStatePropertyAll(
+            Colors.white.withValues(alpha: 0.7),
+          ),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.onSurface),
+          overlayColor: WidgetStatePropertyAll(
+            AppColors.onSurface.withValues(alpha: 0.06),
+          ),
+          side: WidgetStatePropertyAll(
+            BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 1),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+            ),
           ),
         ),
-        alignment: Alignment.center,
         child: Text(
           label,
           style: AppTextStyles.titleSmall.copyWith(fontWeight: FontWeight.w600),
