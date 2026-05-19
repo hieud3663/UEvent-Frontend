@@ -42,8 +42,8 @@ class NotificationsView extends ConsumerWidget {
                   AppSuccessSliver(
                     isEmpty: notifications.isEmpty,
                     emptyIcon: Icons.notifications_off_outlined,
-                    emptyTitle: 'Chua co thong bao',
-                    emptyDescription: 'Thong bao moi se xuat hien tai day.',
+                    emptyTitle: 'Chưa có thông báo',
+                    emptyDescription: 'Thông báo mới sẽ xuất hiện tại đây.',
                     emptyFillRemaining: true,
                     contentSlivers: [
                       SliverToBoxAdapter(
@@ -51,7 +51,10 @@ class NotificationsView extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppConstants.pagePaddingH + 8,
                           ),
-                          child: Text('ALL', style: AppTextStyles.labelSmall),
+                          child: Text(
+                            'TẤT CẢ',
+                            style: AppTextStyles.labelSmall,
+                          ),
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -73,6 +76,16 @@ class NotificationsView extends ConsumerWidget {
                               timestamp: _relativeTime(notification.timestamp),
                               description: notification.description,
                               actionLabel: notification.actionLabel,
+                              onTap: notification.isRead
+                                  ? null
+                                  : () {
+                                      ref
+                                          .read(
+                                            notificationsControllerProvider
+                                                .notifier,
+                                          )
+                                          .markAsRead(notification.id);
+                                    },
                               opacity: notification.isRead ? 0.8 : 1,
                             ),
                           );
@@ -85,9 +98,11 @@ class NotificationsView extends ConsumerWidget {
                 error: (error, stackTrace) => [
                   AppErrorSliver(
                     icon: Icons.wifi_off,
-                    title: 'Khong tai du lieu duoc',
-                    description: 'Vui long thu lai sau.',
-                    onRetry: () => ref.read(notificationsControllerProvider.notifier).refresh(),
+                    title: 'Không tải dữ liệu được',
+                    description: 'Vui lòng thử lại sau.',
+                    onRetry: () => ref
+                        .read(notificationsControllerProvider.notifier)
+                        .refresh(),
                   ),
                 ],
               ),
@@ -101,7 +116,7 @@ class NotificationsView extends ConsumerWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Notifications',
+              title: 'Thông báo',
               leadingIcon: Icons.arrow_back,
               trailingIcon: Icons.more_vert,
               onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
@@ -148,10 +163,10 @@ class NotificationsView extends ConsumerWidget {
 
   String _relativeTime(DateTime timestamp) {
     final diff = DateTime.now().difference(timestamp);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return 'Vừa xong';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
+    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
+    return '${diff.inDays} ngày trước';
   }
 }
 

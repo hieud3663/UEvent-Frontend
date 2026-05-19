@@ -4,7 +4,8 @@ class EnvConfig {
 
   /// The base URL for the UEvent API.
   static const String baseUrl =
-      'http://10.0.2.2:8000/api/v1'; // 10.0.2.2 is Android Emulator's alias for host localhost
+      //   'http://10.0.2.2:8000/api/v1';
+      'http://192.168.43.220:8000/api/v1'; // Update to your backend's local IP address
 
   /// Additional global constants can go here
   static const int connectTimeoutMs = 10000;
@@ -37,5 +38,5 @@ class EnvConfig {
 
   /// Google Web Client ID for Google Sign-In and Token Exchange.
   static const String googleServerClientId =
-      '451009625507-8v4nnt41lomuulvm2e8nt409kqukaru1.apps.googleusercontent.com';
+      '228407044477-8t5bcmq669ns2n2a9iitnohd3lhs8oi3.apps.googleusercontent.com';
 }

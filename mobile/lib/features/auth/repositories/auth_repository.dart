@@ -12,6 +12,15 @@ abstract interface class AuthRepository {
   /// Launches the PKCE flow for the given [method] and persists the session.
   Future<AuthSessionModel> signIn(AuthMethod method, {String? loginHint});
 
+  /// Requests an email OTP from the backend registration/login endpoint.
+  Future<void> requestEmailOtp(String email);
+
+  /// Verifies an email OTP and persists the returned Keycloak session.
+  Future<AuthSessionModel> verifyEmailOtp({
+    required String email,
+    required String code,
+  });
+
   /// Silently refreshes the access token using the stored refresh token.
   /// Throws [AuthFailureRefreshFailed] if the refresh token is invalid.
   Future<void> refreshTokens();

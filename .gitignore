@@ -64,3 +64,5 @@ package-lock.json
 .claude/skills/gitnexus/
 CLAUDE.md
 AGENTS.md
+mobile/android/app/google-services.json
+mobile/lib/firebase_options.dart

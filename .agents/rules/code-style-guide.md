@@ -26,7 +26,10 @@ Every piece of code you generate MUST be placed in its designated directory. NEV
      - `.../widgets/`: UI components that are ONLY used within this feature.
      - `.../models/`: Data structures specific to this feature.
      - `.../services/`: Abstract service interface + implementations (Mock, API).
-     - `.../state/`: ChangeNotifier classes for state management.
+     - `.../providers/`: Riverpod provider wiring for service, repository, controller, and read-only query providers.
+     - `.../controller/`: Riverpod `Notifier` / `AsyncNotifier` classes for feature state and user actions.
+     - `.../repositories/`: Repository interfaces and implementations when a feature has business/data orchestration.
+     - `.../data_sources/local/`: Local persistence such as secure storage, SQLite, or cache sources.
      - `.../mock/`: Mock data files for development/testing.
 
 3. Import Convention:
@@ -61,6 +64,8 @@ You must strictly follow these 5 steps in order:
 - Mock data MUST be placed in a dedicated `mock/` directory inside its respective feature (e.g., `lib/features/events/mock/`), NEVER hardcoded directly inside View files.
 - Views MUST receive data through constructor parameters or a state management solution — they should NOT generate or own their own data.
 - Mock data files should follow the naming pattern: `mock_[entity]_data.dart` (e.g., `mock_event_data.dart`, `mock_user_data.dart`).
+- Không được dùng `if (true)` hoặc nhánh mock cố định trong service. Nếu cần dữ liệu mock, phải đi qua `EnvConfig.useMockData`, provider override, hoặc mock repository/service riêng cho môi trường dev/test.
+- Khi `EnvConfig.useMockData = false`, luồng production bắt buộc gọi API thật. Mọi service còn trả mock cố định phải được xem là lỗi kiến trúc.
 
 # SERVICE LAYER ARCHITECTURE
 Every feature that interacts with data MUST follow the **Service Interface Pattern**:
@@ -114,6 +119,32 @@ Every feature that interacts with data MUST follow the **Service Interface Patte
 - Use `NotifierProvider` / `AsyncNotifierProvider` for state that requires complex modifications.
 - UI components accessing providers MUST extend `ConsumerWidget` or `ConsumerStatefulWidget` to access state via `ref.watch()` or `ref.read()`.
 - Always handle the three stages of asynchronous state explicitly using `.when(data: ..., loading: ..., error: ...)`. NEVER display a blank screen or raw unhandled error to the user.
+
+## Riverpod Controller Rules (Project-Specific)
+- `FutureProvider` chỉ dùng cho dữ liệu đọc đơn giản, không có mutation và không cần state nội bộ phức tạp. Ví dụ: đọc danh sách sự kiện, đọc chi tiết sự kiện, đọc danh sách vé nếu màn chỉ hiển thị.
+- `AsyncNotifierProvider` bắt buộc dùng khi feature có hành động nghiệp vụ hoặc cần điều phối state: đăng nhập/đăng xuất, làm mới, đánh dấu đã đọc, đăng ký sự kiện, hủy vé, tạo/sửa/xóa sự kiện, gửi thông báo, check-in, cập nhật hồ sơ.
+- Controller phải đặt tại `lib/features/<feature>/controller/<feature>_controller.dart` và class đặt tên `<Feature>Controller`.
+- Controller chỉ làm nhiệm vụ điều phối state và gọi repository. Không parse JSON, không build UI, không gọi `Navigator`, không chứa text layout.
+- Provider file chỉ wiring dependency và expose controller/query provider. Không đặt business logic hoặc mapping phức tạp trực tiếp trong provider.
+- View chỉ render từ provider state và gọi action qua `ref.read(<controllerProvider>.notifier).<action>()`. View không gọi service/repository trực tiếp.
+- Với write action, controller phải xử lý loading/error/rollback rõ ràng. Nếu dùng optimistic update, lưu `previousState`, rollback khi repository throw.
+- Sau mutation thành công, controller phải cập nhật state hiện tại hoặc invalidate/refresh provider liên quan để UI không hiển thị dữ liệu cũ.
+- Không tạo controller đại trà cho mọi query nhỏ. Nếu màn chỉ đọc một lần và không có action, `FutureProvider` là đủ.
+
+Recommended production flow:
+
+`View -> Provider -> Controller -> Repository -> Service/LocalDataSource -> Model -> Controller -> View`
+
+Allowed simple read-only flow:
+
+`View -> FutureProvider -> Service/Repository -> Model -> View`
+
+Anti-patterns:
+- `View` gọi `EventService`, `TicketingService`, `NotificationService` trực tiếp.
+- `Provider` chứa logic đăng ký/hủy vé, mark-as-read, parse response, hoặc chọn mock/API bằng điều kiện thủ công.
+- `Controller` gọi service trực tiếp trong feature dài hạn thay vì repository.
+- Service dùng `if (true)` để ép dữ liệu mock.
+- UI text tiếng Việt không dấu trong trạng thái loading/error/empty.
 
 # DEPENDENCY INJECTION (lib/core/di/)
 - Use a simple **Service Locator** pattern in `service_locator.dart`.

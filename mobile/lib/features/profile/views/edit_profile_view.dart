@@ -1,16 +1,13 @@
-// File: lib/features/profile/views/edit_profile_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/widgets/glass_top_bar.dart';
-import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
+import 'package:frontend/core/widgets/glass_input_field.dart';
+import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/profile/services/profile_service.dart';
 
-/// Màn hình chỉnh sửa hồ sơ — pre-fill từ [user] hiện tại, PATCH khi save.
 class EditProfileView extends StatefulWidget {
   final UserModel? user;
   final ProfileService? profileService;
@@ -40,12 +37,12 @@ class _EditProfileViewState extends State<EditProfileView> {
   @override
   void initState() {
     super.initState();
-    final u = widget.user;
-    _fullNameCtrl = TextEditingController(text: u?.fullName ?? '');
-    _studentCodeCtrl = TextEditingController(text: u?.studentCode ?? '');
-    _classNameCtrl = TextEditingController(text: u?.className ?? '');
-    _phoneCtrl = TextEditingController(text: u?.phoneNumber ?? '');
-    _selectedFaculty = u?.faculty;
+    final user = widget.user;
+    _fullNameCtrl = TextEditingController(text: user?.fullName ?? '');
+    _studentCodeCtrl = TextEditingController(text: user?.studentCode ?? '');
+    _classNameCtrl = TextEditingController(text: user?.className ?? '');
+    _phoneCtrl = TextEditingController(text: user?.phoneNumber ?? '');
+    _selectedFaculty = user?.faculty;
   }
 
   @override
@@ -80,9 +77,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       final phone = _phoneCtrl.text.trim();
       if (phone.isNotEmpty) updateData['phone_number'] = phone;
 
-      if (widget.profileService != null) {
-        await widget.profileService!.updateProfile(updateData);
-      }
+      await widget.profileService?.updateProfile(updateData);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,12 +88,12 @@ class _EditProfileViewState extends State<EditProfileView> {
         );
         widget.onSaved?.call();
       }
-    } catch (e) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lưu thất bại: $e'),
-            backgroundColor: Colors.red.shade400,
+            content: Text('Lưu thất bại: $error'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -121,7 +116,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      // Photo Section
                       Column(
                         children: [
                           Stack(
@@ -131,7 +125,10 @@ class _EditProfileViewState extends State<EditProfileView> {
                                 height: 112,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 4),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
                                   color: AppColors.outlineVariant,
                                 ),
                                 child: ClipOval(
@@ -139,10 +136,17 @@ class _EditProfileViewState extends State<EditProfileView> {
                                       ? Image.network(
                                           widget.user!.avatarUrl!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.person, size: 64, color: Colors.white),
+                                          errorBuilder: (_, _, _) => const Icon(
+                                            Icons.person,
+                                            size: 64,
+                                            color: Colors.white,
+                                          ),
                                         )
-                                      : const Icon(Icons.person, size: 64, color: Colors.white),
+                                      : const Icon(
+                                          Icons.person,
+                                          size: 64,
+                                          color: Colors.white,
+                                        ),
                                 ),
                               ),
                               Positioned(
@@ -153,7 +157,10 @@ class _EditProfileViewState extends State<EditProfileView> {
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryContainer,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                   ),
                                   child: const Icon(
                                     Icons.edit,
@@ -166,7 +173,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'CHANGE PHOTO',
+                            'ĐỔI ẢNH',
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),
@@ -174,8 +181,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                         ],
                       ),
                       const SizedBox(height: 48),
-
-                      // Email (read-only)
                       GlassInputField(
                         label: 'EMAIL',
                         leadingIcon: Icons.mail,
@@ -187,8 +192,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Form fields
                       GlassInputField(
                         label: 'HỌ TÊN',
                         placeholder: 'Nhập họ và tên',
@@ -196,7 +199,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                         leadingIcon: Icons.person,
                       ),
                       const SizedBox(height: 24),
-
                       GlassInputField(
                         label: 'MÃ SỐ SINH VIÊN (MSSV)',
                         placeholder: 'Nhập MSSV',
@@ -204,7 +206,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                         leadingIcon: Icons.badge,
                       ),
                       const SizedBox(height: 24),
-
                       GlassInputField(
                         label: 'LỚP',
                         placeholder: 'Nhập lớp sinh hoạt',
@@ -212,27 +213,41 @@ class _EditProfileViewState extends State<EditProfileView> {
                         leadingIcon: Icons.school,
                       ),
                       const SizedBox(height: 24),
-
                       GlassDropdownField<String>(
                         label: 'KHOA',
                         placeholder: 'Chọn khoa của bạn',
                         value: _selectedFaculty,
                         items: const [
-                          GlassDropdownItem(value: 'cntt', label: 'Công nghệ thông tin'),
+                          GlassDropdownItem(
+                            value: 'cntt',
+                            label: 'Công nghệ thông tin',
+                          ),
                           GlassDropdownItem(value: 'kt', label: 'Kinh tế'),
                           GlassDropdownItem(value: 'nn', label: 'Ngoại ngữ'),
                           GlassDropdownItem(value: 'luat', label: 'Luật'),
                           GlassDropdownItem(value: 'xd', label: 'Xây dựng'),
-                          GlassDropdownItem(value: 'dien', label: 'Điện - Điện tử'),
+                          GlassDropdownItem(
+                            value: 'dien',
+                            label: 'Điện - Điện tử',
+                          ),
                           GlassDropdownItem(value: 'co-khi', label: 'Cơ khí'),
-                          GlassDropdownItem(value: 'mt', label: 'Mỹ thuật công nghiệp'),
-                          GlassDropdownItem(value: 'moi-truong', label: 'Môi trường & Tài nguyên'),
-                          GlassDropdownItem(value: 'khoa-hoc', label: 'Khoa học ứng dụng'),
+                          GlassDropdownItem(
+                            value: 'mt',
+                            label: 'Mỹ thuật công nghiệp',
+                          ),
+                          GlassDropdownItem(
+                            value: 'moi-truong',
+                            label: 'Môi trường & Tài nguyên',
+                          ),
+                          GlassDropdownItem(
+                            value: 'khoa-hoc',
+                            label: 'Khoa học ứng dụng',
+                          ),
                         ],
-                        onChanged: (val) => setState(() => _selectedFaculty = val),
+                        onChanged: (value) =>
+                            setState(() => _selectedFaculty = value),
                       ),
                       const SizedBox(height: 24),
-
                       GlassInputField(
                         label: 'SỐ ĐIỆN THOẠI',
                         placeholder: 'Nhập số điện thoại',
@@ -241,10 +256,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 48),
-
                       PrimaryButton(
                         label: _isSaving ? 'Đang lưu...' : 'Lưu thay đổi',
-                        onPressed: (_isFormValid && !_isSaving) ? _handleSave : null,
+                        onPressed: (_isFormValid && !_isSaving)
+                            ? _handleSave
+                            : null,
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -253,8 +269,6 @@ class _EditProfileViewState extends State<EditProfileView> {
               ),
             ],
           ),
-
-          // Top Header
           Positioned(
             top: 0,
             left: 0,

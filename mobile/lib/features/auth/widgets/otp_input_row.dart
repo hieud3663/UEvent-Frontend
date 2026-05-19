@@ -5,11 +5,13 @@ import 'package:frontend/core/theme/app_constants.dart';
 
 class OtpInputRow extends StatefulWidget {
   final int length;
+  final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onCompleted;
 
   const OtpInputRow({
     super.key,
     this.length = 6,
+    this.onChanged,
     this.onCompleted,
   });
 
@@ -18,8 +20,8 @@ class OtpInputRow extends StatefulWidget {
 }
 
 class _OtpInputRowState extends State<OtpInputRow> {
-  late List<TextEditingController> _controllers;
-  late List<FocusNode> _focusNodes;
+  late final List<TextEditingController> _controllers;
+  late final List<FocusNode> _focusNodes;
 
   @override
   void initState() {
@@ -30,43 +32,43 @@ class _OtpInputRowState extends State<OtpInputRow> {
 
   @override
   void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
+    for (final controller in _controllers) {
+      controller.dispose();
     }
-    for (final f in _focusNodes) {
-      f.dispose();
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
     }
     super.dispose();
   }
 
-  void _onDigitChanged(int index, String value) {
-    if (value.length > 1) {
-      // Paste: phân phối từng ký tự vào từng ô
-      final digits = value.replaceAll(RegExp(r'\D'), '');
-      for (int i = 0; i < widget.length && i < digits.length; i++) {
-        _controllers[i].text = digits[i];
-      }
-      final next = (digits.length).clamp(0, widget.length - 1);
-      _focusNodes[next].requestFocus();
-    } else if (value.isNotEmpty) {
-      if (index < widget.length - 1) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-      }
-    } else {
-      // Backspace
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
-      }
-    }
+  String get _code => _controllers.map((controller) => controller.text).join();
 
-    // Kiểm tra đủ 6 số — mỗi ô phải có đúng 1 ký tự
-    final allFilled = _controllers.every((c) => c.text.isNotEmpty);
-    if (allFilled) {
-      final code = _controllers.map((c) => c.text).join();
+  void _emitCode() {
+    final code = _code;
+    widget.onChanged?.call(code);
+    if (code.length == widget.length) {
       widget.onCompleted?.call(code);
     }
+  }
+
+  void _handleChange(int index, String value) {
+    if (value.length > 1) {
+      final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+      for (var i = 0; i < widget.length; i++) {
+        _controllers[i].text = i < digits.length ? digits[i] : '';
+      }
+      final nextIndex = digits.length >= widget.length
+          ? widget.length - 1
+          : digits.length;
+      _focusNodes[nextIndex].requestFocus();
+    } else if (value.isNotEmpty && index < widget.length - 1) {
+      _focusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
+    } else {
+      _focusNodes[index].unfocus();
+    }
+    _emitCode();
   }
 
   @override
@@ -76,7 +78,7 @@ class _OtpInputRowState extends State<OtpInputRow> {
       children: List.generate(widget.length, (index) {
         return Flexible(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: AspectRatio(
               aspectRatio: 4 / 5,
               child: TextFormField(
@@ -93,6 +95,9 @@ class _OtpInputRowState extends State<OtpInputRow> {
                   LengthLimitingTextInputFormatter(1),
                   FilteringTextInputFormatter.digitsOnly,
                 ],
+                textInputAction: index == widget.length - 1
+                    ? TextInputAction.done
+                    : TextInputAction.next,
                 decoration: InputDecoration(
                   hintText: '-',
                   hintStyle: TextStyle(color: AppColors.outline),
@@ -100,18 +105,27 @@ class _OtpInputRowState extends State<OtpInputRow> {
                   fillColor: Colors.white.withValues(alpha: 0.4),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                    borderSide: const BorderSide(color: Colors.transparent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.transparent,
+                      width: 2,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                    borderSide: const BorderSide(color: Colors.transparent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.transparent,
+                      width: 2,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
                   ),
                 ),
-                onChanged: (value) => _onDigitChanged(index, value),
+                onChanged: (value) => _handleChange(index, value),
               ),
             ),
           ),
@@ -120,4 +134,3 @@ class _OtpInputRowState extends State<OtpInputRow> {
     );
   }
 }
-

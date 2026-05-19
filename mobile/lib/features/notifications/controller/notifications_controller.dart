@@ -13,6 +13,18 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
     state = await AsyncValue.guard(_fetchNotifications);
   }
 
+  Future<void> refreshSilently() async {
+    final previousState = state;
+    final nextState = await AsyncValue.guard(_fetchNotifications);
+
+    if (nextState.hasError) {
+      state = previousState;
+      return;
+    }
+
+    state = nextState;
+  }
+
   Future<void> markAsRead(String id) async {
     final previousState = state;
 

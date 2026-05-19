@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
@@ -7,7 +9,7 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/widgets/social_login_button.dart';
 
 class LoginView extends StatefulWidget {
-  final void Function(String email)? onLoginWithEmail;
+  final FutureOr<void> Function(String email)? onLoginWithEmail;
   final VoidCallback? onLoginWithGoogle;
   final VoidCallback? onLoginWithPasskey;
 
@@ -24,6 +26,7 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
+  bool _isSubmittingEmail = false;
 
   @override
   void dispose() {
@@ -31,16 +34,30 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
+  Future<void> _submitEmail() async {
+    if (_isSubmittingEmail || widget.onLoginWithEmail == null) return;
+
+    setState(() => _isSubmittingEmail = true);
+    try {
+      await Future.sync(
+        () => widget.onLoginWithEmail!(_emailController.text.trim()),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingEmail = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        top: false, // Image takes full top space
+        top: false,
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header Image
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.35,
                 width: double.infinity,
@@ -54,7 +71,6 @@ class _LoginViewState extends State<LoginView> {
                         return Container(color: AppColors.primaryContainer);
                       },
                     ),
-                    // Gradient overlay
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -65,15 +81,13 @@ class _LoginViewState extends State<LoginView> {
                             AppColors.background.withValues(alpha: 0.8),
                             AppColors.background,
                           ],
-                          stops: const [0.5, 0.8, 1.0],
+                          stops: const [0.5, 0.8, 1],
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Main content overlapping image
               Transform.translate(
                 offset: const Offset(0, -48),
                 child: Padding(
@@ -103,7 +117,6 @@ class _LoginViewState extends State<LoginView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Title
                               Text(
                                 'UEvents',
                                 style: AppTextStyles.headlineLarge,
@@ -116,32 +129,36 @@ class _LoginViewState extends State<LoginView> {
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 40),
-
-                              // Email Input Group
                               Text(
                                 'EMAIL SINH VIÊN',
                                 style: AppTextStyles.labelSmall.copyWith(
                                   color: AppColors.onSurfaceVariant,
-                                  letterSpacing: 1.0,
+                                  letterSpacing: 1,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                                  borderRadius: BorderRadius.circular(
+                                    AppConstants.radiusMd,
+                                  ),
                                   border: Border.all(
-                                    color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                                    color: AppColors.outlineVariant.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                                 child: TextField(
                                   controller: _emailController,
+                                  enabled: !_isSubmittingEmail,
                                   keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) => _submitEmail(),
                                   decoration: InputDecoration(
                                     hintText: 'yourname@university.edu',
-                                    hintStyle: AppTextStyles.bodyMedium.copyWith(
-                                      color: AppColors.outline,
-                                    ),
+                                    hintStyle: AppTextStyles.bodyMedium
+                                        .copyWith(color: AppColors.outline),
                                     border: InputBorder.none,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20,
@@ -152,25 +169,27 @@ class _LoginViewState extends State<LoginView> {
                               ),
                               const SizedBox(height: 24),
                               PrimaryButton(
-                                label: 'Tiếp tục với Email',
-                                onPressed: () {
-                                  if (widget.onLoginWithEmail != null) {
-                                    widget.onLoginWithEmail!(_emailController.text.trim());
-                                  }
-                                },
+                                label: _isSubmittingEmail
+                                    ? 'Đang gửi mã...'
+                                    : 'Tiếp tục với Email',
+                                isLoading: _isSubmittingEmail,
+                                onPressed: _isSubmittingEmail
+                                    ? null
+                                    : _submitEmail,
                               ),
                               const SizedBox(height: 24),
-
-                              // Divider
                               Row(
                                 children: [
                                   Expanded(
                                     child: Divider(
-                                      color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                                      color: AppColors.outlineVariant
+                                          .withValues(alpha: 0.5),
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       'HOẶC',
                                       style: AppTextStyles.labelSmall,
@@ -178,24 +197,25 @@ class _LoginViewState extends State<LoginView> {
                                   ),
                                   Expanded(
                                     child: Divider(
-                                      color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                                      color: AppColors.outlineVariant
+                                          .withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 24),
-
-                              // Google / Social
                               SocialLoginButton(
                                 label: 'Tiếp tục với Google',
                                 iconPath: 'assets/images/google_icon.png',
-                                onPressed: widget.onLoginWithGoogle,
+                                onPressed: _isSubmittingEmail
+                                    ? null
+                                    : widget.onLoginWithGoogle,
                               ),
                               const SizedBox(height: 16),
-
-                              // Passkey option
                               GestureDetector(
-                                onTap: widget.onLoginWithPasskey,
+                                onTap: _isSubmittingEmail
+                                    ? null
+                                    : widget.onLoginWithPasskey,
                                 child: Container(
                                   height: 48,
                                   alignment: Alignment.center,
@@ -210,17 +230,16 @@ class _LoginViewState extends State<LoginView> {
                                       const SizedBox(width: 8),
                                       Text(
                                         'Đăng nhập bằng Passkey',
-                                        style: AppTextStyles.titleSmall.copyWith(
-                                          color: AppColors.onSurfaceVariant,
-                                        ),
+                                        style: AppTextStyles.titleSmall
+                                            .copyWith(
+                                              color: AppColors.onSurfaceVariant,
+                                            ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 32),
-                              // Signup Link
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -231,7 +250,7 @@ class _LoginViewState extends State<LoginView> {
                                     ),
                                   ),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: _isSubmittingEmail ? null : () {},
                                     child: Text(
                                       'Đăng ký ngay',
                                       style: AppTextStyles.bodySmall.copyWith(

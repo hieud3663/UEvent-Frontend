@@ -6,7 +6,10 @@ import 'package:frontend/features/notifications/services/notification_service.da
 
 abstract interface class NotificationRepository {
   Future<List<NotificationModel>> getNotifications();
+  Future<int> getUnreadCount();
   Future<void> markAsRead(String id);
+  Future<void> registerDevice({required String fcmToken, String? deviceName});
+  Future<void> unregisterDevice(String fcmToken);
 }
 
 class NotificationRepositoryImpl implements NotificationRepository {
@@ -26,6 +29,17 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
+  Future<int> getUnreadCount() async {
+    if (EnvConfig.useMockData) {
+      return MockNotificationData.notifications
+          .where((notification) => !notification.isRead)
+          .length;
+    }
+
+    return _service.getUnreadCount();
+  }
+
+  @override
   Future<void> markAsRead(String id) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -33,5 +47,22 @@ class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     await _service.markAsRead(id);
+  }
+
+  @override
+  Future<void> registerDevice({
+    required String fcmToken,
+    String? deviceName,
+  }) async {
+    if (EnvConfig.useMockData) return;
+
+    await _service.registerDevice(fcmToken: fcmToken, deviceName: deviceName);
+  }
+
+  @override
+  Future<void> unregisterDevice(String fcmToken) async {
+    if (EnvConfig.useMockData) return;
+
+    await _service.unregisterDevice(fcmToken);
   }
 }

@@ -25,11 +25,49 @@ class AuthController extends AsyncNotifier<AuthSessionModel?> {
   ///
   /// Returns the session on success; throws [AuthFailure] on failure
   /// (the `AsyncError` state surfaces it to the UI).
-  Future<AuthSessionModel?> signIn(AuthMethod method, {String? loginHint}) async {
+  Future<AuthSessionModel?> signIn(
+    AuthMethod method, {
+    String? loginHint,
+  }) async {
     state = const AsyncLoading();
     try {
       final repository = ref.read(authRepositoryProvider);
       final session = await repository.signIn(method, loginHint: loginHint);
+      state = AsyncData(session);
+      return session;
+    } on AuthFailure catch (e, st) {
+      state = AsyncError(e, st);
+      return null;
+    } catch (e, st) {
+      state = AsyncError(AuthFailureUnknown(e.toString()), st);
+      return null;
+    }
+  }
+
+  Future<bool> requestEmailOtp(String email) async {
+    state = const AsyncLoading();
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.requestEmailOtp(email);
+      state = const AsyncData(null);
+      return true;
+    } on AuthFailure catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    } catch (e, st) {
+      state = AsyncError(AuthFailureUnknown(e.toString()), st);
+      return false;
+    }
+  }
+
+  Future<AuthSessionModel?> verifyEmailOtp({
+    required String email,
+    required String code,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      final session = await repository.verifyEmailOtp(email: email, code: code);
       state = AsyncData(session);
       return session;
     } on AuthFailure catch (e, st) {
