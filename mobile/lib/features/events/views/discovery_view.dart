@@ -7,8 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/features/events/models/event_category_model.dart';
 import 'package:frontend/features/events/models/event_model.dart';
-import 'package:frontend/features/events/mock/mock_event_data.dart';
 import 'package:frontend/features/events/providers/event_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
@@ -27,7 +27,7 @@ class DiscoveryView extends ConsumerStatefulWidget {
 
   const DiscoveryView({
     super.key,
-    this.currentNavIndex = 1,
+    this.currentNavIndex = 0,
     required this.onNavTap,
     this.onNotificationsTap,
     this.onProfileTap,
@@ -41,81 +41,111 @@ class DiscoveryView extends ConsumerStatefulWidget {
 
 class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
   int _selectedCategoryIndex = 0;
+  String? _selectedCategoryQuery;
 
   @override
   Widget build(BuildContext context) {
-    final eventsAsync = ref.watch(discoveryEventsProvider);
+    final categoriesAsync = ref.watch(eventCategoriesProvider);
+    final loadedCategories = categoriesAsync.maybeWhen(
+      data: (items) => items,
+      orElse: () => null,
+    );
+    final categories = [EventCategoryModel.all, ...?loadedCategories];
+    final safeSelectedIndex = _selectedCategoryIndex >= categories.length
+        ? 0
+        : _selectedCategoryIndex;
+    final categoryQuery = _selectedCategoryQuery;
+    final eventsAsync = ref.watch(discoverySearchEventsProvider(categoryQuery));
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              // Spacing for fixed top bar
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              // Search bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingHLarge,
-                    vertical: 16,
+          RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => _refreshDiscovery(categoryQuery),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Spacing for fixed top bar
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                // Search bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingHLarge,
+                      vertical: 16,
+                    ),
+                    child: _buildSearchBar(),
                   ),
-                  child: _buildSearchBar(),
                 ),
-              ),
-              // Filter chips
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
+                // Filter chips
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 36,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.pagePaddingH,
+                      ),
+                      itemCount: categories.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        return CategoryFilterChip(
+                          label: categories[index].name,
+                          isSelected: index == safeSelectedIndex,
+                          onTap: () {
+                            final selectedCategory = categories[index];
+                            final nextQuery =
+                                selectedCategory == EventCategoryModel.all
+                                ? null
+                                : selectedCategory.queryValue;
+                            setState(() {
+                              _selectedCategoryIndex = index;
+                              _selectedCategoryQuery = nextQuery;
+                            });
+                            ref.invalidate(
+                              discoverySearchEventsProvider(nextQuery),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // Section header
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppConstants.pagePaddingH,
                     ),
-                    itemCount: MockEventData.discoveryCategories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      return CategoryFilterChip(
-                        label: MockEventData.discoveryCategories[index],
-                        isSelected: index == _selectedCategoryIndex,
-                        onTap: () {
-                          setState(() => _selectedCategoryIndex = index);
-                        },
-                      );
-                    },
+                    child: SectionHeader(
+                      title: 'Discover Events',
+                      titleStyle: AppTextStyles.headlineLarge,
+                      actionText: 'See all',
+                      onActionTap: () {},
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              // Section header
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
-                  child: SectionHeader(
-                    title: 'Discover Events',
-                    titleStyle: AppTextStyles.headlineLarge,
-                    actionText: 'See all',
-                    onActionTap: () {},
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              // Event cards
-              ...eventsAsync.when(
-                data: (events) {
-                  return [
-                    AppSuccessSliver(
-                      isEmpty: events.isEmpty,
-                      emptyIcon: Icons.explore_off,
-                      emptyTitle: 'Không có sự kiện',
-                      emptyDescription: 'Không tìm thấy sự kiện phù hợp hiện tại.',
-                      contentSlivers: [
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                // Event cards
+                ...eventsAsync.when(
+                  data: (events) {
+                    return [
+                      AppSuccessSliver(
+                        isEmpty: events.isEmpty,
+                        emptyIcon: Icons.explore_off,
+                        emptyTitle: 'Không có sự kiện',
+                        emptyDescription:
+                            'Không tìm thấy sự kiện phù hợp hiện tại.',
+                        contentSlivers: [
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
                               final event = events[index];
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -124,34 +154,35 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                                 ),
                                 child: EventCardVertical(
                                   event: event,
-                                  dateBadge: DateFormat('MMM d').format(event.startDate),
+                                  dateBadge: DateFormat(
+                                    'MMM d',
+                                  ).format(event.startDate),
                                   onTap: widget.onEventTap != null
                                       ? () => widget.onEventTap!(event)
                                       : null,
                                 ),
                               );
-                            },
-                            childCount: events.length,
+                            }, childCount: events.length),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ];
+                  },
+                  loading: () => const [AppLoadingSliver()],
+                  error: (error, stackTrace) => [
+                    AppErrorSliver(
+                      icon: Icons.wifi_off,
+                      title: 'Không tải dữ liệu được',
+                      description: 'Vui lòng thử lại sau.',
+                      onRetry: () => ref.refresh(
+                        discoverySearchEventsProvider(categoryQuery),
+                      ),
                     ),
-                  ];
-                },
-                loading: () => const [
-                  AppLoadingSliver(),
-                ],
-                error: (_, __) => [
-                  AppErrorSliver(
-                    icon: Icons.wifi_off,
-                    title: 'Không tải dữ liệu được',
-                    description: 'Vui lòng thử lại sau.',
-                    onRetry: () => ref.refresh(discoveryEventsProvider),
-                  ),
-                ],
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 140)),
-            ],
+                  ],
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 140)),
+              ],
+            ),
           ),
           // Top Bar Fixed
           Positioned(
@@ -179,6 +210,19 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
     );
   }
 
+  Future<void> _refreshDiscovery(String? categoryQuery) async {
+    try {
+      await Future.wait([
+        ref.refresh(eventCategoriesProvider.future).then((_) {}),
+        ref
+            .refresh(discoverySearchEventsProvider(categoryQuery).future)
+            .then((_) {}),
+      ]);
+    } catch (_) {
+      // Providers keep their error state for the existing error UI.
+    }
+  }
+
   Widget _buildAvatar() {
     return Container(
       width: 44,
@@ -197,7 +241,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
           fit: BoxFit.cover,
           memCacheWidth: 96,
           maxWidthDiskCache: 192,
-          errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant),
+          errorWidget: (context, url, error) =>
+              Container(color: AppColors.surfaceVariant),
         ),
       ),
     );
@@ -209,9 +254,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
       ),
       child: Row(
         children: [

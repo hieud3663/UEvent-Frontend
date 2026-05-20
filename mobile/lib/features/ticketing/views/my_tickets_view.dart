@@ -101,7 +101,9 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
     );
   }
 
-  List<Widget> _buildUpcomingContent(AsyncValue<List<TicketModel>> ticketsAsync) {
+  List<Widget> _buildUpcomingContent(
+    AsyncValue<List<TicketModel>> ticketsAsync,
+  ) {
     return ticketsAsync.when(
       data: (tickets) {
         return [
@@ -114,40 +116,41 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
             contentSlivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Text(
                     '${tickets.length} upcoming event${tickets.length > 1 ? 's' : ''}',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final ticket = tickets[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.pagePaddingH,
-                        vertical: 6,
-                      ),
-                      child: TicketListCard(
-                        ticket: ticket,
-                        onTap: widget.onTicketTap != null
-                            ? () => widget.onTicketTap!(ticket)
-                            : null,
-                      ),
-                    );
-                  },
-                  childCount: tickets.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final ticket = tickets[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                      vertical: 6,
+                    ),
+                    child: TicketListCard(
+                      ticket: ticket,
+                      onTap: widget.onTicketTap != null
+                          ? () => widget.onTicketTap!(ticket)
+                          : null,
+                    ),
+                  );
+                }, childCount: tickets.length),
               ),
             ],
           ),
         ];
       },
       loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
-      error: (_, __) => [
+      error: (error, stackTrace) => [
         AppErrorSliver(
           title: 'Cannot load tickets',
           description: 'Please check your network and try again.',
@@ -171,37 +174,36 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
             contentSlivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: _buildSummaryBanner(tickets.length),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final ticket = tickets[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.pagePaddingH,
-                        vertical: 6,
-                      ),
-                      child: PastTicketCard(
-                        ticket: ticket,
-                        onTap: widget.onPastTicketTap != null
-                            ? () => widget.onPastTicketTap!(ticket)
-                            : null,
-                      ),
-                    );
-                  },
-                  childCount: tickets.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final ticket = tickets[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                      vertical: 6,
+                    ),
+                    child: PastTicketCard(
+                      ticket: ticket,
+                      onTap: widget.onPastTicketTap != null
+                          ? () => widget.onPastTicketTap!(ticket)
+                          : null,
+                    ),
+                  );
+                }, childCount: tickets.length),
               ),
             ],
           ),
         ];
       },
       loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
-      error: (_, __) => [
+      error: (error, stackTrace) => [
         AppErrorSliver(
           title: 'Cannot load past tickets',
           description: 'Please check your network and try again.',
@@ -236,7 +238,11 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
               color: AppColors.primary.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.emoji_events, color: AppColors.primary, size: 24),
+            child: const Icon(
+              Icons.emoji_events,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

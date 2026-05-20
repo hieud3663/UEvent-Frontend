@@ -5,27 +5,20 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
-import 'package:frontend/core/widgets/glass_toggle_tile.dart';
 import 'package:frontend/features/events/widgets/registration_question_tile.dart';
 
 class RegistrationQuestionsView extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onQuestionTap;
 
-  const RegistrationQuestionsView({
-    super.key,
-    this.onBack,
-    this.onQuestionTap,
-  });
+  const RegistrationQuestionsView({super.key, this.onBack, this.onQuestionTap});
 
   @override
-  State<RegistrationQuestionsView> createState() => _RegistrationQuestionsViewState();
+  State<RegistrationQuestionsView> createState() =>
+      _RegistrationQuestionsViewState();
 }
 
 class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
-  bool _allowSkipping = false;
-  bool _showAfterPayment = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,21 +28,27 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
           CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 110)),
-              
+
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.pagePaddingH,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    
                     // ── Screen Header ──
                     Text(
                       'Registration Questions',
-                      style: AppTextStyles.headlineLarge.copyWith(fontSize: 24, fontWeight: FontWeight.w800),
+                      style: AppTextStyles.headlineLarge.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Manage what information attendees provide.',
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 32),
 
@@ -90,7 +89,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                         // TODO: Show delete confirmation dialog
                       },
                     ),
-                    
+
                     const SizedBox(height: 32),
 
                     // ── Global Settings ──
@@ -103,7 +102,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     //   ),
                     // ),
                     // const SizedBox(height: 12),
-                    
+
                     // Container(
                     //   decoration: BoxDecoration(
                     //     color: Colors.white.withValues(alpha: 0.7),
@@ -138,9 +137,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     //     ],
                     //   ),
                     // ),
-                    
                     const SizedBox(height: 100), // Bottom spacing
-
                   ]),
                 ),
               ),

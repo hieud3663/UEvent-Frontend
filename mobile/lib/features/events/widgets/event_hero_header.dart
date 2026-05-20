@@ -35,7 +35,7 @@ class EventHeroHeader extends StatelessWidget {
             fit: BoxFit.cover,
             memCacheWidth: 1400,
             maxWidthDiskCache: 1920,
-            errorWidget: (_, __, ___) =>
+            errorWidget: (context, url, error) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // Gradient fade to background at bottom
@@ -60,7 +60,10 @@ class EventHeroHeader extends StatelessWidget {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     _GlassCircleButton(
@@ -68,13 +71,12 @@ class EventHeroHeader extends StatelessWidget {
                       onTap: onBack ?? () => Navigator.of(context).pop(),
                     ),
                     const Spacer(),
-                    _GlassCircleButton(
-                      icon: Icons.share,
-                      onTap: onShare,
-                    ),
+                    _GlassCircleButton(icon: Icons.share, onTap: onShare),
                     const SizedBox(width: 8),
                     _GlassCircleButton(
-                      icon: isFavourited ? Icons.favorite : Icons.favorite_border,
+                      icon: isFavourited
+                          ? Icons.favorite
+                          : Icons.favorite_border,
                       onTap: onFavourite,
                       iconColor: isFavourited ? Colors.red : null,
                     ),
@@ -94,11 +96,7 @@ class _GlassCircleButton extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? iconColor;
 
-  const _GlassCircleButton({
-    required this.icon,
-    this.onTap,
-    this.iconColor,
-  });
+  const _GlassCircleButton({required this.icon, this.onTap, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +119,7 @@ class _GlassCircleButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: iconColor ?? AppColors.onSurface,
-        ),
+        child: Icon(icon, size: 20, color: iconColor ?? AppColors.onSurface),
       ),
     );
   }

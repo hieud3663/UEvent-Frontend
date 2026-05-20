@@ -17,10 +17,26 @@ class ShareEventSheet extends StatelessWidget {
   final VoidCallback? onClose;
 
   static const _contactAvatars = [
-    ('Marcus', 'https://lh3.googleusercontent.com/aida-public/AB6AXuByrHsHJAc598bKIFz7IkGNp961jJqLHL99HcsYjUYvlXtj1mmZCks6M9TyEEnepnMEVC6KbrcBIgVYVq2ZW_QOxYSWiFYVMyIZYLMg2H0AM1QT1bEIgCvSl8JSXRJB2ExcH9FPkTDEAnndaYMI0OPTQYjk6V-sBD2IPBLpWVtmt0RumOSdwbzdEn1PVWBL_FCZ8lX4buVQde46hZZtWLl1XSrUq9XKJETGSbmWs09HjMeglGskdiPnOh1R0BQe0lVOwHT0Gu1T_es', true),
-    ('Sarah', 'https://lh3.googleusercontent.com/aida-public/AB6AXuC_Jf24_ui8CVSfWeKpma_X7JLYgAzbhq8rFqsxrzdl1PKJFWQ7rYcLMKS2DuaHTIB5TSLzx_YgUmOXHm-MQjHE9--AArjfyVTqEzAH4YHNYHZ1HLA_JHzj6DKdbYbpaOTHJGVlrBRdZGnTPGhTKBOM-qB2NjMpRlXebZRF-fCAxRNVWXe-4KYnoiBW2PgvDVOfqUfkxnuXRiLsZDhYdaE8FnLDJRqRCvvxt5kWc-LrXAkydwhH6z80h1IVqAO9tvcoylER4Fzky58', false),
-    ('Alex', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjphqDT41Ruh7iVBPu70odSneMSu85eFvpIEzpmW5li1CRY23mK39rpVstHeAIa83jpnLSwg9nCeiwRvqfnYNk3nR03F1YsUQYQBVlPnMf4pVI0WV3Z0TMhQt9T6lpiYkdXbumRg2SHG4LrcNXStRVDjiALVzWG9QNG-YhFzgw3MgX3crO2HyDFnw-iHriDNJCV0mtjK-Fb33HnPIQigS6vIzS4dYGlWYx_5-Y7DvU-x_bkRzHcYigaBL-FbWP4s_5BxTnTUoRfkU', false),
-    ('Elena', 'https://lh3.googleusercontent.com/aida-public/AB6AXuA894Z7Wu-ur7mTA05UqUneeX6nawJf6SO7mokkWBhTcgrO0gxev3ZMS5YA3HxzFhgeb4ds1RR-r72GigyAISR_Tad5yrLGtsbJiferSe41XgG7H11t7cXy3riJy-CrHT19jNs-W19TAoJeVYEWFxPcT60kJOFMY3i_DrVZoL4hq9pdAWT1fgms-0K74ZX4KmhKqVpz-iw8v0IALFUOe0bT5KDm-IOBd9TGkqal4iuKGQ52gADOJ-NxYJWOGQEIRjS1PPoH1PJYZAk', false),
+    (
+      'Marcus',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuByrHsHJAc598bKIFz7IkGNp961jJqLHL99HcsYjUYvlXtj1mmZCks6M9TyEEnepnMEVC6KbrcBIgVYVq2ZW_QOxYSWiFYVMyIZYLMg2H0AM1QT1bEIgCvSl8JSXRJB2ExcH9FPkTDEAnndaYMI0OPTQYjk6V-sBD2IPBLpWVtmt0RumOSdwbzdEn1PVWBL_FCZ8lX4buVQde46hZZtWLl1XSrUq9XKJETGSbmWs09HjMeglGskdiPnOh1R0BQe0lVOwHT0Gu1T_es',
+      true,
+    ),
+    (
+      'Sarah',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuC_Jf24_ui8CVSfWeKpma_X7JLYgAzbhq8rFqsxrzdl1PKJFWQ7rYcLMKS2DuaHTIB5TSLzx_YgUmOXHm-MQjHE9--AArjfyVTqEzAH4YHNYHZ1HLA_JHzj6DKdbYbpaOTHJGVlrBRdZGnTPGhTKBOM-qB2NjMpRlXebZRF-fCAxRNVWXe-4KYnoiBW2PgvDVOfqUfkxnuXRiLsZDhYdaE8FnLDJRqRCvvxt5kWc-LrXAkydwhH6z80h1IVqAO9tvcoylER4Fzky58',
+      false,
+    ),
+    (
+      'Alex',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDjphqDT41Ruh7iVBPu70odSneMSu85eFvpIEzpmW5li1CRY23mK39rpVstHeAIa83jpnLSwg9nCeiwRvqfnYNk3nR03F1YsUQYQBVlPnMf4pVI0WV3Z0TMhQt9T6lpiYkdXbumRg2SHG4LrcNXStRVDjiALVzWG9QNG-YhFzgw3MgX3crO2HyDFnw-iHriDNJCV0mtjK-Fb33HnPIQigS6vIzS4dYGlWYx_5-Y7DvU-x_bkRzHcYigaBL-FbWP4s_5BxTnTUoRfkU',
+      false,
+    ),
+    (
+      'Elena',
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuA894Z7Wu-ur7mTA05UqUneeX6nawJf6SO7mokkWBhTcgrO0gxev3ZMS5YA3HxzFhgeb4ds1RR-r72GigyAISR_Tad5yrLGtsbJiferSe41XgG7H11t7cXy3riJy-CrHT19jNs-W19TAoJeVYEWFxPcT60kJOFMY3i_DrVZoL4hq9pdAWT1fgms-0K74ZX4KmhKqVpz-iw8v0IALFUOe0bT5KDm-IOBd9TGkqal4iuKGQ52gADOJ-NxYJWOGQEIRjS1PPoH1PJYZAk',
+      false,
+    ),
   ];
 
   const ShareEventSheet({
@@ -47,7 +63,8 @@ class ShareEventSheet extends StatelessWidget {
       builder: (_) => ShareEventSheet(
         eventName: eventName,
         eventLink: eventLink,
-        eventImageUrl: eventImageUrl ??
+        eventImageUrl:
+            eventImageUrl ??
             'https://lh3.googleusercontent.com/aida-public/AB6AXuAtsijSJ3J1RBnyNkXwEA4Zl_6ct8vcvlOsUU9s_0-_cxOFwOtyLAimNeGmBXnglU2Vxx39L9NrCMqFNnwtq0rZpCkYpYth7QHsINWF33RfuivCKTdiP9pBS1RbRuJ9ybbTuWXw3vcyQhOTsIB9CYnPElvDEKJMDsR8VZp_bljGh_a8SzfGl1OyKgpc8uK2TSrhvJ57pU-J_Bk0knkomqFfqa3iYdSjqjxSD1NcMpIpsyXI9xZUZeZpFfVrmCl3qNKkTeKesX3o8rs',
         onClose: () => Navigator.of(context).pop(),
       ),
@@ -116,10 +133,7 @@ class ShareEventSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 96,
-                    child: const ShareSocialRow(),
-                  ),
+                  SizedBox(height: 96, child: const ShareSocialRow()),
                   const SizedBox(height: 24),
                   // Recent contacts
                   Text(
@@ -136,8 +150,9 @@ class ShareEventSheet extends StatelessWidget {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _contactAvatars.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 20),
-                      itemBuilder: (_, i) {
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 20),
+                      itemBuilder: (context, i) {
                         final (name, url, isActive) = _contactAvatars[i];
                         return _ContactItem(
                           name: name,
@@ -171,7 +186,7 @@ class ShareEventSheet extends StatelessWidget {
               fit: BoxFit.cover,
               memCacheWidth: 180,
               maxWidthDiskCache: 320,
-              errorWidget: (_, __, ___) =>
+              errorWidget: (context, url, error) =>
                   Container(color: AppColors.surfaceVariant),
             ),
           ),
@@ -211,7 +226,11 @@ class ShareEventSheet extends StatelessWidget {
               color: AppColors.surfaceVariant,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.close, size: 18, color: AppColors.onSurface),
+            child: const Icon(
+              Icons.close,
+              size: 18,
+              color: AppColors.onSurface,
+            ),
           ),
         ),
       ],
@@ -253,7 +272,7 @@ class _ContactItem extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 96,
                 maxWidthDiskCache: 192,
-                errorWidget: (_, __, ___) =>
+                errorWidget: (context, url, error) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),

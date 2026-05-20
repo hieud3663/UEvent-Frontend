@@ -24,8 +24,8 @@ import 'package:frontend/features/auth/views/profile_setup_view.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
 
 // Shell & Tabs
-import 'package:frontend/features/events/views/home_view.dart';
 import 'package:frontend/features/events/views/discovery_view.dart';
+import 'package:frontend/features/events/views/manage_events_view.dart';
 import 'package:frontend/features/events/views/invite_guests_view.dart';
 import 'package:frontend/features/events/views/send_notification_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
@@ -878,16 +878,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     return IndexedStack(
       index: _currentIndex,
       children: [
-        // Tab 0: HOME
-        HomeView(
-          currentNavIndex: _currentIndex,
-          onNavTap: _onNavTap,
-          onNotificationsTap: _pushNotifications,
-          onProfileTap: _pushProfile,
-          onCreateEventTap: _pushCreateEvent,
-          onEventTap: _pushEventDetail,
-        ),
-        // Tab 1: DISCOVER
+        // Tab 0: DISCOVER
         DiscoveryView(
           currentNavIndex: _currentIndex,
           onNavTap: _onNavTap,
@@ -895,6 +886,14 @@ class _AppShellState extends ConsumerState<AppShell> {
           onProfileTap: _pushProfile,
           onSearchEmpty: _pushEmptySearch,
           onEventTap: _pushEventDetail,
+        ),
+        // Tab 1: MANAGE
+        ManageEventsView(
+          currentNavIndex: _currentIndex,
+          onNavTap: _onNavTap,
+          onCreateEventTap: _pushCreateEvent,
+          onEventTap: _pushEventDetail,
+          onManageEventTap: (_) => _pushManageEventHub(),
         ),
         // Tab 2: TICKETS
         MyTicketsView(
@@ -908,7 +907,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         SettingsView(
           currentNavIndex: _currentIndex,
           onNavTap: _onNavTap,
-          onBack: () => _onNavTap(0), // Close -> go Home
+          onBack: () => _onNavTap(0), // Close -> go Discover
           onEditProfile: _pushEditProfile,
           onChangeEmail: _pushChangeEmail,
           onPasskeyLogin: _pushPasskeyLogin,

@@ -11,11 +11,7 @@ class PastTicketCard extends StatelessWidget {
   final TicketModel ticket;
   final VoidCallback? onTap;
 
-  const PastTicketCard({
-    super.key,
-    required this.ticket,
-    this.onTap,
-  });
+  const PastTicketCard({super.key, required this.ticket, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +39,31 @@ class PastTicketCard extends StatelessWidget {
               height: 110,
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
                 child: Image.network(
                   ticket.eventImageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (context, error, stackTrace) => Container(
                     color: AppColors.surfaceVariant,
                     child: const Icon(
                       Icons.event,
@@ -71,15 +83,24 @@ class PastTicketCard extends StatelessWidget {
                   children: [
                     // ATTENDED badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radiusFull,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.check_circle_outline, size: 12, color: Color(0xFF10B981)),
+                          const Icon(
+                            Icons.check_circle_outline,
+                            size: 12,
+                            color: Color(0xFF10B981),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'ATTENDED',
@@ -113,10 +134,7 @@ class PastTicketCard extends StatelessWidget {
             // Chevron
             Padding(
               padding: const EdgeInsets.only(right: 12, top: 14),
-              child: Icon(
-                Icons.chevron_right,
-                color: AppColors.navInactive,
-              ),
+              child: Icon(Icons.chevron_right, color: AppColors.navInactive),
             ),
           ],
         ),

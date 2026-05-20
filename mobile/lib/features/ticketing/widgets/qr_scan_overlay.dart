@@ -10,10 +10,7 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 class QrScanOverlay extends StatefulWidget {
   final double frameSize;
 
-  const QrScanOverlay({
-    super.key,
-    this.frameSize = 240.0,
-  });
+  const QrScanOverlay({super.key, this.frameSize = 240.0});
 
   @override
   State<QrScanOverlay> createState() => _QrScanOverlayState();
@@ -32,9 +29,10 @@ class _QrScanOverlayState extends State<QrScanOverlay>
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
 
-    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scanAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -63,7 +61,7 @@ class _QrScanOverlayState extends State<QrScanOverlay>
               // Animated scan line
               AnimatedBuilder(
                 animation: _scanAnimation,
-                builder: (_, __) {
+                builder: (context, child) {
                   return Positioned(
                     left: 12,
                     right: 12,

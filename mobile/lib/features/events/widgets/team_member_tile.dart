@@ -13,11 +13,7 @@ class TeamMemberTile extends StatelessWidget {
   final TeamMemberModel member;
   final VoidCallback? onTap;
 
-  const TeamMemberTile({
-    super.key,
-    required this.member,
-    this.onTap,
-  });
+  const TeamMemberTile({super.key, required this.member, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +35,7 @@ class TeamMemberTile extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 96,
                 maxWidthDiskCache: 192,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, url, error) => Container(
                   color: AppColors.surfaceVariant,
                   child: const Icon(Icons.person, color: AppColors.primary),
                 ),

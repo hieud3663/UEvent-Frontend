@@ -14,11 +14,7 @@ class PastEventDetailView extends StatelessWidget {
   final TicketModel ticket;
   final VoidCallback? onBack;
 
-  const PastEventDetailView({
-    super.key,
-    required this.ticket,
-    this.onBack,
-  });
+  const PastEventDetailView({super.key, required this.ticket, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +62,9 @@ class PastEventDetailView extends StatelessWidget {
 
   Widget _buildHero() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.pagePaddingH,
+      ),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppConstants.radiusCard),
@@ -87,17 +85,32 @@ class PastEventDetailView extends StatelessWidget {
               width: double.infinity,
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
                 child: Image.network(
                   ticket.eventImageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.surfaceVariant,
-                  ),
+                  errorBuilder: (context, error, stackTrace) =>
+                      Container(color: AppColors.surfaceVariant),
                 ),
               ),
             ),
@@ -126,15 +139,24 @@ class PastEventDetailView extends StatelessWidget {
                 children: [
                   // ATTENDED badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusFull,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check_circle, size: 14, color: Colors.white),
+                        const Icon(
+                          Icons.check_circle,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'ATTENDED',
@@ -177,7 +199,9 @@ class PastEventDetailView extends StatelessWidget {
 
   Widget _buildInfoSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.pagePaddingH,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
