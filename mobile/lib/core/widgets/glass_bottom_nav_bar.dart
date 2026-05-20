@@ -22,14 +22,14 @@ class GlassBottomNavBar extends StatelessWidget {
 
   static List<NavItemModel> get defaultItems => const [
     NavItemModel(
-      label: 'HOME',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-    ),
-    NavItemModel(
       label: 'DISCOVER',
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore,
+    ),
+    NavItemModel(
+      label: 'MANAGE',
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
     ),
     NavItemModel(
       label: 'TICKETS',

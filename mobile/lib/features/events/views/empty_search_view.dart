@@ -17,7 +17,7 @@ class EmptySearchView extends StatelessWidget {
 
   const EmptySearchView({
     super.key,
-    this.currentNavIndex = 1,
+    this.currentNavIndex = 0,
     required this.onNavTap,
     this.onBack,
     this.onGoHome,
@@ -90,9 +90,7 @@ class EmptySearchView extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.4),
           width: 0.5,
         ),
-        boxShadow: [
-          BoxShadow(color: AppColors.shadowNav, blurRadius: 32),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.shadowNav, blurRadius: 32)],
       ),
       child: Row(
         children: [

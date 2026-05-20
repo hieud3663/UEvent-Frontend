@@ -49,118 +49,125 @@ class EventDetailOrganizerView extends StatelessWidget {
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
 
-          // ── Hero Image ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Hero Image ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildHeroImage(),
+                ),
               ),
-              child: _buildHeroImage(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          // ── Category Badge + Title + Meta ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Category Badge + Title + Meta ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildEventInfo(),
+                ),
               ),
-              child: _buildEventInfo(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-          // ── Organizer Action Buttons (Invite / Notify / Manage) ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Organizer Action Buttons (Invite / Notify / Manage) ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildActionButtons(),
+                ),
               ),
-              child: _buildActionButtons(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          // ── Participant Check-in CTA ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Participant Check-in CTA ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: PrimaryButton(
+                    label: 'Participant Check-in',
+                    icon: Icons.qr_code_2,
+                    onPressed: onCheckIn,
+                  ),
+                ),
               ),
-              child: PrimaryButton(
-                label: 'Participant Check-in',
-                icon: Icons.qr_code_2,
-                onPressed: onCheckIn,
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-          // ── Stats Section ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Stats Section ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildStatsSection(),
+                ),
               ),
-              child: _buildStatsSection(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-          // ── Event Description ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── Event Description ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildDescriptionSection(),
+                ),
               ),
-              child: _buildDescriptionSection(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-          // ── BTC Team ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.pagePaddingH,
+              // ── BTC Team ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
+                  child: _buildTeamSection(),
+                ),
               ),
-              child: _buildTeamSection(),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
-      ),
-      Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: GlassTopBar(
-          title: 'Event Details',
-          titleStyle: AppTextStyles.titleMedium.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-          ),
-          leadingIcon: Icons.chevron_left,
-          trailingWidget: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildCircleButton(Icons.share, onTap: onShare, isPrimary: true),
-              const SizedBox(width: 4),
-              _buildCircleButton(Icons.more_vert, onTap: () {}),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ),
-          onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
-        ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: GlassTopBar(
+              title: 'Event Details',
+              titleStyle: AppTextStyles.titleMedium.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+              leadingIcon: Icons.chevron_left,
+              trailingWidget: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildCircleButton(
+                    Icons.share,
+                    onTap: onShare,
+                    isPrimary: true,
+                  ),
+                  const SizedBox(width: 4),
+                  _buildCircleButton(Icons.more_vert, onTap: () {}),
+                ],
+              ),
+              onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
+            ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
-}
+    );
+  }
 
   // ── Helper: Circle button for top bar trailing ──
-  Widget _buildCircleButton(IconData icon,
-      {VoidCallback? onTap, bool isPrimary = false}) {
+  Widget _buildCircleButton(
+    IconData icon, {
+    VoidCallback? onTap,
+    bool isPrimary = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -169,9 +176,7 @@ class EventDetailOrganizerView extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.8),
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4),
-          ],
+          boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
         ),
         child: Icon(
           icon,
@@ -199,7 +204,7 @@ class EventDetailOrganizerView extends StatelessWidget {
             fit: BoxFit.cover,
             memCacheWidth: 1200,
             maxWidthDiskCache: 1800,
-            errorWidget: (_, __, ___) =>
+            errorWidget: (context, url, error) =>
                 Container(color: AppColors.surfaceVariant),
           ),
           // "Live Now" badge
@@ -253,7 +258,10 @@ class EventDetailOrganizerView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         // Date row
-        _buildInfoRow(Icons.calendar_month, 'Oct 24, 2024 • ${_event.timeRange}'),
+        _buildInfoRow(
+          Icons.calendar_month,
+          'Oct 24, 2024 • ${_event.timeRange}',
+        ),
         const SizedBox(height: 12),
         // Location row
         _buildInfoRow(Icons.location_on, _event.location),
@@ -361,7 +369,10 @@ class EventDetailOrganizerView extends StatelessWidget {
                     style: AppTextStyles.headlineLarge.copyWith(fontSize: 30),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF059669).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(9999),
@@ -369,7 +380,11 @@ class EventDetailOrganizerView extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.trending_up, size: 14, color: Color(0xFF059669)),
+                        Icon(
+                          Icons.trending_up,
+                          size: 14,
+                          color: Color(0xFF059669),
+                        ),
                         SizedBox(width: 4),
                         Text(
                           '+12%',
@@ -440,7 +455,10 @@ class EventDetailOrganizerView extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.surfaceVariant,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.background, width: 2),
+                          border: Border.all(
+                            color: AppColors.background,
+                            width: 2,
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -475,7 +493,7 @@ class EventDetailOrganizerView extends StatelessWidget {
           fit: BoxFit.cover,
           memCacheWidth: 96,
           maxWidthDiskCache: 192,
-          errorWidget: (_, __, ___) =>
+          errorWidget: (context, url, error) =>
               Container(color: AppColors.surfaceVariant),
         ),
       ),
@@ -529,7 +547,9 @@ class EventDetailOrganizerView extends StatelessWidget {
         ...List.generate(
           _teamMembers.length,
           (i) => Padding(
-            padding: EdgeInsets.only(bottom: i < _teamMembers.length - 1 ? 12 : 0),
+            padding: EdgeInsets.only(
+              bottom: i < _teamMembers.length - 1 ? 12 : 0,
+            ),
             child: TeamMemberTile(member: _teamMembers[i]),
           ),
         ),

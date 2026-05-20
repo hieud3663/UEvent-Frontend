@@ -11,7 +11,7 @@ class TicketingService {
   TicketingService(this._apiClient);
 
   Future<List<TicketModel>> getMyTickets({String? status}) async {
-    if (true) {
+    if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 400));
       if (status == 'past') {
         return MockTicketData.pastTickets;
@@ -32,14 +32,20 @@ class TicketingService {
     }
   }
 
-  Future<UserRegistrationModel> registerForEvent(String eventId, Map<String, dynamic> answers) async {
-    if (true) {
+  Future<UserRegistrationModel> registerForEvent(
+    String eventId,
+    Map<String, dynamic> answers,
+  ) async {
+    if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(seconds: 1));
       return MockTicketData.myRegistration;
     }
 
     try {
-      final response = await _apiClient.dio.post('/events/$eventId/register', data: answers);
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/register',
+        data: answers,
+      );
       return UserRegistrationModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
@@ -47,7 +53,7 @@ class TicketingService {
   }
 
   Future<TicketModel> getTicketForEvent(String eventId) async {
-    if (true) {
+    if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 500));
       return MockTicketData.myValidTicket;
     }
@@ -62,13 +68,15 @@ class TicketingService {
 
   /// Request a new rotated QR token
   Future<TicketModel> rotateQrToken(String ticketCode) async {
-    if (true) {
+    if (EnvConfig.useMockData) {
       // Simulate new token generated
       return MockTicketData.myValidTicket;
     }
 
     try {
-      final response = await _apiClient.dio.post('/tickets/$ticketCode/rotate_qr');
+      final response = await _apiClient.dio.post(
+        '/tickets/$ticketCode/rotate_qr',
+      );
       return TicketModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;

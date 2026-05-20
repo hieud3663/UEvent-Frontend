@@ -67,8 +67,9 @@ class TicketDetailView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius:
-                                  BorderRadius.circular(AppConstants.radiusMd),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusMd,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppColors.shadowPrimary,
@@ -105,8 +106,9 @@ class TicketDetailView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(AppConstants.radiusMd),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusMd,
+                              ),
                               border: Border.all(
                                 color: AppColors.error.withValues(alpha: 0.5),
                                 width: 1.5,
@@ -156,7 +158,9 @@ class TicketDetailView extends StatelessWidget {
 
   Widget _buildHero() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.pagePaddingH,
+      ),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.vertical(
@@ -180,9 +184,8 @@ class TicketDetailView extends StatelessWidget {
               child: Image.network(
                 ticket.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                ),
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
             ),
             // Dark gradient overlay
@@ -243,8 +246,9 @@ class TicketDetailView extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius:
-                                BorderRadius.circular(AppConstants.radiusFull),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusFull,
+                            ),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.3),
                               width: 1,
@@ -291,7 +295,10 @@ class TicketDetailView extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
       child: RichText(
         text: TextSpan(
@@ -322,7 +329,9 @@ class TicketDetailView extends StatelessWidget {
 
   Widget _buildPerforationDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.pagePaddingH,
+      ),
       child: Row(
         children: [
           // Left notch
@@ -340,8 +349,8 @@ class TicketDetailView extends StatelessWidget {
               builder: (context, constraints) {
                 const dashWidth = 6.0;
                 const dashSpace = 4.0;
-                final count =
-                    (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+                final count = (constraints.maxWidth / (dashWidth + dashSpace))
+                    .floor();
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(
@@ -372,7 +381,9 @@ class TicketDetailView extends StatelessWidget {
 
   Widget _buildInfoSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.pagePaddingH,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,

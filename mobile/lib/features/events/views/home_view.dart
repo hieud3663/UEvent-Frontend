@@ -73,37 +73,39 @@ class HomeView extends ConsumerWidget {
                           'Ban chua co su kien nao trong danh sach cua minh.',
                       contentSlivers: [
                         SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final event = events[index];
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppConstants.pagePaddingH,
-                                  vertical: 8,
-                                ),
-                                child: EventCard(
-                                  event: event,
-                                  formattedDate:
-                                      DateFormat('EEE, d MMM').format(event.startDate),
-                                  trailing: _buildQrButton(),
-                                  onTap: onEventTap != null ? () => onEventTap!(event) : null,
-                                ),
-                              );
-                            },
-                            childCount: events.length,
-                          ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final event = events[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppConstants.pagePaddingH,
+                                vertical: 8,
+                              ),
+                              child: EventCard(
+                                event: event,
+                                formattedDate: DateFormat(
+                                  'EEE, d MMM',
+                                ).format(event.startDate),
+                                trailing: _buildQrButton(),
+                                onTap: onEventTap != null
+                                    ? () => onEventTap!(event)
+                                    : null,
+                              ),
+                            );
+                          }, childCount: events.length),
                         ),
                       ],
                     ),
                   ];
                 },
-                loading: () => [
-                  const AppLoadingSliver(),
-                ],
+                loading: () => [const AppLoadingSliver()],
                 error: (error, _) => [
                   AppErrorSliver(
                     title: 'Tai du lieu that bai',
-                    description: 'Khong the lay danh sach su kien. Keo xuong de thu lai.',
+                    description:
+                        'Khong the lay danh sach su kien. Keo xuong de thu lai.',
                     onRetry: () => ref.refresh(myEventsProvider),
                   ),
                 ],
@@ -120,13 +122,10 @@ class HomeView extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'CHÀO MỪNG QUAY LẠI',
-                        style: AppTextStyles.labelSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
                         'Khám phá hôm nay',
-                        style: AppTextStyles.headlineLarge.copyWith(fontSize: 24),
+                        style: AppTextStyles.headlineLarge.copyWith(
+                          fontSize: 24,
+                        ),
                       ),
                     ],
                   ),
@@ -149,15 +148,15 @@ class HomeView extends ConsumerWidget {
             ],
           ),
 
-          // FAB
-          Positioned(
-            bottom: AppConstants.bottomNavOffset + AppConstants.bottomNavHeight + 16,
-            right: 24,
-            child: GestureDetector(
-              onTap: onCreateEventTap,
-              child: _buildFab(),
-            ),
-          ),
+          // // FAB
+          // Positioned(
+          //   bottom:
+          //       AppConstants.bottomNavOffset +
+          //       AppConstants.bottomNavHeight +
+          //       16,
+          //   right: 24,
+          //   child: GestureDetector(onTap: onCreateEventTap, child: _buildFab()),
+          // ),
 
           // Top Bar Fixed
           Positioned(
@@ -207,7 +206,7 @@ class HomeView extends ConsumerWidget {
           fit: BoxFit.cover,
           memCacheWidth: 96,
           maxWidthDiskCache: 192,
-          errorWidget: (_, __, ___) => Container(
+          errorWidget: (context, url, error) => Container(
             color: AppColors.surfaceVariant,
             child: const Icon(Icons.person, color: AppColors.primary),
           ),
@@ -267,7 +266,8 @@ class HomeView extends ConsumerWidget {
             fit: BoxFit.cover,
             memCacheWidth: 1280,
             maxWidthDiskCache: 1920,
-            errorWidget: (_, __, ___) => Container(color: AppColors.onSurface),
+            errorWidget: (context, url, error) =>
+                Container(color: AppColors.onSurface),
           ),
           // Gradient overlay
           Container(
@@ -298,12 +298,11 @@ class HomeView extends ConsumerWidget {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusFull,
+                    ),
                   ),
-                  child: Text(
-                    'NỔI BẬT',
-                    style: AppTextStyles.badge,
-                  ),
+                  child: Text('NỔI BẬT', style: AppTextStyles.badge),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -346,10 +345,7 @@ class HomeView extends ConsumerWidget {
               children: [
                 const Icon(Icons.auto_awesome, color: AppColors.primary),
                 const SizedBox(height: 8),
-                Text(
-                  'Dành riêng cho bạn',
-                  style: AppTextStyles.titleSmall,
-                ),
+                Text('Dành riêng cho bạn', style: AppTextStyles.titleSmall),
                 const SizedBox(height: 4),
                 Text(
                   'Dựa trên sở thích âm nhạc và nghệ thuật của bạn.',
@@ -420,7 +416,8 @@ class HomeView extends ConsumerWidget {
           fit: BoxFit.cover,
           memCacheWidth: 72,
           maxWidthDiskCache: 160,
-          errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant),
+          errorWidget: (context, url, error) =>
+              Container(color: AppColors.surfaceVariant),
         ),
       ),
     );
@@ -470,36 +467,36 @@ class HomeView extends ConsumerWidget {
     );
   }
 
-  Widget _buildFab() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowPrimary,
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.add, color: Colors.white, size: 24),
-          SizedBox(width: 8),
-          Text(
-            'Tạo sự kiện',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildFab() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: AppColors.primary,
+  //       borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: AppColors.shadowPrimary,
+  //           blurRadius: 14,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //     ),
+  //     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+  //     child: const Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Icon(Icons.add, color: Colors.white, size: 24),
+  //         SizedBox(width: 8),
+  //         Text(
+  //           'Tạo sự kiện',
+  //           style: TextStyle(
+  //             fontFamily: 'Inter',
+  //             fontWeight: FontWeight.w700,
+  //             fontSize: 14,
+  //             color: Colors.white,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

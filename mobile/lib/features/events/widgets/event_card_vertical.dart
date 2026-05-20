@@ -53,10 +53,14 @@ class EventCardVertical extends StatelessWidget {
                     fit: BoxFit.cover,
                     memCacheWidth: 900,
                     maxWidthDiskCache: 1400,
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (context, url, error) => Container(
                       color: AppColors.surfaceVariant,
                       child: const Center(
-                        child: Icon(Icons.image, size: 48, color: AppColors.outline),
+                        child: Icon(
+                          Icons.image,
+                          size: 48,
+                          color: AppColors.outline,
+                        ),
                       ),
                     ),
                   ),
@@ -72,7 +76,9 @@ class EventCardVertical extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusFull,
+                      ),
                     ),
                     child: Text(
                       dateBadge,
@@ -103,7 +109,8 @@ class EventCardVertical extends StatelessWidget {
                   const SizedBox(height: 6),
                   _buildInfoRow(
                     Icons.schedule,
-                    event.timeRange ?? '${DateFormat('HH:mm').format(event.startDate)} - ${DateFormat('HH:mm').format(event.endDate ?? event.startDate)}',
+                    event.timeRange ??
+                        '${DateFormat('HH:mm').format(event.startDate)} - ${DateFormat('HH:mm').format(event.endDate ?? event.startDate)}',
                   ),
                 ],
               ),

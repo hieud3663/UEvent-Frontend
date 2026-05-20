@@ -12,8 +12,12 @@ class AskQuestionScreen extends StatefulWidget {
   final String eventImageUrl;
   final String eventCategory;
   final VoidCallback? onBack;
-  final void Function(String question, bool isAnonymous, bool wantsNotification)?
-      onSend;
+  final void Function(
+    String question,
+    bool isAnonymous,
+    bool wantsNotification,
+  )?
+  onSend;
 
   const AskQuestionScreen({
     super.key,
@@ -132,10 +136,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
         ],
       ),
       child: Row(
@@ -149,7 +150,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
               child: Image.network(
                 widget.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (context, error, stackTrace) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),
@@ -193,10 +194,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 24,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24),
         ],
       ),
       child: Column(
@@ -221,7 +219,9 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             child: TextField(
               controller: _controller,
               maxLines: 6,
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: 'Type your question here...',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -296,10 +296,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
         Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(
-            color: iconBg,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
           child: Icon(icon, size: 20, color: iconColor),
         ),
         const SizedBox(width: 12),
@@ -325,11 +322,12 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primary,
-          trackColor: WidgetStateProperty.resolveWith((states) =>
-              states.contains(WidgetState.selected)
-                  ? AppColors.primary.withValues(alpha: 0.5)
-                  : AppColors.outline),
+          activeThumbColor: AppColors.primary,
+          trackColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? AppColors.primary.withValues(alpha: 0.5)
+                : AppColors.outline,
+          ),
         ),
       ],
     );

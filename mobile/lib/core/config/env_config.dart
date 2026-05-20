@@ -5,7 +5,7 @@ class EnvConfig {
   /// The base URL for the UEvent API.
   static const String baseUrl =
       //   'http://10.0.2.2:8000/api/v1';
-      'http://192.168.43.220:8000/api/v1'; // Update to your backend's local IP address
+      'http://192.168.1.30:8000/api/v1';
 
   /// Additional global constants can go here
   static const int connectTimeoutMs = 10000;

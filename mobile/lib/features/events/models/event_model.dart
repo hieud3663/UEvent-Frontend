@@ -90,7 +90,8 @@ class EventModel {
       endDate: endDate ?? this.endDate,
       registrationOpenAt: registrationOpenAt ?? this.registrationOpenAt,
       registrationCloseAt: registrationCloseAt ?? this.registrationCloseAt,
-      cancellationDeadlineAt: cancellationDeadlineAt ?? this.cancellationDeadlineAt,
+      cancellationDeadlineAt:
+          cancellationDeadlineAt ?? this.cancellationDeadlineAt,
       timeRange: timeRange ?? this.timeRange,
       category: category ?? this.category,
       visibility: visibility ?? this.visibility,
@@ -102,9 +103,70 @@ class EventModel {
     );
   }
 
-  factory EventModel.fromJson(Map<String, dynamic> json) => _$EventModelFromJson(json);
+  factory EventModel.fromJson(Map<String, dynamic> json) {
+    final category = json['category'];
+
+    return EventModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      slug: json['slug'] as String?,
+      imageUrl: json['cover_image_url'] as String? ?? '',
+      location:
+          json['location'] as String? ??
+          json['location_snapshot'] as String? ??
+          '',
+      startDate: DateTime.parse(json['start_at'] as String),
+      endDate: _parseNullableDateTime(json['end_at']),
+      registrationOpenAt: _parseNullableDateTime(json['registration_open_at']),
+      registrationCloseAt: _parseNullableDateTime(
+        json['registration_close_at'],
+      ),
+      cancellationDeadlineAt: _parseNullableDateTime(
+        json['cancellation_deadline_at'],
+      ),
+      timeRange: json['time_range'] as String?,
+      category: _parseCategoryName(category),
+      visibility: _parseVisibility(json['visibility']),
+      status: _parseStatus(json['status']),
+      description: json['description'] as String?,
+      guestCount: (json['max_capacity'] as num?)?.toInt(),
+      deepLink: json['deep_link'] as String?,
+      isOrganizer: json['is_organizer'] as bool? ?? false,
+    );
+  }
 
   Map<String, dynamic> toJson() => _$EventModelToJson(this);
+}
+
+DateTime? _parseNullableDateTime(dynamic value) {
+  if (value is! String || value.isEmpty) return null;
+  return DateTime.parse(value);
+}
+
+String? _parseCategoryName(dynamic value) {
+  if (value is String) return value;
+  if (value is Map<String, dynamic>) {
+    return value['name'] as String? ?? value['slug'] as String?;
+  }
+  return null;
+}
+
+EventVisibility _parseVisibility(dynamic value) {
+  if (value is String) {
+    for (final visibility in EventVisibility.values) {
+      if (visibility.name == value) return visibility;
+    }
+  }
+  return EventVisibility.public;
+}
+
+EventStatus _parseStatus(dynamic value) {
+  if (value is String) {
+    for (final status in EventStatus.values) {
+      if (status.name == value) return status;
+    }
+  }
+  return EventStatus.active;
 }
 
 enum EventVisibility { public, private }

@@ -12,11 +12,7 @@ class TicketListCard extends StatelessWidget {
   final TicketModel ticket;
   final VoidCallback? onTap;
 
-  const TicketListCard({
-    super.key,
-    required this.ticket,
-    this.onTap,
-  });
+  const TicketListCard({super.key, required this.ticket, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +43,7 @@ class TicketListCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 220,
                 maxWidthDiskCache: 420,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, url, error) => Container(
                   color: AppColors.surfaceVariant,
                   child: const Icon(
                     Icons.event,
@@ -82,10 +78,15 @@ class TicketListCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     // Ticket code
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radiusFull,
+                        ),
                       ),
                       child: Text(
                         ticket.ticketCode,
@@ -102,10 +103,7 @@ class TicketListCard extends StatelessWidget {
             // Chevron
             Padding(
               padding: const EdgeInsets.only(right: 12, top: 14),
-              child: Icon(
-                Icons.chevron_right,
-                color: AppColors.navInactive,
-              ),
+              child: Icon(Icons.chevron_right, color: AppColors.navInactive),
             ),
           ],
         ),

@@ -42,7 +42,7 @@ class EventCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 160,
                 maxWidthDiskCache: 320,
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (context, url, error) => Container(
                   width: AppConstants.eventThumbnailSize,
                   height: AppConstants.eventThumbnailSize,
                   decoration: BoxDecoration(
@@ -95,10 +95,7 @@ class EventCard extends StatelessWidget {
             ),
 
             // Trailing widget (e.g. QR code button)
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
-            ],
+            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
           ],
         ),
       ),
