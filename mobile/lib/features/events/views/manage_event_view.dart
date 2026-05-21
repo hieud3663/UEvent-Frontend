@@ -46,7 +46,9 @@ class ManageEventView extends StatelessWidget {
               // ── Header Section ──
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Column(
                     children: [
                       Text(
@@ -59,7 +61,9 @@ class ManageEventView extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Manage Event',
-                        style: AppTextStyles.headlineLarge.copyWith(fontSize: 32),
+                        style: AppTextStyles.headlineLarge.copyWith(
+                          fontSize: 32,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -78,7 +82,9 @@ class ManageEventView extends StatelessWidget {
               // ── Quick Stats Bento Grid ──
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -88,7 +94,6 @@ class ManageEventView extends StatelessWidget {
                             icon: Icons.how_to_reg,
                             title: 'Check-ins',
                             metric: '1,284',
-                            secondaryMetric: '12% VS LAST HR',
                             isHighlightIcon: false,
                           ),
                         ),
@@ -102,7 +107,6 @@ class ManageEventView extends StatelessWidget {
                             title: 'Attendance',
                             metric: '86',
                             percentageStr: '%',
-                            progressPercentage: 0.86,
                             isHighlightIcon: true,
                           ),
                         ),
@@ -114,11 +118,13 @@ class ManageEventView extends StatelessWidget {
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
               // ── Management Tools Sections ──
-              
+
               // 1. Event Operations
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -161,7 +167,9 @@ class ManageEventView extends StatelessWidget {
               // 2. Participant Management
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -208,12 +216,16 @@ class ManageEventView extends StatelessWidget {
               // ── Featured Map Section ──
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.pagePaddingH,
+                  ),
                   child: Container(
                     height: 192,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.1),
@@ -227,13 +239,17 @@ class ManageEventView extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         CachedNetworkImage(
-                          imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBUJVgZCTaUwZWXG4b0RxtqsleC0adPsFZj9GGNgRsIkK3YgWl6kUwR7wm0ZP08JnZJrpAHOFVKuqaUF-98-eM3X5csZt8K9KpDvIS9QbaO_hlM6tllod3ldRVzFyp5xMn8YEwkYmXxfRfZE1HQw8R3pgOcLQawRMN5JPxRpTYY27FIlVySseel7bwS6-Thl1fHUz54suHTsmnsWrqIYVZQmd2ZY5VeWqtvdw_fuCDsYl0K0OG2zk5iBTdxeOU5IiDVGmJ0z4H_vVw',
+                          imageUrl:
+                              'https://lh3.googleusercontent.com/aida-public/AB6AXuBUJVgZCTaUwZWXG4b0RxtqsleC0adPsFZj9GGNgRsIkK3YgWl6kUwR7wm0ZP08JnZJrpAHOFVKuqaUF-98-eM3X5csZt8K9KpDvIS9QbaO_hlM6tllod3ldRVzFyp5xMn8YEwkYmXxfRfZE1HQw8R3pgOcLQawRMN5JPxRpTYY27FIlVySseel7bwS6-Thl1fHUz54suHTsmnsWrqIYVZQmd2ZY5VeWqtvdw_fuCDsYl0K0OG2zk5iBTdxeOU5IiDVGmJ0z4H_vVw',
                           fit: BoxFit.cover,
                           memCacheWidth: 1200,
                           maxWidthDiskCache: 1800,
-                          color: Colors.black.withValues(alpha: 0.25), // Grayscale brightness equivalent roughly
+                          color: Colors.black.withValues(
+                            alpha: 0.25,
+                          ), // Grayscale brightness equivalent roughly
                           colorBlendMode: BlendMode.darken,
-                          errorWidget: (_, _, _) => Container(color: AppColors.surfaceVariant),
+                          errorWidget: (_, _, _) =>
+                              Container(color: AppColors.surfaceVariant),
                         ),
                         // Overlay Gradient
                         Container(
@@ -271,13 +287,18 @@ class ManageEventView extends StatelessWidget {
                                   Text(
                                     'Harbourfront Centre, Plaza B',
                                     style: AppTextStyles.bodySmall.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(999),
@@ -299,7 +320,9 @@ class ManageEventView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 140)), // Padding for bottom nav bar
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 140),
+              ), // Padding for bottom nav bar
             ],
           ),
 
@@ -315,7 +338,6 @@ class ManageEventView extends StatelessWidget {
               onLeadingTap: onClose ?? () => Navigator.of(context).pop(),
             ),
           ),
-
         ],
       ),
     );

@@ -17,17 +17,32 @@ Map<String, dynamic> extractObjectData(dynamic responseData) {
 }
 
 List<Map<String, dynamic>> extractListData(dynamic responseData) {
-  dynamic rawList = responseData;
-
-  if (responseData is Map<String, dynamic>) {
-    rawList = responseData['results'] ?? responseData['data'] ?? responseData['items'];
-  }
+  final rawList = _extractRawList(responseData);
 
   if (rawList is List) {
     return rawList.whereType<Map<String, dynamic>>().toList();
   }
 
   return const [];
+}
+
+dynamic _extractRawList(dynamic responseData) {
+  if (responseData is List) return responseData;
+
+  if (responseData is Map<String, dynamic>) {
+    final nested =
+        responseData['results'] ??
+        responseData['data'] ??
+        responseData['items'];
+
+    if (nested == null || identical(nested, responseData)) {
+      return null;
+    }
+
+    return _extractRawList(nested);
+  }
+
+  return null;
 }
 
 T mapObjectData<T>(
@@ -60,11 +75,7 @@ TModel mapObjectResponseToModel<TDto, TModel>(
 }) {
   return mapObjectData(
     responseData,
-    (raw) => mapDtoToModel(
-      raw,
-      dtoFromMap: dtoFromMap,
-      toModel: toModel,
-    ),
+    (raw) => mapDtoToModel(raw, dtoFromMap: dtoFromMap, toModel: toModel),
   );
 }
 
@@ -75,10 +86,6 @@ List<TModel> mapListResponse<TDto, TModel>(
 }) {
   return mapListData(
     responseData,
-    (raw) => mapDtoToModel(
-      raw,
-    dtoFromMap: dtoFromMap,
-    toModel: toModel,
-    ),
+    (raw) => mapDtoToModel(raw, dtoFromMap: dtoFromMap, toModel: toModel),
   );
 }
