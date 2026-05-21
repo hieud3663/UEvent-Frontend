@@ -33,24 +33,27 @@ class ApiClient {
     required AuthLocalDataSource authLocal,
     required Future<void> Function() refreshFn,
     required Future<void> Function() onForceSignOut,
-  })  : _authLocal = authLocal,
-        _refreshFn = refreshFn,
-        _onForceSignOut = onForceSignOut {
-    dio = Dio(BaseOptions(
-      baseUrl: EnvConfig.baseUrl,
-      connectTimeout: const Duration(milliseconds: EnvConfig.connectTimeoutMs),
-      receiveTimeout: const Duration(milliseconds: EnvConfig.receiveTimeoutMs),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+  }) : _authLocal = authLocal,
+       _refreshFn = refreshFn,
+       _onForceSignOut = onForceSignOut {
+    dio = Dio(
+      BaseOptions(
+        baseUrl: EnvConfig.baseUrl,
+        connectTimeout: const Duration(
+          milliseconds: EnvConfig.connectTimeoutMs,
+        ),
+        receiveTimeout: const Duration(
+          milliseconds: EnvConfig.receiveTimeoutMs,
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
 
     dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: _injectToken,
-        onError: _handleAuthError,
-      ),
+      InterceptorsWrapper(onRequest: _injectToken, onError: _handleAuthError),
     );
   }
 
@@ -66,11 +69,10 @@ class ApiClient {
     }
 
     final session = await _authLocal.readSession();
-    if (session != null && !session.isExpired) {
+    if (session != null) {
       options.headers['Authorization'] = 'Bearer ${session.accessToken}';
     }
-    // Expired or missing: let request go without a token.
-    // If the server returns 401, the error handler will refresh-and-retry.
+
     return handler.next(options);
   }
 
@@ -104,8 +106,13 @@ class ApiClient {
 
     // Replay the original request with the new token.
     final session = await _authLocal.readSession();
+    if (session == null) {
+      await _onForceSignOut();
+      return handler.next(error);
+    }
+
     request.extra['retried'] = true;
-    request.headers['Authorization'] = 'Bearer ${session!.accessToken}';
+    request.headers['Authorization'] = 'Bearer ${session.accessToken}';
 
     try {
       final response = await dio.fetch(request);
@@ -117,8 +124,9 @@ class ApiClient {
 
   /// Ensures exactly one refresh call runs at a time.
   Future<bool> _refreshSingleFlight() {
-    return _refreshFlight ??=
-        _doRefresh().whenComplete(() => _refreshFlight = null);
+    return _refreshFlight ??= _doRefresh().whenComplete(
+      () => _refreshFlight = null,
+    );
   }
 
   Future<bool> _doRefresh() async {

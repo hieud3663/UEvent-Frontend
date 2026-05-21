@@ -17,7 +17,7 @@ import 'package:frontend/features/profile/services/profile_service.dart';
 class ProfileSetupView extends ConsumerStatefulWidget {
   final ProfileService? profileService;
   final UserModel? initialUser;
-  final VoidCallback? onComplete;
+  final ValueChanged<UserModel>? onComplete;
   final VoidCallback? onBack;
 
   const ProfileSetupView({
@@ -77,7 +77,7 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
     try {
       final ProfileService profileService =
           widget.profileService ?? ref.read(profileServiceProvider);
-      await profileService.updateProfile({
+      final updatedUser = await profileService.updateProfile({
         'full_name': _fullNameController.text.trim(),
         'student_code': _studentCodeController.text.trim(),
         'faculty': _selectedFaculty!.trim(),
@@ -85,12 +85,14 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
         'phone_number': _phoneController.text.trim(),
       });
 
+      if (!mounted) return;
       ref.invalidate(userProfileProvider);
       ref.invalidate(profileOverviewProvider);
-      widget.onComplete?.call();
+      widget.onComplete?.call(updatedUser);
     } on DioException catch (error) {
       _showMessage(_errorMessage(error));
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Unexpected error during profile update: $error');
       _showMessage('Không thể cập nhật hồ sơ. Vui lòng thử lại.');
     } finally {
       if (mounted) {
@@ -202,13 +204,9 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                   const SizedBox(height: 20),
                   GlassInputField(
                     label: 'SỐ ĐIỆN THOẠI',
-                    placeholder: 'Nhập số điện thoại (nếu có)',
+                    placeholder: 'Nhập số điện thoại',
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    labelTrailing: Text(
-                      'Tùy chọn',
-                      style: AppTextStyles.bodySmall,
-                    ),
                   ),
                   const SizedBox(height: 40),
                   Container(
