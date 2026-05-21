@@ -16,6 +16,7 @@ import 'package:frontend/features/events/widgets/event_card_vertical.dart';
 import 'package:frontend/features/events/widgets/category_filter_chip.dart';
 import 'package:frontend/core/widgets/section_header.dart';
 import 'package:frontend/core/widgets/async_state_slivers.dart';
+import 'package:frontend/core/widgets/text_action_button.dart';
 
 class DiscoveryView extends ConsumerStatefulWidget {
   final int currentNavIndex;
@@ -40,8 +41,23 @@ class DiscoveryView extends ConsumerStatefulWidget {
 }
 
 class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
+  final _scrollController = ScrollController();
   int _selectedCategoryIndex = 0;
   String? _selectedCategoryQuery;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_maybeLoadNextPage);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_maybeLoadNextPage)
+      ..dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +71,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
         ? 0
         : _selectedCategoryIndex;
     final categoryQuery = _selectedCategoryQuery;
-    final eventsAsync = ref.watch(discoverySearchEventsProvider(categoryQuery));
+    final eventsAsync = ref.watch(discoveryEventsPagerProvider(categoryQuery));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -65,6 +81,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
             color: AppColors.primary,
             onRefresh: () => _refreshDiscovery(categoryQuery),
             child: CustomScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 // Spacing for fixed top bar
@@ -105,9 +122,6 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                               _selectedCategoryIndex = index;
                               _selectedCategoryQuery = nextQuery;
                             });
-                            ref.invalidate(
-                              discoverySearchEventsProvider(nextQuery),
-                            );
                           },
                         );
                       },
@@ -132,7 +146,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 // Event cards
                 ...eventsAsync.when(
-                  data: (events) {
+                  data: (pagedState) {
+                    final events = pagedState.events;
                     return [
                       AppSuccessSliver(
                         isEmpty: events.isEmpty,
@@ -164,6 +179,20 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                               );
                             }, childCount: events.length),
                           ),
+                          SliverToBoxAdapter(
+                            child: _PagingFooter(
+                              hasMore: pagedState.hasMore,
+                              isLoadingMore: pagedState.isLoadingMore,
+                              hasError: pagedState.loadMoreError != null,
+                              onRetry: () => ref
+                                  .read(
+                                    discoveryEventsPagerProvider(
+                                      categoryQuery,
+                                    ).notifier,
+                                  )
+                                  .loadNextPage(),
+                            ),
+                          ),
                         ],
                       ),
                     ];
@@ -174,8 +203,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       icon: Icons.wifi_off,
                       title: 'Không tải dữ liệu được',
                       description: 'Vui lòng thử lại sau.',
-                      onRetry: () => ref.refresh(
-                        discoverySearchEventsProvider(categoryQuery),
+                      onRetry: () => ref.invalidate(
+                        discoveryEventsPagerProvider(categoryQuery),
                       ),
                     ),
                   ],
@@ -215,12 +244,24 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
       await Future.wait([
         ref.refresh(eventCategoriesProvider.future).then((_) {}),
         ref
-            .refresh(discoverySearchEventsProvider(categoryQuery).future)
+            .read(discoveryEventsPagerProvider(categoryQuery).notifier)
+            .refreshPage()
             .then((_) {}),
       ]);
     } catch (_) {
       // Providers keep their error state for the existing error UI.
     }
+  }
+
+  void _maybeLoadNextPage() {
+    if (!_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+    if (position.extentAfter > 700) return;
+
+    ref
+        .read(discoveryEventsPagerProvider(_selectedCategoryQuery).notifier)
+        .loadNextPage();
   }
 
   Widget _buildAvatar() {
@@ -278,5 +319,50 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
         ],
       ),
     );
+  }
+}
+
+class _PagingFooter extends StatelessWidget {
+  final bool hasMore;
+  final bool isLoadingMore;
+  final bool hasError;
+  final VoidCallback onRetry;
+
+  const _PagingFooter({
+    required this.hasMore,
+    required this.isLoadingMore,
+    required this.hasError,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (hasError) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: TextActionButton(label: 'Thử lại', onPressed: onRetry),
+        ),
+      );
+    }
+
+    if (!hasMore) {
+      return const SizedBox(height: 8);
+    }
+
+    return const SizedBox(height: 24);
   }
 }

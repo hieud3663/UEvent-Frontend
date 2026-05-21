@@ -638,6 +638,34 @@ class _AppShellState extends ConsumerState<AppShell> {
   // -- Organizer Flow --
 
   void _pushCreateEvent() {
+    unawaited(_handleCreateEventTap());
+  }
+
+  Future<void> _handleCreateEventTap() async {
+    late final UserModel user;
+    try {
+      user = await ref.read(userProfileProvider.future);
+      if (!mounted) return;
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(context, 'Không thể kiểm tra quyền tạo sự kiện.');
+      return;
+    }
+
+    final primaryRole = user.primaryRole.trim().toLowerCase();
+    final canCreateEvent =
+        primaryRole == 'admin' ||
+        primaryRole == 'administrator' ||
+        primaryRole == 'organizer';
+
+    if (!canCreateEvent) {
+      _showSnackBar(
+        context,
+        'Bạn không phải là người tổ chức, hãy liên hệ với administrator để cấp quyền cho bạn',
+      );
+      return;
+    }
+
     Navigator.of(context).push(
       _fastRoute(
         builder: (_) =>

@@ -2,8 +2,18 @@ class EventCategoryModel {
   final String id;
   final String name;
   final String? slug;
+  final String? description;
+  final String? color;
+  final String? icon;
 
-  const EventCategoryModel({required this.id, required this.name, this.slug});
+  const EventCategoryModel({
+    required this.id,
+    required this.name,
+    this.slug,
+    this.description,
+    this.color,
+    this.icon,
+  });
 
   static const all = EventCategoryModel(id: '', name: 'All');
 
@@ -22,6 +32,9 @@ class EventCategoryModel {
       id: id,
       name: name,
       slug: json['slug']?.toString(),
+      description: json['description']?.toString(),
+      color: json['color']?.toString(),
+      icon: json['icon']?.toString(),
     );
   }
 }
