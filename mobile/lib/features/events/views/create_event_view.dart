@@ -2,11 +2,9 @@
 
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
@@ -15,6 +13,7 @@ import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/segmented_toggle.dart';
 import 'package:frontend/core/widgets/text_action_button.dart';
+import 'package:frontend/features/events/controller/event_mutation_controller.dart';
 import 'package:frontend/features/events/models/event_category_model.dart';
 import 'package:frontend/features/events/models/event_room_model.dart';
 import 'package:frontend/features/events/providers/event_providers.dart';
@@ -40,7 +39,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   final _imagePicker = ImagePicker();
 
   bool _isPublic = true;
-  bool _isSubmitting = false;
   File? _coverImageFile;
   EventRoomModel? _selectedRoom;
   EventCategoryModel? _selectedCategory;
@@ -357,7 +355,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   }
 
   Future<void> _submitEvent() async {
-    if (_isSubmitting) return;
+    final isSubmitting = ref.read(eventMutationControllerProvider).isLoading;
+    if (isSubmitting) return;
 
     final title = _titleController.text.trim();
     final selectedCategory = _selectedCategory;
@@ -394,74 +393,30 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    final created = await ref
+        .read(eventMutationControllerProvider.notifier)
+        .createOrganizerEventWithCover(
+          title: title,
+          description: _descriptionController.text.trim(),
+          category: selectedCategory,
+          room: selectedRoom,
+          coverImage: coverImage,
+          maxCapacity: maxCapacity,
+          startAt: startAt,
+          endAt: endAt,
+          isPublic: _isPublic,
+        );
 
-    try {
-      final eventService = ref.read(eventServiceProvider);
-      final registrationOpenAt = DateTime.now();
-      final registrationCloseAt = startAt.subtract(const Duration(hours: 1));
-      final cancellationDeadlineAt = startAt.subtract(const Duration(hours: 3));
+    if (!mounted) return;
 
-      final createdEvent = await eventService.createOrganizerEvent({
-        'title': title,
-        'category': selectedCategory.id,
-        'room': selectedRoom.id,
-        'description': _descriptionController.text.trim(),
-        'visibility': _isPublic ? 'public' : 'private',
-        'registration_open_at': _toApiDate(registrationOpenAt),
-        'registration_close_at': _toApiDate(
-          registrationCloseAt.isAfter(registrationOpenAt)
-              ? registrationCloseAt
-              : registrationOpenAt,
-        ),
-        'cancellation_deadline_at': _toApiDate(
-          cancellationDeadlineAt.isAfter(registrationOpenAt)
-              ? cancellationDeadlineAt
-              : registrationOpenAt,
-        ),
-        'start_at': _toApiDate(startAt),
-        'end_at': _toApiDate(endAt),
-        'max_capacity': maxCapacity,
-        'location_snapshot': selectedRoom.displayName,
-        'cover_image_url': '',
-        'deep_link': '',
-        'status': 'draft',
-      });
-
-      final contentType = _contentTypeForPath(coverImage.path);
-      final fileName =
-          '${createdEvent.id}.${_extensionForContentType(contentType)}';
-      final uploadTarget = await eventService.getEventCoverPresignedUrl(
-        fileName: fileName,
-        contentType: contentType,
-      );
-      if (uploadTarget.presignedUrl.isEmpty) {
-        _showMessage('Server không trả presigned URL để upload ảnh.');
-        return;
-      }
-
-      await eventService.uploadEventCoverImage(
-        imageFile: coverImage,
-        presignedUrl: uploadTarget.presignedUrl,
-        contentType: contentType,
-      );
-
-      ref.invalidate(organizerEventsProvider);
-      ref.invalidate(organizerEventsPagerProvider);
-      if (!mounted) return;
+    if (created) {
       _showMessage('Tạo sự kiện thành công.');
       widget.onBack?.call();
-    } on DioException catch (error) {
-      if (!mounted) return;
-      _showMessage(_uploadErrorMessage(error));
-    } catch (_) {
-      if (!mounted) return;
-      _showMessage('Không tạo được sự kiện. Vui lòng thử lại.');
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      return;
     }
+
+    final error = ref.read(eventMutationControllerProvider).error;
+    _showMessage(eventMutationErrorMessage(error ?? Object()));
   }
 
   DateTime? _parseDateTime(String date, String time) {
@@ -474,41 +429,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
       }
     }
     return null;
-  }
-
-  String _toApiDate(DateTime date) => date.toUtc().toIso8601String();
-
-  String _uploadErrorMessage(DioException error) {
-    final statusCode = error.response?.statusCode;
-    final responseData = error.response?.data?.toString();
-    if (statusCode != null && error.requestOptions.uri.host.contains('s3')) {
-      debugPrint('S3 upload failed [$statusCode]: $responseData');
-      return 'Tạo event thành công nhưng upload ảnh lên S3 thất bại ($statusCode).';
-    }
-
-    debugPrint('Create event failed: ${error.message} $responseData');
-    return 'Không tạo được sự kiện. Vui lòng thử lại.';
-  }
-
-  String _contentTypeForPath(String path) {
-    final extension = path.split('.').last.toLowerCase();
-    return switch (extension) {
-      'png' => 'image/png',
-      'webp' => 'image/webp',
-      'heic' => 'image/heic',
-      'heif' => 'image/heif',
-      _ => 'image/jpeg',
-    };
-  }
-
-  String _extensionForContentType(String contentType) {
-    return switch (contentType) {
-      'image/png' => 'png',
-      'image/webp' => 'webp',
-      'image/heic' => 'heic',
-      'image/heif' => 'heif',
-      _ => 'jpg',
-    };
   }
 
   String _fileNameFromPath(String path) {
@@ -546,6 +466,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   }
 
   Widget _buildBottomCta() {
+    final isSubmitting = ref.watch(eventMutationControllerProvider).isLoading;
+
     return Positioned(
       bottom: 0,
       left: 0,
@@ -564,10 +486,10 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           ),
         ),
         child: PrimaryButton(
-          label: _isSubmitting ? 'Creating Event' : 'Create Event',
+          label: isSubmitting ? 'Creating Event' : 'Create Event',
           icon: Icons.rocket_launch,
-          isLoading: _isSubmitting,
-          onPressed: _isSubmitting ? null : _submitEvent,
+          isLoading: isSubmitting,
+          onPressed: isSubmitting ? null : _submitEvent,
         ),
       ),
     );
