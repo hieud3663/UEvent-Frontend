@@ -79,6 +79,10 @@ class AuthService {
     String refreshToken,
     AuthMethod method,
   ) async {
+    if (method == AuthMethod.email || method == AuthMethod.google) {
+      return _refreshBackendToken(refreshToken, method);
+    }
+
     try {
       final result = await _appAuth.token(
         TokenRequest(
@@ -93,6 +97,23 @@ class AuthService {
       return _mapTokenResponse(result, method);
     } on AuthFailure {
       rethrow;
+    } catch (_) {
+      throw const AuthFailureRefreshFailed();
+    }
+  }
+
+  Future<AuthSessionModel> _refreshBackendToken(
+    String refreshToken,
+    AuthMethod method,
+  ) async {
+    try {
+      final response = await _authDio.post<Map<String, dynamic>>(
+        '/auth/refresh/',
+        data: {'refresh_token': refreshToken},
+      );
+      return _mapBackendTokenResponse(extractObjectData(response.data), method);
+    } on DioException {
+      throw const AuthFailureRefreshFailed();
     } catch (_) {
       throw const AuthFailureRefreshFailed();
     }

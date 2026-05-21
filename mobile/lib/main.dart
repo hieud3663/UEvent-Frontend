@@ -205,7 +205,7 @@ Future<void> _bootstrapProfileAndNavigate(
     if (user.isProfileComplete) {
       _navigateToAppShell(context);
     } else {
-      _navigateToProfileSetup(context, ref: ref, initialUser: user);
+      _navigateToProfileSetup(context, initialUser: user);
     }
   } on DioException catch (error) {
     await _handleProfileBootstrapFailure(
@@ -386,23 +386,27 @@ void _navigateToOtp(
   );
 }
 
-void _navigateToProfileSetup(
-  BuildContext context, {
-  WidgetRef? ref,
-  UserModel? initialUser,
-}) {
+void _navigateToProfileSetup(BuildContext context, {UserModel? initialUser}) {
   Navigator.of(context).pushAndRemoveUntil(
     _fastRoute(
-      builder: (ctx) => ProfileSetupView(
-        initialUser: initialUser,
-        profileService: ref?.read(profileServiceProvider),
-        onComplete: () {
-          if (ref == null) {
-            _navigateToAppShell(ctx);
-            return;
-          }
-          unawaited(_bootstrapProfileAndNavigate(ctx, ref, fromSplash: false));
-        },
+      builder: (ctx) => Consumer(
+        builder: (ctx, setupRef, _) => ProfileSetupView(
+          initialUser: initialUser,
+          profileService: setupRef.read(profileServiceProvider),
+          onComplete: (updatedUser) {
+            setupRef.invalidate(userProfileProvider);
+            setupRef.invalidate(profileOverviewProvider);
+
+            if (updatedUser.isProfileComplete) {
+              _navigateToAppShell(ctx);
+              return;
+            }
+
+            unawaited(
+              _bootstrapProfileAndNavigate(ctx, setupRef, fromSplash: false),
+            );
+          },
+        ),
       ),
     ),
     (route) => false,
