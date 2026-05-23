@@ -51,13 +51,6 @@ class ManageEventView extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        'LIVE CONTROL',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.primary,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
                       const SizedBox(height: 8),
                       Text(
                         'Manage Event',

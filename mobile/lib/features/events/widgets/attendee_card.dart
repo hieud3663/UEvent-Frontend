@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 
-enum AttendeeStatus { checkedIn, pending }
+enum AttendeeStatus { checkedIn, registered, waitlisted, pending, cancelled }
 
 class AttendeeCard extends StatelessWidget {
   final String imageUrl;
@@ -12,6 +12,7 @@ class AttendeeCard extends StatelessWidget {
   final String studentId;
   final AttendeeStatus status;
   final String? timestamp;
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   const AttendeeCard({
@@ -21,17 +22,28 @@ class AttendeeCard extends StatelessWidget {
     required this.studentId,
     required this.status,
     this.timestamp,
+    this.trailing,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     // Styling based on status
-    final bool isCheckedIn = status == AttendeeStatus.checkedIn;
-    final Color badgeColor = isCheckedIn ? AppColors.success : AppColors.surfaceVariant.withValues(alpha: 0.8);
-    final Color tagBgColor = isCheckedIn ? AppColors.success.withValues(alpha: 0.15) : AppColors.surfaceVariant;
-    final Color tagTextColor = isCheckedIn ? AppColors.success : AppColors.onSurfaceVariant;
-    final String statusLabel = isCheckedIn ? 'CHECKED-IN' : 'PENDING';
+    final Color badgeColor = switch (status) {
+      AttendeeStatus.checkedIn ||
+      AttendeeStatus.registered => AppColors.success,
+      AttendeeStatus.waitlisted || AttendeeStatus.pending => AppColors.primary,
+      AttendeeStatus.cancelled => AppColors.error,
+    };
+    final Color tagBgColor = badgeColor.withValues(alpha: 0.15);
+    final Color tagTextColor = badgeColor;
+    final String statusLabel = switch (status) {
+      AttendeeStatus.checkedIn => 'CHECKED-IN',
+      AttendeeStatus.registered => 'REGISTERED',
+      AttendeeStatus.waitlisted => 'WAITLISTED',
+      AttendeeStatus.pending => 'PENDING',
+      AttendeeStatus.cancelled => 'CANCELLED',
+    };
 
     return GestureDetector(
       onTap: onTap,
@@ -40,7 +52,9 @@ class AttendeeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(32), // large rounded corners like design
+          borderRadius: BorderRadius.circular(
+            32,
+          ), // large rounded corners like design
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.4),
             width: 0.5,
@@ -73,7 +87,10 @@ class AttendeeCard extends StatelessWidget {
                           width: 56,
                           height: 56,
                           color: AppColors.surfaceVariant,
-                          child: const Icon(Icons.person, color: AppColors.onSurfaceVariant),
+                          child: const Icon(
+                            Icons.person,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ),
@@ -93,7 +110,7 @@ class AttendeeCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 16),
-                
+
                 // Name & ID
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,38 +134,43 @@ class AttendeeCard extends StatelessWidget {
                 ),
               ],
             ),
-            
-            // Status and Time
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tagBgColor,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: tagTextColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 10,
-                      letterSpacing: 1.0,
+
+            if (trailing != null)
+              trailing!
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tagBgColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: tagTextColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  timestamp ?? '—',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.navInactive,
-                    fontSize: 10,
+                  const SizedBox(height: 8),
+                  Text(
+                    timestamp ?? '—',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.navInactive,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

@@ -210,6 +210,7 @@ class _ManageBadge extends StatelessWidget {
   Color get _statusColor {
     return switch (status) {
       EventStatus.active => AppColors.primary,
+      EventStatus.approved => AppColors.primary,
       EventStatus.draft => AppColors.primaryDark,
       EventStatus.finished => AppColors.success,
       EventStatus.cancelled => AppColors.error,

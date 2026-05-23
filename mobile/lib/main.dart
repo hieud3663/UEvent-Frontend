@@ -71,6 +71,9 @@ import 'package:frontend/features/events/views/export_attendee_list_view.dart';
 import 'package:frontend/features/events/views/registration_questions_view.dart';
 import 'package:frontend/features/events/views/question_detail_view.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/events/controller/event_mutation_controller.dart';
+import 'package:frontend/features/events/models/event_registration_model.dart';
+import 'package:frontend/features/events/providers/event_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -541,6 +544,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       Navigator.of(context).push(
         _fastRoute(
           builder: (ctx) => EventDetailOrganizerView(
+            eventId: event.id,
+            initialEvent: event,
             onBack: () => Navigator.of(ctx).pop(),
             onCheckIn: _pushQrScanner,
             onInvite: () =>
@@ -548,7 +553,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             onNotify: () => _pushSendNotification(
               event,
             ), // TODO: Navigate to send notification screen
-            onManage: _pushManageEventHub,
+            onManage: () => _pushManageEventHub(event),
             onShare: () => ShareEventSheet.show(ctx),
           ),
         ),
@@ -558,33 +563,51 @@ class _AppShellState extends ConsumerState<AppShell> {
       Navigator.of(context).push(
         _fastRoute(
           builder: (ctx) => EventDetailScreen(
+            eventId: event.id,
+            initialEvent: event,
             onBack: () => Navigator.of(ctx).pop(),
             onShare: () => ShareEventSheet.show(ctx),
-            onRegister: () => _pushRegistrationConfirmation(ctx),
-            onAskQuestion: () => _pushAskQuestion(ctx),
+            onRegister: () => _pushRegistrationConfirmation(ctx, event),
+            onAskQuestion: () => _pushAskQuestion(ctx, event),
           ),
         ),
       );
     }
   }
 
-  void _pushRegistrationConfirmation(BuildContext ctx) {
+  void _pushRegistrationConfirmation(BuildContext ctx, EventModel event) {
     RegistrationConfirmationScreen.show(
       ctx,
-      eventName: 'Global Developer Summit 2024',
-      onConfirm: () {
-        Navigator.of(ctx).pop(); // close sheet
-        _pushRegistrationSuccess(ctx);
+      event: event,
+      onConfirm: (answers) async {
+        final detail = ref
+            .read(eventDetailProvider(event.id))
+            .whenOrNull(data: (value) => value);
+        final registration = await ref
+            .read(eventRegistrationControllerProvider.notifier)
+            .registerEvent(eventId: event.id, answers: answers);
+        if (registration != null && mounted) {
+          if (ctx.mounted) {
+            _pushRegistrationSuccess(ctx, detail ?? event, registration);
+          }
+        }
+        return registration;
       },
     );
   }
 
-  void _pushRegistrationSuccess(BuildContext ctx) {
+  void _pushRegistrationSuccess(
+    BuildContext ctx,
+    EventModel event,
+    EventRegistrationModel registration,
+  ) {
     Navigator.of(ctx).push(
       _fastRoute(
         builder: (_) => RegistrationSuccessScreen(
-          eventName: 'Global Developer Summit 2024',
-          ticketId: '#UE-98210',
+          eventName: event.title,
+          ticketId:
+              registration.ticket?.ticketCode ??
+              registration.status.toUpperCase(),
           onViewTicket: () => Navigator.of(ctx).pop(),
           onAddToWallet: () {},
         ),
@@ -592,12 +615,31 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushAskQuestion(BuildContext ctx) {
+  void _pushAskQuestion(BuildContext ctx, EventModel event) {
     Navigator.of(ctx).push(
       _fastRoute(
         builder: (_) => AskQuestionScreen(
+          eventName: event.title,
+          eventImageUrl: event.imageUrl,
+          eventCategory: event.category ?? 'Live Q&A Session',
           onBack: () => Navigator.of(ctx).pop(),
-          onSend: (q, anon, notify) {},
+          onSend: (q, anon, notify) async {
+            final ok = await ref
+                .read(eventEngagementControllerProvider.notifier)
+                .createQuestion(
+                  eventId: event.id,
+                  questionText: q,
+                  isAnonymous: anon,
+                );
+
+            if (ok && mounted && ctx.mounted) {
+              ScaffoldMessenger.of(
+                ctx,
+              ).showSnackBar(const SnackBar(content: Text('Đã gửi câu hỏi.')));
+            }
+
+            return ok;
+          },
         ),
       ),
     );
@@ -696,15 +738,15 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushManageEventHub() {
+  void _pushManageEventHub(EventModel event) {
     Navigator.of(context).push(
       _fastRoute(
         builder: (_) => ManageEventHubView(
           onBack: () => Navigator.of(context).pop(),
-          onEditDetailsTap: _pushEditEventDetails,
-          onManageTeamTap: _pushManageTeam,
+          onEditDetailsTap: () => _pushEditEventDetails(event),
+          onManageTeamTap: () => _pushManageTeam(event),
           onArchiveTap: _pushArchiveEvent,
-          onAttendeeListTap: _pushAttendeeList,
+          onAttendeeListTap: () => _pushAttendeeList(event),
           onRegistrationQuestionsTap: _pushRegistrationQuestions,
           onParticipantCheckInTap: _pushQrScanner,
           onExportAttendeeListTap: _pushExportAttendeeList,
@@ -713,19 +755,25 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushEditEventDetails() {
+  void _pushEditEventDetails(EventModel event) {
     Navigator.of(context).push(
       _fastRoute(
-        builder: (ctx) =>
-            EditEventDetailsView(onBack: () => Navigator.of(ctx).pop()),
+        builder: (ctx) => EditEventDetailsView(
+          eventId: event.id,
+          initialEvent: event,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
     );
   }
 
-  void _pushManageTeam() {
+  void _pushManageTeam(EventModel event) {
     Navigator.of(context).push(
       _fastRoute(
-        builder: (ctx) => ManageTeamView(onBack: () => Navigator.of(ctx).pop()),
+        builder: (ctx) => ManageTeamView(
+          eventId: event.id,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
     );
   }
@@ -739,11 +787,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushAttendeeList() {
+  void _pushAttendeeList(EventModel event) {
     Navigator.of(context).push(
       _fastRoute(
-        builder: (ctx) =>
-            AttendeeListView(onBack: () => Navigator.of(ctx).pop()),
+        builder: (ctx) => AttendeeListView(
+          eventId: event.id,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
     );
   }
@@ -925,7 +975,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onNavTap: _onNavTap,
           onCreateEventTap: _pushCreateEvent,
           onEventTap: _pushEventDetail,
-          onManageEventTap: (_) => _pushManageEventHub(),
+          onManageEventTap: _pushManageEventHub,
         ),
         // Tab 2: TICKETS
         MyTicketsView(

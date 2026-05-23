@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/theme/app_constants.dart';
+import 'package:frontend/core/widgets/text_action_button.dart';
 import 'package:frontend/features/events/models/event_question_model.dart';
 
 /// Q&A section: header with "Ask Question" button + list of questions.
@@ -31,40 +32,47 @@ class EventQaSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Questions & Answers', style: AppTextStyles.headlineMedium),
-            GestureDetector(
-              onTap: onAskQuestion,
-              child: Text(
-                'Ask Question',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+            TextActionButton(
+              label: 'Ask Question',
+              onPressed: onAskQuestion,
+              foregroundColor: AppColors.primary,
+              textStyle: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
         // Question tiles
-        ...questions.map((q) => Padding(
+        if (questions.isEmpty)
+          Text(
+            'Chưa có câu hỏi public nào.',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          )
+        else
+          ...questions.map(
+            (q) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _QuestionTile(question: q),
-            )),
+            ),
+          ),
         // View All button
         if (totalCount > questions.length)
-          GestureDetector(
-            onTap: onViewAll,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: AppColors.outlineVariant),
-                ),
-              ),
-              child: Text(
-                'View all $totalCount questions',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodySmall.copyWith(
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.outlineVariant)),
+            ),
+            child: Center(
+              child: TextActionButton(
+                label: 'View all $totalCount questions',
+                onPressed: onViewAll,
+                foregroundColor: AppColors.onSurfaceVariant,
+                textStyle: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
@@ -137,7 +145,9 @@ class _QuestionTile extends StatelessWidget {
                           Text(
                             'Answered by ${question.answeredBy} • ${question.timeAgo}',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: AppColors.onSurfaceVariant.withValues(
+                                alpha: 0.6,
+                              ),
                               fontStyle: FontStyle.italic,
                             ),
                           ),

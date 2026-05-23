@@ -7,7 +7,11 @@ import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/events/mock/mock_event_data.dart';
 import 'package:frontend/features/events/models/event_cover_upload_model.dart';
 import 'package:frontend/features/events/models/event_category_model.dart';
+import 'package:frontend/features/events/models/event_feedback_model.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/events/models/event_organizer_member_model.dart';
+import 'package:frontend/features/events/models/event_question_model.dart';
+import 'package:frontend/features/events/models/event_registration_model.dart';
 import 'package:frontend/features/events/models/event_room_model.dart';
 
 class EventService {
@@ -177,6 +181,55 @@ class EventService {
     }
   }
 
+  Future<EventModel> updateOrganizerEvent({
+    required String eventId,
+    required Map<String, dynamic> payload,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return MockEventData.mockEventLaunchParty.copyWith(
+        id: eventId,
+        title:
+            payload['title']?.toString() ??
+            MockEventData.mockEventLaunchParty.title,
+        description:
+            payload['description']?.toString() ??
+            MockEventData.mockEventLaunchParty.description,
+        category:
+            payload['category']?.toString() ??
+            MockEventData.mockEventLaunchParty.category,
+        location:
+            payload['location_snapshot']?.toString() ??
+            MockEventData.mockEventLaunchParty.location,
+        guestCount:
+            (payload['max_capacity'] as num?)?.toInt() ??
+            MockEventData.mockEventLaunchParty.guestCount,
+        startDate: payload['start_at'] is String
+            ? DateTime.parse(payload['start_at'] as String)
+            : MockEventData.mockEventLaunchParty.startDate,
+        endDate: payload['end_at'] is String
+            ? DateTime.parse(payload['end_at'] as String)
+            : MockEventData.mockEventLaunchParty.endDate,
+        visibility: payload['visibility'] == 'private'
+            ? EventVisibility.private
+            : EventVisibility.public,
+        isOrganizer: true,
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.patch(
+        '/organizer/events/$eventId/',
+        data: payload,
+      );
+      return EventModel.fromJson(
+        extractObjectData(response.data),
+      ).copyWith(isOrganizer: true);
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<EventCoverUploadModel> getEventCoverPresignedUrl({
     required String fileName,
     required String contentType,
@@ -186,7 +239,6 @@ class EventService {
       return EventCoverUploadModel(
         objectKey: 'events/mock/covers/$fileName',
         presignedUrl: 'https://example.com/mock-presigned-url',
-        publicUrl: 'https://example.com/events/mock/covers/$fileName',
         method: 'PUT',
         expiresIn: 3600,
       );
@@ -272,6 +324,30 @@ class EventService {
     return originalUri.replace(host: endpoint).toString();
   }
 
+  Future<EventModel> updateOrganizerEventCover({
+    required String eventId,
+    required String coverImageKey,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return MockEventData.mockEventLaunchParty.copyWith(
+        id: eventId,
+        imageUrl: 'https://example.com/$coverImageKey',
+        isOrganizer: true,
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.patch(
+        '/organizer/events/$eventId/',
+        data: {'cover_image_key': coverImageKey},
+      );
+      return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<EventModel> getEventDetail(String eventId) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -279,8 +355,264 @@ class EventService {
     }
 
     try {
-      final response = await _apiClient.dio.get('/events/$eventId');
+      final response = await _apiClient.dio.get('/events/$eventId/');
       return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventModel> getOrganizerEventDetail(String eventId) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 800));
+      return MockEventData.list
+          .firstWhere((e) => e.id == eventId)
+          .copyWith(isOrganizer: true);
+    }
+
+    try {
+      final response = await _apiClient.dio.get('/organizer/events/$eventId/');
+      return EventModel.fromJson(
+        extractObjectData(response.data),
+      ).copyWith(isOrganizer: true);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventRegistrationModel> registerEvent({
+    required String eventId,
+    List<EventRegistrationAnswerModel> answers = const [],
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return EventRegistrationModel(
+        id: 'mock-registration-$eventId',
+        status: 'registered',
+        registeredAt: DateTime.now(),
+        answers: answers,
+        ticket: const EventTicketSummaryModel(
+          id: 'mock-ticket-001',
+          ticketCode: 'UE-98210',
+          status: 'valid',
+        ),
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/registrations/',
+        data: {'answers': answers.map((answer) => answer.toJson()).toList()},
+      );
+      return EventRegistrationModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventRegistrationModel>> getEventRegistrations({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return [
+        EventRegistrationModel(
+          id: 'mock-registration-001',
+          status: 'registered',
+          registeredAt: DateTime.now().subtract(const Duration(hours: 2)),
+          user: const EventUserSummaryModel(
+            id: 'mock-user-001',
+            username: 'attendee',
+            fullName: 'Attendee Name',
+            email: 'attendee@example.com',
+          ),
+          ticket: const EventTicketSummaryModel(
+            id: 'mock-ticket-001',
+            ticketCode: 'UE-98210',
+            status: 'valid',
+          ),
+        ),
+        EventRegistrationModel(
+          id: 'mock-registration-002',
+          status: 'waitlisted',
+          registeredAt: DateTime.now().subtract(const Duration(hours: 1)),
+          user: const EventUserSummaryModel(
+            id: 'mock-user-002',
+            username: 'waitlist',
+            fullName: 'Waitlist User',
+            email: 'waitlist@example.com',
+          ),
+        ),
+      ];
+    }
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/registrations/',
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventRegistrationModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventOrganizerMemberModel> promoteRegistrationToCohost({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return const EventOrganizerMemberModel(
+        id: 'mock-cohost-001',
+        eventId: 'mock-event',
+        user: EventUserSummaryModel(
+          id: 'mock-user-001',
+          username: 'attendee',
+          fullName: 'Attendee Name',
+          email: 'attendee@example.com',
+        ),
+        organizerRole: 'co_host',
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.post(
+        '/organizer/events/$eventId/registrations/$registrationId/cohost/',
+      );
+      return EventOrganizerMemberModel.fromJson(
+        extractObjectData(response.data),
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventQuestionModel>> getPublicEventQuestions({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return const [
+        EventQuestionModel(
+          id: 'mock-question-001',
+          question: 'Sự kiện có cấp certificate không?',
+          answer: 'Có, certificate sẽ được gửi sau sự kiện.',
+          answeredBy: 'Organizer',
+          timeAgo: '2h ago',
+        ),
+        EventQuestionModel(
+          id: 'mock-question-002',
+          question: 'Có cần mang laptop không?',
+          timeAgo: '1h ago',
+        ),
+      ];
+    }
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/questions/public/',
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventQuestionModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventQuestionModel>> getOrganizerEventQuestions({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      return getPublicEventQuestions(eventId: eventId);
+    }
+
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/questions/');
+      final dataList = extractListData(response.data);
+      return dataList.map(EventQuestionModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventQuestionModel> createEventQuestion({
+    required String eventId,
+    required String questionText,
+    required bool isAnonymous,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return EventQuestionModel(
+        id: 'mock-question-${DateTime.now().millisecondsSinceEpoch}',
+        question: questionText,
+        isAnonymous: isAnonymous,
+        timeAgo: 'just now',
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/questions/',
+        data: {'question_text': questionText, 'is_anonymous': isAnonymous},
+      );
+      return EventQuestionModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventFeedbackModel>> getEventFeedbacks({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return [
+        EventFeedbackModel(
+          id: 'mock-feedback-001',
+          rating: 5,
+          content: 'Sự kiện rất hữu ích và tổ chức tốt.',
+          isAnonymous: false,
+          createdAt: DateTime.now().subtract(const Duration(days: 1)),
+          user: const EventUserSummaryModel(
+            id: 'mock-user-001',
+            username: 'attendee',
+            fullName: 'Attendee Name',
+            email: 'attendee@example.com',
+          ),
+        ),
+      ];
+    }
+
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/feedbacks/');
+      final dataList = extractListData(response.data);
+      return dataList.map(EventFeedbackModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventFeedbackSummaryModel> getEventFeedbackSummary({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return const EventFeedbackSummaryModel(
+        eventId: 'mock-event',
+        total: 1,
+        averageRating: 5,
+        ratingCounts: {5: 1},
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/feedbacks/summary/',
+      );
+      return EventFeedbackSummaryModel.fromJson(
+        extractObjectData(response.data),
+      );
     } on DioException {
       rethrow;
     }

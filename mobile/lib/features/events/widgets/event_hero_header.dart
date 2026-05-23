@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
 
 /// Full-bleed hero image with gradient overlay + back/share/favourite overlay buttons.
 /// Returns a SliverAppBar or use as a plain widget inside CustomScrollView.
@@ -30,14 +31,18 @@ class EventHeroHeader extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Hero image
-          CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            memCacheWidth: 1400,
-            maxWidthDiskCache: 1920,
-            errorWidget: (context, url, error) =>
-                Container(color: AppColors.surfaceVariant),
-          ),
+          if (imageUrl.trim().isEmpty)
+            const _HeroImagePlaceholder()
+          else
+            CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              memCacheWidth: 1400,
+              maxWidthDiskCache: 1920,
+              placeholder: (context, url) => const _HeroImagePlaceholder(),
+              errorWidget: (context, url, error) =>
+                  const _HeroImagePlaceholder(),
+            ),
           // Gradient fade to background at bottom
           const DecoratedBox(
             decoration: BoxDecoration(
@@ -100,26 +105,28 @@ class _GlassCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.4),
-            width: 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: Icon(icon, size: 20, color: iconColor ?? AppColors.onSurface),
+    return GlassIconButton(
+      icon: icon,
+      iconSize: 20,
+      iconColor: iconColor ?? AppColors.onSurface,
+      backgroundColor: Colors.white.withValues(alpha: 0.7),
+      onPressed: onTap,
+    );
+  }
+}
+
+class _HeroImagePlaceholder extends StatelessWidget {
+  const _HeroImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surfaceVariant,
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        size: 56,
+        color: AppColors.outline,
       ),
     );
   }

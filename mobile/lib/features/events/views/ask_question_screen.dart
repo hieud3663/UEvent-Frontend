@@ -6,13 +6,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 
 class AskQuestionScreen extends StatefulWidget {
   final String eventName;
   final String eventImageUrl;
   final String eventCategory;
   final VoidCallback? onBack;
-  final void Function(
+  final Future<bool> Function(
     String question,
     bool isAnonymous,
     bool wantsNotification,
@@ -37,6 +39,8 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
   final _controller = TextEditingController();
   bool _isAnonymous = false;
   bool _wantsNotification = true;
+  bool _isSending = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -44,11 +48,28 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
     super.dispose();
   }
 
-  void _handleSend() {
+  Future<void> _handleSend() async {
     final q = _controller.text.trim();
     if (q.isEmpty) return;
-    widget.onSend?.call(q, _isAnonymous, _wantsNotification);
-    Navigator.of(context).pop();
+
+    setState(() {
+      _isSending = true;
+      _errorMessage = null;
+    });
+
+    final ok =
+        await widget.onSend?.call(q, _isAnonymous, _wantsNotification) ?? true;
+    if (!mounted) return;
+
+    if (ok) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() {
+      _isSending = false;
+      _errorMessage = 'Không gửi được câu hỏi. Vui lòng thử lại.';
+    });
   }
 
   @override
@@ -71,13 +92,11 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: widget.onBack ?? () => Navigator.of(context).pop(),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 24,
-                        color: AppColors.onSurface,
-                      ),
+                    GlassIconButton(
+                      icon: Icons.arrow_back,
+                      onPressed:
+                          widget.onBack ?? () => Navigator.of(context).pop(),
+                      backgroundColor: Colors.transparent,
                     ),
                     Expanded(
                       child: Text(
@@ -253,29 +272,20 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             value: _wantsNotification,
             onChanged: (v) => setState(() => _wantsNotification = v),
           ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            ),
+          ],
           const SizedBox(height: 24),
           // Send button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _handleSend,
-              icon: const Icon(Icons.send, size: 18),
-              label: const Text('Send Question'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimaryDark,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: AppTextStyles.titleSmall.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                elevation: 0,
-                shadowColor: AppColors.primary.withValues(alpha: 0.3),
-              ),
-            ),
+          PrimaryButton(
+            label: 'Send Question',
+            icon: Icons.send,
+            isLoading: _isSending,
+            onPressed: _handleSend,
           ),
         ],
       ),
