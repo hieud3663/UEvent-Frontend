@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
@@ -535,9 +536,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 }
 

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/features/events/widgets/share_action_grid.dart';
 import 'package:frontend/features/events/widgets/share_social_row.dart';
 
@@ -114,9 +115,7 @@ class ShareEventSheet extends StatelessWidget {
                   // Action grid
                   ShareActionGrid(
                     onCopyLink: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Link copied!')),
-                      );
+                      showAppSnackBar(context, 'Link copied!');
                     },
                     onQrCode: () {},
                     onSavePost: () {},

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/section_header.dart';
@@ -50,10 +51,7 @@ class _ExportAttendeeListViewState extends State<ExportAttendeeListView> {
     if (widget.onDownloadReport != null) {
       widget.onDownloadReport!(_config);
     } else {
-      // Provide visual feedback if no callback is supplied
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Downloading report...')),
-      );
+      showAppSnackBar(context, 'Downloading report...');
     }
   }
 
@@ -78,10 +76,7 @@ class _ExportAttendeeListViewState extends State<ExportAttendeeListView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Format',
-                        style: AppTextStyles.headlineMedium,
-                      ),
+                      Text('Format', style: AppTextStyles.headlineMedium),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -130,29 +125,41 @@ class _ExportAttendeeListViewState extends State<ExportAttendeeListView> {
                       const SizedBox(height: 16),
                       GlassCheckboxTile(
                         value: _config.includeName,
-                        onChanged: (val) => setState(() =>
-                            _config = _config.copyWith(includeName: val ?? false)),
+                        onChanged: (val) => setState(
+                          () => _config = _config.copyWith(
+                            includeName: val ?? false,
+                          ),
+                        ),
                         title: 'Attendee Name',
                         icon: Icons.person_outline,
                       ),
                       GlassCheckboxTile(
                         value: _config.includeId,
-                        onChanged: (val) => setState(() =>
-                            _config = _config.copyWith(includeId: val ?? false)),
+                        onChanged: (val) => setState(
+                          () => _config = _config.copyWith(
+                            includeId: val ?? false,
+                          ),
+                        ),
                         title: 'Ticket ID',
                         icon: Icons.confirmation_number_outlined,
                       ),
                       GlassCheckboxTile(
                         value: _config.includeEmail,
-                        onChanged: (val) => setState(() =>
-                            _config = _config.copyWith(includeEmail: val ?? false)),
+                        onChanged: (val) => setState(
+                          () => _config = _config.copyWith(
+                            includeEmail: val ?? false,
+                          ),
+                        ),
                         title: 'Email Address',
                         icon: Icons.email_outlined,
                       ),
                       GlassCheckboxTile(
                         value: _config.includeStatus,
-                        onChanged: (val) => setState(() =>
-                            _config = _config.copyWith(includeStatus: val ?? false)),
+                        onChanged: (val) => setState(
+                          () => _config = _config.copyWith(
+                            includeStatus: val ?? false,
+                          ),
+                        ),
                         title: 'Check-in Status',
                         icon: Icons.how_to_reg,
                       ),
@@ -160,7 +167,7 @@ class _ExportAttendeeListViewState extends State<ExportAttendeeListView> {
                   ),
                 ),
               ),
-              
+
               const SliverToBoxAdapter(child: SizedBox(height: 48)),
             ],
           ),
@@ -175,7 +182,9 @@ class _ExportAttendeeListViewState extends State<ExportAttendeeListView> {
                 left: AppConstants.pagePaddingH,
                 right: AppConstants.pagePaddingH,
                 top: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16, // SafeArea equivalent
+                bottom:
+                    MediaQuery.of(context).padding.bottom +
+                    16, // SafeArea equivalent
               ),
               decoration: BoxDecoration(
                 color: AppColors.background,

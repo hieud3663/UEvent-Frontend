@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
@@ -315,13 +316,9 @@ class _ManageTeamViewState extends ConsumerState<ManageTeamView> {
     if (!mounted || !sheetContext.mounted) return;
     if (ok) {
       Navigator.of(sheetContext).pop();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đã cấp quyền co-host.')));
+      showAppSnackBar(context, 'Đã cấp quyền co-host.');
     } else {
-      ScaffoldMessenger.of(sheetContext).showSnackBar(
-        const SnackBar(content: Text('Không cấp được quyền co-host.')),
-      );
+      showAppSnackBar(sheetContext, 'Không cấp được quyền co-host.');
     }
   }
 }

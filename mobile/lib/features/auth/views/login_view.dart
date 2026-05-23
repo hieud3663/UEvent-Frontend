@@ -227,41 +227,41 @@ class _LoginViewState extends State<LoginView> {
                                 isLoading: _isSubmittingGoogle,
                                 onPressed: _isBusy ? null : _submitGoogle,
                               ),
-                              const SizedBox(height: 16),
-                              TextActionButton(
-                                label: 'Đăng nhập bằng Passkey',
-                                height: 48,
-                                onPressed: _isBusy
-                                    ? null
-                                    : widget.onLoginWithPasskey,
-                                foregroundColor: AppColors.onSurfaceVariant,
-                                icon: const Icon(Icons.fingerprint, size: 20),
-                                textStyle: AppTextStyles.titleSmall.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Chưa có tài khoản? ',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  TextActionButton(
-                                    label: 'Đăng ký ngay',
-                                    onPressed: _isBusy ? null : () {},
-                                    foregroundColor: AppColors.primary,
-                                    textStyle: AppTextStyles.bodySmall.copyWith(
-                                      fontSize: 13,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              // const SizedBox(height: 16),
+                              // TextActionButton(
+                              //   label: 'Đăng nhập bằng Passkey',
+                              //   height: 48,
+                              //   onPressed: _isBusy
+                              //       ? null
+                              //       : widget.onLoginWithPasskey,
+                              //   foregroundColor: AppColors.onSurfaceVariant,
+                              //   icon: const Icon(Icons.fingerprint, size: 20),
+                              //   textStyle: AppTextStyles.titleSmall.copyWith(
+                              //     color: AppColors.onSurfaceVariant,
+                              //   ),
+                              // ),
+                              // const SizedBox(height: 32),
+                              // Row(
+                              //   mainAxisAlignment: MainAxisAlignment.center,
+                              //   children: [
+                              //     Text(
+                              //       'Chưa có tài khoản? ',
+                              //       style: AppTextStyles.bodySmall.copyWith(
+                              //         fontSize: 13,
+                              //       ),
+                              //     ),
+                              //     TextActionButton(
+                              //       label: 'Đăng ký ngay',
+                              //       onPressed: _isBusy ? null : () {},
+                              //       foregroundColor: AppColors.primary,
+                              //       textStyle: AppTextStyles.bodySmall.copyWith(
+                              //         fontSize: 13,
+                              //         color: AppColors.primary,
+                              //         fontWeight: FontWeight.w700,
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
                             ],
                           ),
                         ),

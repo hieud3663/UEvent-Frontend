@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
@@ -438,9 +439,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 
   Widget _buildVisibilityToggle() {

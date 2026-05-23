@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_dropdown_field.dart';
 import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
@@ -80,21 +81,19 @@ class _EditProfileViewState extends State<EditProfileView> {
       await widget.profileService?.updateProfile(updateData);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cập nhật thành công!'),
-            backgroundColor: AppColors.primary,
-          ),
+        showAppSnackBar(
+          context,
+          'Cập nhật thành công!',
+          backgroundColor: AppColors.primary,
         );
         widget.onSaved?.call();
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lưu thất bại: $error'),
-            backgroundColor: Colors.red,
-          ),
+        showAppSnackBar(
+          context,
+          'Lưu thất bại: $error',
+          backgroundColor: Colors.red,
         );
       }
     } finally {

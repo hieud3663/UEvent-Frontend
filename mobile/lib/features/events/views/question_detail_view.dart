@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/events/widgets/ticket_detail_card.dart';
@@ -13,10 +14,7 @@ import 'package:frontend/features/events/widgets/quick_reply_bar.dart';
 class QuestionDetailView extends StatefulWidget {
   final VoidCallback? onBack;
 
-  const QuestionDetailView({
-    super.key,
-    this.onBack,
-  });
+  const QuestionDetailView({super.key, this.onBack});
 
   @override
   State<QuestionDetailView> createState() => _QuestionDetailViewState();
@@ -62,13 +60,15 @@ class _QuestionDetailViewState extends State<QuestionDetailView> {
               const SliverToBoxAdapter(child: SizedBox(height: 110)),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.pagePaddingH,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    
                     // ── Attendee Question Detail ──
                     const TicketDetailCard(
-                      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBq83ddJFxOl0xv5HYwFn1d8a_7Tv9rQZFEQFBr_qHzuQOE0ZMRGDk5v4Yyat9Tp__uS_DRyYFFj2gpNWLJtZLJTohxnpvEBCmJhu-BLJxvEibrv-FOJtsT0I6xl80ODmYaZXhxe5Gd0v4mlQtrtLxN9G97M8UEAzO821iRDe98y_v1q1bHJ_AJYx9qq0MxqE2HXIcjsdi0aw6kHVHdloOd2w4Y-Xg4s0OZW53kwkSNnUzQz96r2fA_gvYy6GRRSB7A7zAZMz0__7o',
+                      avatarUrl:
+                          'https://lh3.googleusercontent.com/aida-public/AB6AXuBq83ddJFxOl0xv5HYwFn1d8a_7Tv9rQZFEQFBr_qHzuQOE0ZMRGDk5v4Yyat9Tp__uS_DRyYFFj2gpNWLJtZLJTohxnpvEBCmJhu-BLJxvEibrv-FOJtsT0I6xl80ODmYaZXhxe5Gd0v4mlQtrtLxN9G97M8UEAzO821iRDe98y_v1q1bHJ_AJYx9qq0MxqE2HXIcjsdi0aw6kHVHdloOd2w4Y-Xg4s0OZW53kwkSNnUzQz96r2fA_gvYy6GRRSB7A7zAZMz0__7o',
                       userName: 'Michael Chen',
                       userTypeAndDate: 'Regular Attendee • 2m ago',
                       questionText: 'How do I update my emergency contact?',
@@ -115,10 +115,7 @@ class _QuestionDetailViewState extends State<QuestionDetailView> {
                       label: 'Send Reply',
                       icon: Icons.send,
                       onPressed: () {
-                        // mock send
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Reply sent!')),
-                        );
+                        showAppSnackBar(context, 'Reply sent!');
                       },
                     ),
                     const SizedBox(height: 12),
@@ -133,7 +130,7 @@ class _QuestionDetailViewState extends State<QuestionDetailView> {
                         ),
                       ),
                     ),
-                    
+
                     // Spacer for keyboard and floating bottom bar
                     SizedBox(height: bottomPadding > 0 ? bottomPadding : 120),
                   ]),
@@ -161,7 +158,9 @@ class _QuestionDetailViewState extends State<QuestionDetailView> {
 
           // ── Quick Reply Bottom Bar (Floating) ──
           Positioned(
-            bottom: bottomPadding > 0 ? bottomPadding + 16 : 32, // Lift above keyboard if open
+            bottom: bottomPadding > 0
+                ? bottomPadding + 16
+                : 32, // Lift above keyboard if open
             left: 16,
             right: 16,
             child: QuickReplyBar(
