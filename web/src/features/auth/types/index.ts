@@ -5,7 +5,7 @@ export interface AdminUserInfo {
   username: string;
   fullName: string;
   email: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   isSuperuser: boolean;
 }
 
@@ -25,7 +25,7 @@ export interface AdminUserInfoDto {
   username: string;
   full_name: string;
   email: string;
-  avatar_url: string;
+  avatar_url: string | null;
   is_superuser: boolean;
 }
 
