@@ -1,6 +1,10 @@
 // File: lib/models/event_model.dart
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:frontend/core/config/env_config.dart';
+import 'package:frontend/features/events/models/event_organizer_member_model.dart';
+import 'package:frontend/features/events/models/event_registration_model.dart';
+import 'package:frontend/features/events/models/registration_field_model.dart';
 
 part 'event_model.g.dart';
 
@@ -34,6 +38,9 @@ class EventModel {
   final int? guestCount;
   @JsonKey(name: 'deep_link')
   final String? deepLink;
+  final List<RegistrationFieldModel> registrationFields;
+  final List<EventOrganizerMemberModel> organizers;
+  final EventUserSummaryModel? createdBy;
 
   /// Whether the current user is the organizer/creator of this event.
   /// true = user created this event, false = user is attending/discovering.
@@ -57,6 +64,9 @@ class EventModel {
     this.description,
     this.guestCount,
     this.deepLink,
+    this.registrationFields = const [],
+    this.organizers = const [],
+    this.createdBy,
     this.isOrganizer = false,
   });
 
@@ -78,6 +88,9 @@ class EventModel {
     String? description,
     int? guestCount,
     String? deepLink,
+    List<RegistrationFieldModel>? registrationFields,
+    List<EventOrganizerMemberModel>? organizers,
+    EventUserSummaryModel? createdBy,
     bool? isOrganizer,
   }) {
     return EventModel(
@@ -99,21 +112,29 @@ class EventModel {
       description: description ?? this.description,
       guestCount: guestCount ?? this.guestCount,
       deepLink: deepLink ?? this.deepLink,
+      registrationFields: registrationFields ?? this.registrationFields,
+      organizers: organizers ?? this.organizers,
+      createdBy: createdBy ?? this.createdBy,
       isOrganizer: isOrganizer ?? this.isOrganizer,
     );
   }
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final category = json['category'];
+    final room = json['room'];
+    final rawRegistrationFields = json['registration_fields'];
+    final rawOrganizers = json['organizers'];
+    final rawCreatedBy = json['created_by'];
 
     return EventModel(
       id: json['id'] as String,
       title: json['title'] as String,
       slug: json['slug'] as String?,
-      imageUrl: json['cover_image_url'] as String? ?? '',
+      imageUrl: _parseImageUrl(json),
       location:
           json['location'] as String? ??
           json['location_snapshot'] as String? ??
+          _parseRoomName(room) ??
           '',
       startDate: DateTime.parse(json['start_at'] as String),
       endDate: _parseNullableDateTime(json['end_at']),
@@ -131,11 +152,48 @@ class EventModel {
       description: json['description'] as String?,
       guestCount: (json['max_capacity'] as num?)?.toInt(),
       deepLink: json['deep_link'] as String?,
+      registrationFields: rawRegistrationFields is List
+          ? rawRegistrationFields
+                .whereType<Map<String, dynamic>>()
+                .map(RegistrationFieldModel.fromJson)
+                .toList()
+          : const [],
+      organizers: rawOrganizers is List
+          ? rawOrganizers
+                .whereType<Map<String, dynamic>>()
+                .map(EventOrganizerMemberModel.fromJson)
+                .toList()
+          : const [],
+      createdBy: rawCreatedBy is Map<String, dynamic>
+          ? EventUserSummaryModel.fromJson(rawCreatedBy)
+          : null,
       isOrganizer: json['is_organizer'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => _$EventModelToJson(this);
+}
+
+String _parseImageUrl(Map<String, dynamic> json) {
+  final rawValue =
+      json['cover_image_url'] ??
+      json['cover_image'] ??
+      json['cover_url'] ??
+      json['image_url'] ??
+      json['imageUrl'] ??
+      json['image'] ??
+      '';
+
+  if (rawValue is! String || rawValue.trim().isEmpty) return '';
+
+  final value = rawValue.trim();
+  final uri = Uri.tryParse(value);
+  if (uri != null && uri.hasScheme) return value;
+
+  final baseUri = Uri.parse(EnvConfig.baseUrl);
+  final origin = baseUri.replace(path: '', query: '', fragment: '');
+  final normalizedPath = value.startsWith('/') ? value : '/$value';
+  return origin.replace(path: normalizedPath).toString();
 }
 
 DateTime? _parseNullableDateTime(dynamic value) {
@@ -149,6 +207,19 @@ String? _parseCategoryName(dynamic value) {
     return value['name'] as String? ?? value['slug'] as String?;
   }
   return null;
+}
+
+String? _parseRoomName(dynamic value) {
+  if (value is! Map<String, dynamic>) return null;
+
+  final parts = [
+    value['name'],
+    value['code'],
+    value['building_name'],
+    value['campus_name'],
+  ].whereType<String>().where((part) => part.trim().isNotEmpty).toList();
+
+  return parts.isEmpty ? null : parts.join(' • ');
 }
 
 EventVisibility _parseVisibility(dynamic value) {
@@ -171,4 +242,4 @@ EventStatus _parseStatus(dynamic value) {
 
 enum EventVisibility { public, private }
 
-enum EventStatus { active, draft, finished, cancelled }
+enum EventStatus { active, approved, draft, finished, cancelled }

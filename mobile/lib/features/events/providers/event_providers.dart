@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/events/models/event_category_model.dart';
+import 'package:frontend/features/events/models/event_feedback_model.dart';
 import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/events/models/event_question_model.dart';
+import 'package:frontend/features/events/models/event_registration_model.dart';
 import 'package:frontend/features/events/models/event_room_model.dart';
 
 const _eventsPageSize = 10;
@@ -196,3 +199,44 @@ final eventDetailProvider = FutureProvider.family<EventModel, String>((
   final service = ref.read(eventServiceProvider);
   return service.getEventDetail(eventId);
 });
+
+final organizerEventDetailProvider = FutureProvider.family<EventModel, String>((
+  ref,
+  eventId,
+) async {
+  final service = ref.read(eventServiceProvider);
+  return service.getOrganizerEventDetail(eventId);
+});
+
+final eventRegistrationsProvider =
+    FutureProvider.family<List<EventRegistrationModel>, String>((
+      ref,
+      eventId,
+    ) async {
+      final service = ref.read(eventServiceProvider);
+      return service.getEventRegistrations(eventId: eventId);
+    });
+
+final publicEventQuestionsProvider =
+    FutureProvider.family<List<EventQuestionModel>, String>((ref, eventId) {
+      final service = ref.read(eventServiceProvider);
+      return service.getPublicEventQuestions(eventId: eventId);
+    });
+
+final organizerEventQuestionsProvider =
+    FutureProvider.family<List<EventQuestionModel>, String>((ref, eventId) {
+      final service = ref.read(eventServiceProvider);
+      return service.getOrganizerEventQuestions(eventId: eventId);
+    });
+
+final eventFeedbacksProvider =
+    FutureProvider.family<List<EventFeedbackModel>, String>((ref, eventId) {
+      final service = ref.read(eventServiceProvider);
+      return service.getEventFeedbacks(eventId: eventId);
+    });
+
+final eventFeedbackSummaryProvider =
+    FutureProvider.family<EventFeedbackSummaryModel, String>((ref, eventId) {
+      final service = ref.read(eventServiceProvider);
+      return service.getEventFeedbackSummary(eventId: eventId);
+    });

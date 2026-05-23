@@ -2,22 +2,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/async_state_widgets.dart';
 import 'package:frontend/features/events/models/event_model.dart';
 import 'package:frontend/features/events/models/team_member_model.dart';
-import 'package:frontend/features/events/mock/mock_event_data.dart';
-import 'package:frontend/features/events/mock/mock_team_data.dart';
-import 'package:frontend/core/widgets/glass_top_bar.dart';
+import 'package:frontend/features/events/providers/event_providers.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
+import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/section_header.dart';
+import 'package:frontend/features/events/models/event_feedback_model.dart';
+import 'package:frontend/features/events/models/event_question_model.dart';
 import 'package:frontend/features/events/widgets/team_member_tile.dart';
 
 /// Event Detail — Organizer View with Check-in capability.
 /// Push navigation (no bottom nav, ← back button).
-class EventDetailOrganizerView extends StatelessWidget {
+class EventDetailOrganizerView extends ConsumerWidget {
+  final String eventId;
+  final EventModel? initialEvent;
   final VoidCallback? onBack;
   final VoidCallback? onCheckIn;
   final VoidCallback? onInvite;
@@ -27,6 +34,8 @@ class EventDetailOrganizerView extends StatelessWidget {
 
   const EventDetailOrganizerView({
     super.key,
+    required this.eventId,
+    this.initialEvent,
     this.onBack,
     this.onCheckIn,
     this.onInvite,
@@ -35,101 +44,137 @@ class EventDetailOrganizerView extends StatelessWidget {
     this.onShare,
   });
 
-  // Reference mock data from dedicated mock files
-  static EventModel get _event => MockEventData.eventDetailOrganizer;
-  static List<TeamMemberModel> get _teamMembers => MockTeamData.btcTeam;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detailState = ref.watch(organizerEventDetailProvider(eventId));
+    final event =
+        detailState.whenOrNull(data: (value) => value) ?? initialEvent;
+
+    if (event == null && detailState.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (event == null && detailState.hasError) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: AppErrorState(
+            title: 'Không tải được sự kiện',
+            description:
+                'Bạn không có quyền organizer hoặc sự kiện không tồn tại.',
+            onRetry: () => _invalidateEventDetailData(ref),
+          ),
+        ),
+      );
+    }
+
+    final resolvedEvent = event!;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          RefreshIndicator(
+            onRefresh: () => _refreshEventDetailData(ref),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
 
-              // ── Hero Image ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
-                  child: _buildHeroImage(),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // ── Category Badge + Title + Meta ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
-                  child: _buildEventInfo(),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // ── Organizer Action Buttons (Invite / Notify / Manage) ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
-                  child: _buildActionButtons(),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // ── Participant Check-in CTA ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
-                  ),
-                  child: PrimaryButton(
-                    label: 'Participant Check-in',
-                    icon: Icons.qr_code_2,
-                    onPressed: onCheckIn,
+                // ── Hero Image ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildHeroImage(resolvedEvent),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── Stats Section ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
+                // ── Category Badge + Title + Meta ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildEventInfo(resolvedEvent),
                   ),
-                  child: _buildStatsSection(),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Event Description ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
+                // ── Organizer Action Buttons (Invite / Notify / Manage) ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildActionButtons(),
                   ),
-                  child: _buildDescriptionSection(),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── BTC Team ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.pagePaddingH,
+                // ── Participant Check-in CTA ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: PrimaryButton(
+                      label: 'Participant Check-in',
+                      icon: Icons.qr_code_2,
+                      onPressed: onCheckIn,
+                    ),
                   ),
-                  child: _buildTeamSection(),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
-            ],
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── Stats Section ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildStatsSection(resolvedEvent),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── Event Description ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildDescriptionSection(resolvedEvent),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _OrganizerEngagementSection(eventId: eventId),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── BTC Team ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _buildTeamSection(resolvedEvent),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
+            ),
           ),
           Positioned(
             top: 0,
@@ -168,27 +213,17 @@ class EventDetailOrganizerView extends StatelessWidget {
     VoidCallback? onTap,
     bool isPrimary = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.8),
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: isPrimary ? AppColors.primary : AppColors.onSurface,
-        ),
-      ),
+    return GlassIconButton(
+      icon: icon,
+      iconSize: 20,
+      backgroundColor: Colors.white.withValues(alpha: 0.8),
+      iconColor: isPrimary ? AppColors.primary : AppColors.onSurface,
+      onPressed: onTap,
     );
   }
 
   // ── Hero Image with Live badge ──
-  Widget _buildHeroImage() {
+  Widget _buildHeroImage(EventModel event) {
     return Container(
       height: 200,
       decoration: BoxDecoration(
@@ -200,7 +235,7 @@ class EventDetailOrganizerView extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           CachedNetworkImage(
-            imageUrl: _event.imageUrl,
+            imageUrl: event.imageUrl,
             fit: BoxFit.cover,
             memCacheWidth: 1200,
             maxWidthDiskCache: 1800,
@@ -215,7 +250,7 @@ class EventDetailOrganizerView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               borderRadius: 9999,
               child: Text(
-                'LIVE NOW',
+                event.status.name.toUpperCase(),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w800,
@@ -230,7 +265,7 @@ class EventDetailOrganizerView extends StatelessWidget {
   }
 
   // ── Event Info: category badge, title, date, location ──
-  Widget _buildEventInfo() {
+  Widget _buildEventInfo(EventModel event) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -242,7 +277,7 @@ class EventDetailOrganizerView extends StatelessWidget {
             borderRadius: BorderRadius.circular(9999),
           ),
           child: Text(
-            _event.category?.toUpperCase() ?? '',
+            event.category?.toUpperCase() ?? 'EVENT',
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.w700,
@@ -253,18 +288,21 @@ class EventDetailOrganizerView extends StatelessWidget {
         const SizedBox(height: 12),
         // Title
         Text(
-          _event.title,
+          event.title,
           style: AppTextStyles.headlineLarge.copyWith(fontSize: 28),
         ),
         const SizedBox(height: 16),
         // Date row
         _buildInfoRow(
           Icons.calendar_month,
-          'Oct 24, 2024 • ${_event.timeRange}',
+          '${DateFormat('MMM d, yyyy').format(event.startDate.toLocal())} • ${_formatTimeRange(event)}',
         ),
         const SizedBox(height: 12),
         // Location row
-        _buildInfoRow(Icons.location_on, _event.location),
+        _buildInfoRow(
+          Icons.location_on,
+          event.location.isNotEmpty ? event.location : 'Chưa có địa điểm',
+        ),
       ],
     );
   }
@@ -309,42 +347,16 @@ class EventDetailOrganizerView extends StatelessWidget {
   }
 
   Widget _buildActionChip(IconData icon, String label, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowPrimary.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: AppColors.onPrimaryDark),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.titleSmall.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onPrimaryDark,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return PrimaryButton(
+      label: label,
+      icon: icon,
+      isFullWidth: true,
+      onPressed: onTap,
     );
   }
 
   // ── Stats: Tickets Sold + Pending Approvals ──
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(EventModel event) {
     return Column(
       children: [
         // Tickets Sold
@@ -365,7 +377,7 @@ class EventDetailOrganizerView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '1,842',
+                    '${event.guestCount ?? 0}',
                     style: AppTextStyles.headlineLarge.copyWith(fontSize: 30),
                   ),
                   Container(
@@ -423,7 +435,7 @@ class EventDetailOrganizerView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '48 Guest Requests',
+                      '${event.registrationFields.length} Registration Fields',
                       style: AppTextStyles.headlineMedium,
                     ),
                   ],
@@ -462,7 +474,7 @@ class EventDetailOrganizerView extends StatelessWidget {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '+45',
+                          '+${event.registrationFields.length}',
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -501,14 +513,14 @@ class EventDetailOrganizerView extends StatelessWidget {
   }
 
   // ── Description ──
-  Widget _buildDescriptionSection() {
+  Widget _buildDescriptionSection(EventModel event) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Event Description', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         Text(
-          _event.description ?? '',
+          event.description ?? 'Chưa có mô tả sự kiện.',
           style: AppTextStyles.bodyMedium.copyWith(
             height: 1.6,
             color: AppColors.onSurfaceVariant,
@@ -534,7 +546,9 @@ class EventDetailOrganizerView extends StatelessWidget {
   }
 
   // ── BTC Team Section ──
-  Widget _buildTeamSection() {
+  Widget _buildTeamSection(EventModel event) {
+    final teamMembers = _teamMembersFromEvent(event);
+
     return Column(
       children: [
         SectionHeader(
@@ -545,15 +559,338 @@ class EventDetailOrganizerView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...List.generate(
-          _teamMembers.length,
+          teamMembers.length,
           (i) => Padding(
             padding: EdgeInsets.only(
-              bottom: i < _teamMembers.length - 1 ? 12 : 0,
+              bottom: i < teamMembers.length - 1 ? 12 : 0,
             ),
-            child: TeamMemberTile(member: _teamMembers[i]),
+            child: TeamMemberTile(member: teamMembers[i]),
           ),
         ),
       ],
+    );
+  }
+
+  List<TeamMemberModel> _teamMembersFromEvent(EventModel event) {
+    return event.organizers
+        .map(
+          (organizer) => TeamMemberModel(
+            id: organizer.id,
+            name: organizer.user.displayName,
+            role: organizer.organizerRole,
+            avatarUrl: organizer.user.avatarUrl,
+          ),
+        )
+        .toList();
+  }
+
+  String _formatTimeRange(EventModel event) {
+    if (event.timeRange?.isNotEmpty == true) return event.timeRange!;
+
+    final start = DateFormat('HH:mm').format(event.startDate.toLocal());
+    final end = event.endDate == null
+        ? null
+        : DateFormat('HH:mm').format(event.endDate!.toLocal());
+    return end == null ? start : '$start - $end';
+  }
+
+  void _invalidateEventDetailData(WidgetRef ref) {
+    ref.invalidate(organizerEventDetailProvider(eventId));
+    ref.invalidate(organizerEventQuestionsProvider(eventId));
+    ref.invalidate(eventFeedbacksProvider(eventId));
+    ref.invalidate(eventFeedbackSummaryProvider(eventId));
+  }
+
+  Future<void> _refreshEventDetailData(WidgetRef ref) {
+    ref.invalidate(organizerEventQuestionsProvider(eventId));
+    ref.invalidate(eventFeedbacksProvider(eventId));
+    ref.invalidate(eventFeedbackSummaryProvider(eventId));
+    return ref
+        .refresh(organizerEventDetailProvider(eventId).future)
+        .then<void>((_) {});
+  }
+}
+
+class _OrganizerEngagementSection extends ConsumerWidget {
+  final String eventId;
+
+  const _OrganizerEngagementSection({required this.eventId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final questionsState = ref.watch(organizerEventQuestionsProvider(eventId));
+    final feedbacksState = ref.watch(eventFeedbacksProvider(eventId));
+    final summaryState = ref.watch(eventFeedbackSummaryProvider(eventId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Comments & Feedback', style: AppTextStyles.headlineMedium),
+        const SizedBox(height: 12),
+        summaryState.when(
+          loading: () =>
+              const AppLoadingState(height: 84, padding: EdgeInsets.zero),
+          error: (_, _) => AppErrorState(
+            title: 'Không tải được thống kê feedback',
+            description: 'Vui lòng thử lại sau.',
+            padding: EdgeInsets.zero,
+            onRetry: () =>
+                ref.invalidate(eventFeedbackSummaryProvider(eventId)),
+          ),
+          data: _FeedbackSummaryCard.new,
+        ),
+        const SizedBox(height: 12),
+        questionsState.when(
+          loading: () =>
+              const AppLoadingState(height: 120, padding: EdgeInsets.zero),
+          error: (_, _) => AppErrorState(
+            title: 'Không tải được bình luận',
+            description: 'Vui lòng thử lại sau.',
+            padding: EdgeInsets.zero,
+            onRetry: () =>
+                ref.invalidate(organizerEventQuestionsProvider(eventId)),
+          ),
+          data: (questions) => _QuestionListCard(questions: questions),
+        ),
+        const SizedBox(height: 12),
+        feedbacksState.when(
+          loading: () =>
+              const AppLoadingState(height: 120, padding: EdgeInsets.zero),
+          error: (_, _) => AppErrorState(
+            title: 'Không tải được feedback',
+            description: 'Vui lòng thử lại sau.',
+            padding: EdgeInsets.zero,
+            onRetry: () => ref.invalidate(eventFeedbacksProvider(eventId)),
+          ),
+          data: (feedbacks) => _FeedbackListCard(feedbacks: feedbacks),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeedbackSummaryCard extends StatelessWidget {
+  final EventFeedbackSummaryModel summary;
+
+  const _FeedbackSummaryCard(this.summary);
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 12,
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.star, color: AppColors.primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  summary.averageRating.toStringAsFixed(1),
+                  style: AppTextStyles.headlineMedium,
+                ),
+                Text(
+                  '${summary.total} feedbacks',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _ratingBreakdown(summary),
+            textAlign: TextAlign.right,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _ratingBreakdown(EventFeedbackSummaryModel summary) {
+    return List.generate(5, (index) {
+      final rating = 5 - index;
+      return '$rating★ ${summary.ratingCounts[rating] ?? 0}';
+    }).join('\n');
+  }
+}
+
+class _QuestionListCard extends StatelessWidget {
+  final List<EventQuestionModel> questions;
+
+  const _QuestionListCard({required this.questions});
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = [...questions]
+      ..sort((a, b) {
+        if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+        final aDate = a.askedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.askedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Questions', style: AppTextStyles.titleSmall),
+          const SizedBox(height: 12),
+          if (visible.isEmpty)
+            Text(
+              'Chưa có câu hỏi nào.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            )
+          else
+            ...visible.take(4).map(_QuestionRow.new),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestionRow extends StatelessWidget {
+  final EventQuestionModel question;
+
+  const _QuestionRow(this.question);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            question.isPinned ? Icons.push_pin : Icons.forum_outlined,
+            size: 18,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  question.question,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  question.isAnswered
+                      ? question.answer!
+                      : 'Chưa được trả lời • ${question.moderationStatus}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackListCard extends StatelessWidget {
+  final List<EventFeedbackModel> feedbacks;
+
+  const _FeedbackListCard({required this.feedbacks});
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = [...feedbacks]
+      ..sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Feedback', style: AppTextStyles.titleSmall),
+          const SizedBox(height: 12),
+          if (visible.isEmpty)
+            Text(
+              'Chưa có feedback nào.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            )
+          else
+            ...visible.take(4).map(_FeedbackRow.new),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackRow extends StatelessWidget {
+  final EventFeedbackModel feedback;
+
+  const _FeedbackRow(this.feedback);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.rate_review_outlined,
+            size: 18,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${feedback.authorName} • ${feedback.rating}★',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  feedback.content.isEmpty
+                      ? 'Không có nội dung.'
+                      : feedback.content,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

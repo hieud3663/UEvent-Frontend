@@ -5,12 +5,23 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/events/models/event_category_model.dart';
+import 'package:frontend/features/events/models/event_registration_model.dart';
 import 'package:frontend/features/events/models/event_room_model.dart';
 import 'package:frontend/features/events/providers/event_providers.dart';
 
 final eventMutationControllerProvider =
     AsyncNotifierProvider<EventMutationController, void>(
       EventMutationController.new,
+    );
+
+final eventRegistrationControllerProvider =
+    AsyncNotifierProvider<EventRegistrationController, void>(
+      EventRegistrationController.new,
+    );
+
+final eventEngagementControllerProvider =
+    AsyncNotifierProvider<EventEngagementController, void>(
+      EventEngagementController.new,
     );
 
 class EventMutationController extends AsyncNotifier<void> {
@@ -57,7 +68,7 @@ class EventMutationController extends AsyncNotifier<void> {
         'end_at': _toApiDate(endAt),
         'max_capacity': maxCapacity,
         'location_snapshot': room.displayName,
-        'cover_image_url': '',
+        'cover_image_key': '',
         'deep_link': '',
         'status': 'draft',
       });
@@ -82,8 +93,101 @@ class EventMutationController extends AsyncNotifier<void> {
         contentType: contentType,
       );
 
+      if (uploadTarget.objectKey.isEmpty) {
+        throw const EventMutationException(
+          'Server không trả object key của ảnh bìa.',
+        );
+      }
+
+      await service.updateOrganizerEventCover(
+        eventId: createdEvent.id,
+        coverImageKey: uploadTarget.objectKey,
+      );
+
       ref.invalidate(organizerEventsProvider);
       ref.invalidate(organizerEventsPagerProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> updateOrganizerEvent({
+    required String eventId,
+    required String title,
+    required String description,
+    required EventCategoryModel? category,
+    required EventRoomModel? room,
+    required File? coverImage,
+    required int maxCapacity,
+    required DateTime startAt,
+    required DateTime endAt,
+    required bool isPublic,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      final service = ref.read(eventServiceProvider);
+      final payload = <String, dynamic>{
+        'title': title,
+        'description': description,
+        'visibility': isPublic ? 'public' : 'private',
+        'start_at': _toApiDate(startAt),
+        'end_at': _toApiDate(endAt),
+        'max_capacity': maxCapacity,
+      };
+
+      if (category != null) {
+        payload['category'] = category.id.isNotEmpty
+            ? category.id
+            : category.name;
+      }
+
+      if (room != null) {
+        payload['room'] = room.id;
+        payload['location_snapshot'] = room.displayName;
+      }
+
+      await service.updateOrganizerEvent(eventId: eventId, payload: payload);
+
+      if (coverImage != null) {
+        final contentType = _contentTypeForPath(coverImage.path);
+        final fileName = '$eventId.${_extensionForContentType(contentType)}';
+        final uploadTarget = await service.getEventCoverPresignedUrl(
+          fileName: fileName,
+          contentType: contentType,
+        );
+
+        if (uploadTarget.presignedUrl.isEmpty) {
+          throw const EventMutationException(
+            'Server không trả presigned URL để upload ảnh.',
+          );
+        }
+
+        await service.uploadEventCoverImage(
+          imageFile: coverImage,
+          presignedUrl: uploadTarget.presignedUrl,
+          contentType: contentType,
+        );
+
+        if (uploadTarget.objectKey.isEmpty) {
+          throw const EventMutationException(
+            'Server không trả object key của ảnh bìa.',
+          );
+        }
+
+        await service.updateOrganizerEventCover(
+          eventId: eventId,
+          coverImageKey: uploadTarget.objectKey,
+        );
+      }
+
+      ref.invalidate(eventDetailProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(discoveryEventsProvider);
+      ref.invalidate(discoverySearchEventsProvider);
     });
 
     state = result;
@@ -121,6 +225,84 @@ class EventMutationException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class EventRegistrationController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<EventRegistrationModel?> registerEvent({
+    required String eventId,
+    List<EventRegistrationAnswerModel> answers = const [],
+  }) async {
+    state = const AsyncLoading();
+
+    EventRegistrationModel? registration;
+    final result = await AsyncValue.guard(() async {
+      registration = await ref
+          .read(eventServiceProvider)
+          .registerEvent(eventId: eventId, answers: answers);
+
+      ref.invalidate(eventDetailProvider(eventId));
+      ref.invalidate(myEventsProvider);
+    });
+
+    state = result;
+    return result.hasValue ? registration : null;
+  }
+
+  Future<bool> promoteRegistrationToCohost({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(eventServiceProvider)
+          .promoteRegistrationToCohost(
+            eventId: eventId,
+            registrationId: registrationId,
+          );
+
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(eventRegistrationsProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+}
+
+class EventEngagementController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> createQuestion({
+    required String eventId,
+    required String questionText,
+    required bool isAnonymous,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(eventServiceProvider)
+          .createEventQuestion(
+            eventId: eventId,
+            questionText: questionText,
+            isAnonymous: isAnonymous,
+          );
+
+      ref.invalidate(publicEventQuestionsProvider(eventId));
+      ref.invalidate(organizerEventQuestionsProvider(eventId));
+    });
+
+    state = result;
+    return result.hasValue;
+  }
 }
 
 String eventMutationErrorMessage(Object error) {

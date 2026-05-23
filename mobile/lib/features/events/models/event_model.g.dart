@@ -36,6 +36,7 @@ const _$EventVisibilityEnumMap = {
 
 const _$EventStatusEnumMap = {
   EventStatus.active: 'active',
+  EventStatus.approved: 'approved',
   EventStatus.draft: 'draft',
   EventStatus.finished: 'finished',
   EventStatus.cancelled: 'cancelled',

@@ -406,6 +406,8 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
     switch (status) {
       case EventStatus.active:
         return 'Active';
+      case EventStatus.approved:
+        return 'Approved';
       case EventStatus.draft:
         return 'Draft';
       case EventStatus.finished:

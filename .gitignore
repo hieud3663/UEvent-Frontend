@@ -64,3 +64,5 @@ package-lock.json
 .claude/skills/gitnexus/
 mobile/android/app/google-services.json
 mobile/lib/firebase_options.dart
+
+.codegraph/
