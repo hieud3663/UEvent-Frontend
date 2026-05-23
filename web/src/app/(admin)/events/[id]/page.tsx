@@ -287,8 +287,12 @@ export default function EventReviewDetailPage() {
                     <Calendar className="text-slate-600 w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">{event.date}</p>
-                    <p className="text-sm text-slate-500">{event.startAt ? new Date(event.startAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                    <p className="font-bold text-slate-900">
+                      {event.startAt ? `Bắt đầu: ${formatDateTime(event.startAt)}` : event.date}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {event.endAt ? `Kết thúc: ${formatDateTime(event.endAt)}` : 'Chưa có thời gian kết thúc'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -559,6 +563,17 @@ function formatModerationAction(action: string): string {
   if (action === 'reopen') return 'Mở lại';
   if (action === 'escalate') return 'Chuyển cấp xử lý';
   return action;
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+    hour12: false,
+  }).format(new Date(value));
 }
 
 function formatVisibilityLabel(visibility?: string | null): string {

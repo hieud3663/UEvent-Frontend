@@ -301,8 +301,6 @@ export default function EditUserPage() {
                 </div>
               </div>
 
-              {/* Permission checkbox mock UI tạm ẩn vì API hiện chỉ hỗ trợ đồng bộ role_codes. */}
-
               <div className="pt-6">
                 <div className="p-6 bg-red-50 rounded-[24px] border border-red-100 flex items-start gap-4">
                   <div className="w-5 h-5 text-red-500 mt-1 flex-shrink-0">⚠️</div>

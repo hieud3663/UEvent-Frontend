@@ -28,8 +28,10 @@ interface SystemSettingsState {
   dateRange: LogDateRange;
   error: string | null;
   isAuditLoading: boolean;
+  isSavingSettings: boolean;
   isSettingsLoading: boolean;
   logs: LogEntry[];
+  settingGroups: SystemSettingsResponse['groups'];
   settings: SystemSetting[];
   status: 'all' | 'success' | 'failed';
   totalLogs: number;
@@ -37,9 +39,10 @@ interface SystemSettingsState {
   setActorId: (value: string) => void;
   setAuditAlerts: (value: boolean) => void;
   setDateRange: (value: LogDateRange) => void;
+  setSettingValue: (key: string, value: SystemSetting['value']) => void;
   setStatus: (value: 'all' | 'success' | 'failed') => void;
   refresh: () => Promise<void>;
-  savePreferences: () => Promise<void>;
+  savePreferences: (reason?: string) => Promise<void>;
 }
 
 const DEFAULT_AUDIT_SUMMARY: AuditSummary = {
@@ -66,6 +69,7 @@ export function useSystemSettings(): SystemSettingsState {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [totalLogs, setTotalLogs] = useState(0);
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isAuditLoading, setIsAuditLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [auditAlerts, setAuditAlertsState] = useState(true);
@@ -177,7 +181,17 @@ export function useSystemSettings(): SystemSettingsState {
     await Promise.all([loadSettings(), loadAuditLogs()]);
   }, [loadAuditLogs, loadSettings]);
 
-  const savePreferences = useCallback(async () => {
+  const setSettingValue = useCallback((key: string, value: SystemSetting['value']) => {
+    setSettingsResponse((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        settings: current.settings.map((setting) => (setting.key === key ? { ...setting, value } : setting)),
+      };
+    });
+  }, []);
+
+  const savePreferences = useCallback(async (reason?: string) => {
     const settingsToSave: Array<{ key: string; value: SystemSetting['value'] }> = [];
 
     const currentSettings = settingsResponse?.settings ?? [];
@@ -188,8 +202,13 @@ export function useSystemSettings(): SystemSettingsState {
     }
 
     if (settingsToSave.length > 0) {
-      const response = await updateSystemSettings(settingsToSave);
-      setSettingsResponse(response);
+      setIsSavingSettings(true);
+      try {
+        const response = await updateSystemSettings(settingsToSave, reason);
+        setSettingsResponse(response);
+      } finally {
+        setIsSavingSettings(false);
+      }
     }
   }, [settingsResponse]);
 
@@ -209,8 +228,10 @@ export function useSystemSettings(): SystemSettingsState {
     dateRange,
     error,
     isAuditLoading,
+    isSavingSettings,
     isSettingsLoading,
     logs,
+    settingGroups: settingsResponse?.groups ?? [],
     settings: settingsResponse?.settings ?? [],
     status,
     totalLogs,
@@ -218,6 +239,7 @@ export function useSystemSettings(): SystemSettingsState {
     setActorId,
     setAuditAlerts,
     setDateRange,
+    setSettingValue,
     setStatus,
     refresh,
     savePreferences,

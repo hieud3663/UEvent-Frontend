@@ -223,9 +223,6 @@ export default function CreateUserPage() {
               </div>
             </div>
 
-            {/* Permission checkbox mock UI tạm ẩn vì API admin users hiện chỉ hỗ trợ role_codes.
-                Khi backend có contract permission chi tiết, khối này sẽ được bật lại và bind với API thật. */}
-            
             {/* Action Buttons for Mobile mostly, but good to have at bottom too */}
             <div className="pt-8 border-t border-slate-200/50 flex justify-end gap-3 md:hidden">
               <button 

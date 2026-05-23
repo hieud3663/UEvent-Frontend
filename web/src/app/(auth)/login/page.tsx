@@ -2,9 +2,8 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, Zap, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
 import { Input, ListSkeleton } from '@/core/components';
 import { loginAdmin } from '@/features/auth/services/auth.service';
 
@@ -58,7 +57,6 @@ function LoginForm() {
         </p>
       </div>
 
-      {/* Login Card */}
       <div className="w-full max-w-md glass-card rounded-[32px] p-8 shadow-2xl shadow-black/5">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email Field */}
@@ -120,33 +118,6 @@ function LoginForm() {
           </button>
         </form>
 
-        {/* Forgot Password */}
-        <div className="mt-8 text-center">
-          <Link
-            href="#"
-            className="text-sm font-semibold text-primary hover:text-on-primary-container transition-colors"
-          >
-            Forgot Password?
-          </Link>
-        </div>
-      </div>
-
-      {/* Secondary Navigation */}
-      <div className="mt-12 flex items-center justify-center gap-6">
-        <Link
-          href="#"
-          className="flex items-center gap-2 px-6 py-3 glass-card rounded-full text-sm font-bold text-on-surface-variant hover:text-on-surface transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Return to Site
-        </Link>
-        <div className="w-1 h-1 bg-outline-variant rounded-full" />
-        <Link
-          href="#"
-          className="text-sm font-bold text-outline hover:text-on-surface-variant transition-colors"
-        >
-          Help Center
-        </Link>
       </div>
 
       {/* Footer */}

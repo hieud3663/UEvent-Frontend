@@ -13,9 +13,9 @@ function mapAdminUserInfo(dto: AdminUserInfoDto): AdminUserInfo {
   return {
     id: dto.id,
     username: dto.username,
-    fullName: dto.full_name,
+    fullName: dto.full_name || dto.username,
     email: dto.email,
-    avatarUrl: dto.avatar_url,
+    avatarUrl: dto.avatar_url || null,
     isSuperuser: dto.is_superuser,
   };
 }
