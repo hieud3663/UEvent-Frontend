@@ -189,6 +189,29 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
     return result.hasValue;
   }
 
+  Future<bool> activateDraftEvent({required String eventId}) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .updateOrganizerEvent(
+            eventId: eventId,
+            payload: {'status': 'active'},
+          );
+
+      ref.invalidate(userEventDetailProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(userDiscoveryEventsProvider);
+      ref.invalidate(userDiscoverySearchEventsProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
   String _toApiDate(DateTime date) => date.toUtc().toIso8601String();
 
   String _contentTypeForPath(String path) {
@@ -236,6 +259,30 @@ class OrganizerEventRegistrationController extends AsyncNotifier<void> {
       await ref
           .read(organizerEventRepositoryProvider)
           .promoteRegistrationToCohost(
+            eventId: eventId,
+            registrationId: registrationId,
+          );
+
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventRegistrationsProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> checkInRegistration({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .checkInRegistration(
             eventId: eventId,
             registrationId: registrationId,
           );

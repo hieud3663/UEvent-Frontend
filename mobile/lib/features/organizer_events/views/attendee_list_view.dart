@@ -8,9 +8,7 @@ import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
-import 'package:frontend/core/widgets/glass_filter_chip.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
-import 'package:frontend/core/widgets/glass_search_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
@@ -29,23 +27,14 @@ class AttendeeListView extends ConsumerStatefulWidget {
 }
 
 class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
-  int _activeFilterIndex = 0;
-  String _query = '';
-
-  final List<String> _filters = const [
-    'All',
-    'Registered',
-    'Waitlisted',
-    'Cancelled',
-  ];
+  String? _selectedRegistrationId;
+  String? _pendingRegistrationId;
+  _RegistrationAction? _pendingAction;
 
   @override
   Widget build(BuildContext context) {
     final registrationsState = ref.watch(
       organizerEventRegistrationsProvider(widget.eventId),
-    );
-    final mutationState = ref.watch(
-      organizerEventRegistrationControllerProvider,
     );
 
     return Scaffold(
@@ -78,54 +67,30 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
                     ),
                   ),
                   data: (registrations) {
-                    final visible = _filteredRegistrations(registrations);
+                    final visible = _visibleRegistrations(registrations);
 
                     return SliverList(
                       delegate: SliverChildListDelegate([
                         Text(
-                          'Danh sách người tham gia',
+                          'Người đăng ký',
                           style: AppTextStyles.headlineLarge.copyWith(
                             fontSize: 24,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        GlassSearchBar(
-                          placeholder: 'Tìm người đăng ký theo email...',
-                          onChanged: (value) => setState(() => _query = value),
-                        ),
                         const SizedBox(height: 24),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          clipBehavior: Clip.none,
-                          physics: const BouncingScrollPhysics(),
-                          child: Row(
-                            children: List.generate(_filters.length, (index) {
-                              return GlassFilterChip(
-                                label: _filterLabel(_filters[index]),
-                                isActive: _activeFilterIndex == index,
-                                onTap: () =>
-                                    setState(() => _activeFilterIndex = index),
-                              );
-                            }),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
                         if (visible.isEmpty)
                           const AppSuccessState(
                             isEmpty: true,
                             emptyIcon: Icons.people_outline,
-                            emptyTitle: 'Chưa có attendee',
+                            emptyTitle: 'Chưa có người đăng ký',
                             emptyDescription:
-                                'Danh sách đăng ký sẽ xuất hiện tại đây.',
+                                'Người đăng ký hợp lệ sẽ xuất hiện tại đây.',
                             emptyPadding: EdgeInsets.zero,
                             child: SizedBox.shrink(),
                           )
                         else
                           ...visible.map(
-                            (registration) => _buildAttendeeCard(
-                              registration,
-                              mutationState.isLoading,
-                            ),
+                            (registration) => _buildAttendeeCard(registration),
                           ),
                         const SizedBox(height: 100),
                       ]),
@@ -156,11 +121,9 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     );
   }
 
-  Widget _buildAttendeeCard(
-    EventRegistrationModel registration,
-    bool isPromoting,
-  ) {
+  Widget _buildAttendeeCard(EventRegistrationModel registration) {
     final user = registration.user;
+    final isSelected = registration.id == _selectedRegistrationId;
 
     return AttendeeCard(
       imageUrl: user?.avatarUrl ?? '',
@@ -170,23 +133,76 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       timestamp: registration.registeredAt == null
           ? null
           : DateFormat('HH:mm').format(registration.registeredAt!.toLocal()),
-      trailing: registration.canPromoteToCohost
-          ? SizedBox(
-              width: 118,
-              child: PrimaryButton(
-                label: 'Co-host',
-                isFullWidth: false,
-                isLoading: isPromoting,
-                onPressed: isPromoting
-                    ? null
-                    : () => _promoteRegistration(registration),
-              ),
-            )
-          : null,
+      onTap: () => setState(() {
+        _selectedRegistrationId = isSelected ? null : registration.id;
+      }),
+      trailing: isSelected ? _buildRegistrationActions(registration) : null,
     );
   }
 
+  Widget _buildRegistrationActions(EventRegistrationModel registration) {
+    final isBusy = _pendingRegistrationId == registration.id;
+    final isCheckedIn = registration.status == 'checked_in';
+
+    return SizedBox(
+      width: 142,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrimaryButton(
+            label: isCheckedIn ? 'Đã check-in' : 'Check-in',
+            isFullWidth: true,
+            isLoading: isBusy && _pendingAction == _RegistrationAction.checkIn,
+            onPressed: isBusy || isCheckedIn
+                ? null
+                : () => _checkInRegistration(registration),
+          ),
+          const SizedBox(height: 8),
+          SecondaryButton(
+            label: 'Co-host',
+            isFullWidth: true,
+            onPressed: isBusy || !registration.canPromoteToCohost
+                ? null
+                : () => _promoteRegistration(registration),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _checkInRegistration(EventRegistrationModel registration) async {
+    setState(() {
+      _pendingRegistrationId = registration.id;
+      _pendingAction = _RegistrationAction.checkIn;
+    });
+
+    final ok = await ref
+        .read(organizerEventRegistrationControllerProvider.notifier)
+        .checkInRegistration(
+          eventId: widget.eventId,
+          registrationId: registration.id,
+        );
+
+    if (!mounted) return;
+    setState(() {
+      _pendingRegistrationId = null;
+      _pendingAction = null;
+    });
+
+    if (ok) {
+      showAppSnackBar(context, 'Đã check-in người đăng ký.');
+    } else {
+      showAppSnackBar(context, 'Không thể check-in người đăng ký.');
+    }
+  }
+
   Future<void> _promoteRegistration(EventRegistrationModel registration) async {
+    setState(() {
+      _pendingRegistrationId = registration.id;
+      _pendingAction = _RegistrationAction.promoteToCohost;
+    });
+
     final ok = await ref
         .read(organizerEventRegistrationControllerProvider.notifier)
         .promoteRegistrationToCohost(
@@ -195,6 +211,11 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
         );
 
     if (!mounted) return;
+    setState(() {
+      _pendingRegistrationId = null;
+      _pendingAction = null;
+    });
+
     if (ok) {
       showAppSnackBar(context, 'Đã cấp quyền co-host.');
     } else {
@@ -202,40 +223,13 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     }
   }
 
-  List<EventRegistrationModel> _filteredRegistrations(
+  List<EventRegistrationModel> _visibleRegistrations(
     List<EventRegistrationModel> registrations,
   ) {
-    final selected = _filters[_activeFilterIndex].toLowerCase();
-    final query = _query.trim().toLowerCase();
-
     return registrations.where((registration) {
-      final matchesStatus =
-          selected == 'all' ||
-          registration.status.toLowerCase() == selected ||
-          (selected == 'registered' && registration.status == 'checked_in');
-      if (!matchesStatus) return false;
-      if (query.isEmpty) return true;
-
-      final user = registration.user;
-      final haystack = [
-        user?.displayName,
-        user?.email,
-        user?.username,
-        registration.ticket?.ticketCode,
-      ].whereType<String>().join(' ').toLowerCase();
-
-      return haystack.contains(query);
+      return registration.status == 'registered' ||
+          registration.status == 'checked_in';
     }).toList();
-  }
-
-  String _filterLabel(String value) {
-    return switch (value) {
-      'All' => 'Tất cả',
-      'Registered' => 'Đã đăng ký',
-      'Waitlisted' => 'Danh sách chờ',
-      'Cancelled' => 'Đã hủy',
-      _ => value,
-    };
   }
 
   AttendeeStatus _statusFromApi(String status) {
@@ -248,3 +242,5 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     };
   }
 }
+
+enum _RegistrationAction { checkIn, promoteToCohost }

@@ -229,6 +229,19 @@ class OrganizerEventService {
     }
   }
 
+  Future<void> checkInRegistration({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    try {
+      await _apiClient.dio.post(
+        '/organizer/events/$eventId/registrations/$registrationId/check-in/',
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<List<EventQuestionModel>> getOrganizerEventQuestions({
     required String eventId,
   }) async {

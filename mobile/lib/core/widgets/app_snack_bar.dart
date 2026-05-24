@@ -1,10 +1,22 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 
-OverlayEntry? _currentSnackBarEntry;
+final Queue<_AppSnackBarMessage> _pendingSnackBars =
+    Queue<_AppSnackBarMessage>();
+_AppSnackBarHostState? _appSnackBarHostState;
+int _nextSnackBarId = 0;
+const _snackBarAnimationDuration = Duration(milliseconds: 260);
 
-final NavigatorObserver appSnackBarRouteObserver = _AppSnackBarRouteObserver();
+class AppSnackBarHost extends StatefulWidget {
+  final Widget child;
+
+  const AppSnackBarHost({required this.child, super.key});
+
+  @override
+  State<AppSnackBarHost> createState() => _AppSnackBarHostState();
+}
 
 void showAppSnackBar(
   BuildContext context,
@@ -13,103 +25,196 @@ void showAppSnackBar(
   Color? foregroundColor,
   Duration duration = const Duration(seconds: 3),
 }) {
-  final route = ModalRoute.of(context);
-  if (route != null && !route.isCurrent) {
-    _dismissCurrentSnackBar();
-    return;
-  }
-
-  final overlay = Overlay.maybeOf(context, rootOverlay: true);
-  if (overlay == null) return;
-
   final colorScheme = Theme.of(context).colorScheme;
-  final resolvedBackgroundColor = backgroundColor ?? colorScheme.inverseSurface;
-  final resolvedForegroundColor =
-      foregroundColor ?? colorScheme.onInverseSurface;
-
-  _dismissCurrentSnackBar();
-
-  final entry = OverlayEntry(
-    builder: (context) => _AppSnackBarOverlay(
-      message: message,
-      backgroundColor: resolvedBackgroundColor,
-      foregroundColor: resolvedForegroundColor,
-      duration: duration,
-      onDismiss: _dismissCurrentSnackBar,
-    ),
+  final snackBar = _AppSnackBarMessage(
+    id: _nextSnackBarId++,
+    text: message,
+    backgroundColor: backgroundColor ?? colorScheme.inverseSurface,
+    foregroundColor: foregroundColor ?? colorScheme.onInverseSurface,
+    duration: duration,
   );
 
-  _currentSnackBarEntry = entry;
-  overlay.insert(entry);
+  _pendingSnackBars.add(snackBar);
+  _appSnackBarHostState?._showNextSnackBar();
 }
 
 void dismissAppSnackBar() {
-  _dismissCurrentSnackBar();
+  _pendingSnackBars.clear();
+  _appSnackBarHostState?._dismissCurrentSnackBar();
 }
 
-void _dismissCurrentSnackBar() {
-  final entry = _currentSnackBarEntry;
-  _currentSnackBarEntry = null;
-  if (entry?.mounted ?? false) {
-    entry?.remove();
-  }
-}
-
-class _AppSnackBarOverlay extends StatefulWidget {
-  final String message;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final Duration duration;
-  final VoidCallback onDismiss;
-
-  const _AppSnackBarOverlay({
-    required this.message,
-    required this.backgroundColor,
-    required this.foregroundColor,
-    required this.duration,
-    required this.onDismiss,
-  });
-
-  @override
-  State<_AppSnackBarOverlay> createState() => _AppSnackBarOverlayState();
-}
-
-class _AppSnackBarOverlayState extends State<_AppSnackBarOverlay> {
+class _AppSnackBarHostState extends State<AppSnackBarHost> {
+  _AppSnackBarMessage? _currentSnackBar;
   Timer? _dismissTimer;
+  bool _isSnackBarVisible = false;
+  bool _isDismissing = false;
 
   @override
   void initState() {
     super.initState();
-    _scheduleDismiss();
-  }
-
-  @override
-  void didUpdateWidget(covariant _AppSnackBarOverlay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.duration != widget.duration ||
-        oldWidget.message != widget.message) {
-      _scheduleDismiss();
-    }
+    _appSnackBarHostState = this;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showNextSnackBar());
   }
 
   @override
   void dispose() {
+    if (_appSnackBarHostState == this) {
+      _appSnackBarHostState = null;
+    }
     _dismissTimer?.cancel();
     super.dispose();
   }
 
-  void _scheduleDismiss() {
+  void _showNextSnackBar() {
+    if (!mounted ||
+        _currentSnackBar != null ||
+        _isDismissing ||
+        _pendingSnackBars.isEmpty) {
+      return;
+    }
+
+    final snackBar = _pendingSnackBars.removeFirst();
+    setState(() {
+      _currentSnackBar = snackBar;
+      _isSnackBarVisible = false;
+      _isDismissing = false;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _currentSnackBar == snackBar) {
+        setState(() => _isSnackBarVisible = true);
+      }
+    });
+
+    _scheduleDismiss(snackBar);
+  }
+
+  void _scheduleDismiss(_AppSnackBarMessage snackBar) {
     _dismissTimer?.cancel();
     _dismissTimer = null;
 
-    if (widget.duration <= Duration.zero) return;
+    if (snackBar.duration <= Duration.zero) return;
 
-    _dismissTimer = Timer(widget.duration, () {
-      if (mounted) {
-        widget.onDismiss();
+    _dismissTimer = Timer(snackBar.duration, () {
+      if (mounted && _currentSnackBar == snackBar) {
+        _dismissCurrentSnackBar();
       }
     });
   }
+
+  Future<void> _dismissCurrentSnackBar() async {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+
+    if (_currentSnackBar == null || _isDismissing) return;
+
+    setState(() {
+      _isSnackBarVisible = false;
+      _isDismissing = true;
+    });
+    await Future<void>.delayed(_snackBarAnimationDuration);
+    if (!mounted) return;
+
+    setState(() {
+      _currentSnackBar = null;
+      _isDismissing = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showNextSnackBar());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentSnackBar = _currentSnackBar;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.child,
+        if (currentSnackBar != null)
+          _AppSnackBarOverlay(
+            snackBar: currentSnackBar,
+            isVisible: _isSnackBarVisible,
+            onDismiss: _dismissCurrentSnackBar,
+          ),
+      ],
+    );
+  }
+}
+
+class _AppSnackBarMessage {
+  final int id;
+  final String text;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Duration duration;
+
+  const _AppSnackBarMessage({
+    required this.id,
+    required this.text,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.duration,
+  });
+}
+
+class AppSnackBarTemplate extends StatelessWidget {
+  final String message;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  const AppSnackBarTemplate({
+    required this.message,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    super.key,
+  });
+
+  factory AppSnackBarTemplate.fromTheme(
+    BuildContext context, {
+    required String message,
+    Color? backgroundColor,
+    Color? foregroundColor,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AppSnackBarTemplate(
+      message: message,
+      backgroundColor: backgroundColor ?? colorScheme.inverseSurface,
+      foregroundColor: foregroundColor ?? colorScheme.onInverseSurface,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: backgroundColor,
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Text(
+          message,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: foregroundColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppSnackBarOverlay extends StatelessWidget {
+  final _AppSnackBarMessage snackBar;
+  final bool isVisible;
+  final VoidCallback onDismiss;
+
+  const _AppSnackBarOverlay({
+    required this.snackBar,
+    required this.isVisible,
+    required this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,55 +224,27 @@ class _AppSnackBarOverlayState extends State<_AppSnackBarOverlay> {
       right: 16,
       child: SafeArea(
         bottom: false,
-        child: Dismissible(
-          key: ValueKey(widget.message),
-          direction: DismissDirection.horizontal,
-          onDismissed: (_) => widget.onDismiss(),
-          child: Material(
-            color: widget.backgroundColor,
-            elevation: 6,
-            shadowColor: Colors.black.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(14),
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Text(
-                widget.message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: widget.foregroundColor,
-                  fontWeight: FontWeight.w600,
-                ),
+        child: AnimatedSlide(
+          offset: isVisible ? Offset.zero : const Offset(0, -0.35),
+          duration: _snackBarAnimationDuration,
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: isVisible ? 1 : 0,
+            duration: _snackBarAnimationDuration,
+            curve: Curves.easeOutCubic,
+            child: Dismissible(
+              key: ValueKey(snackBar.id),
+              direction: DismissDirection.horizontal,
+              onDismissed: (_) => onDismiss(),
+              child: AppSnackBarTemplate(
+                message: snackBar.text,
+                backgroundColor: snackBar.backgroundColor,
+                foregroundColor: snackBar.foregroundColor,
               ),
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-class _AppSnackBarRouteObserver extends NavigatorObserver {
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    _dismissCurrentSnackBar();
-    super.didPush(route, previousRoute);
-  }
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    _dismissCurrentSnackBar();
-    super.didPop(route, previousRoute);
-  }
-
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    _dismissCurrentSnackBar();
-    super.didRemove(route, previousRoute);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    _dismissCurrentSnackBar();
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 }

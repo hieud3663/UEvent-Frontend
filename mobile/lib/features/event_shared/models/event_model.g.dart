@@ -26,6 +26,8 @@ Map<String, dynamic> _$EventModelToJson(EventModel instance) =>
       'description': instance.description,
       'max_capacity': instance.guestCount,
       'deep_link': instance.deepLink,
+      'user_event_relation':
+          _$EventUserRelationEnumMap[instance.userEventRelation]!,
       'is_organizer': instance.isOrganizer,
     };
 
@@ -40,4 +42,11 @@ const _$EventStatusEnumMap = {
   EventStatus.draft: 'draft',
   EventStatus.finished: 'finished',
   EventStatus.cancelled: 'cancelled',
+};
+
+const _$EventUserRelationEnumMap = {
+  EventUserRelation.owner: 'owner',
+  EventUserRelation.cohost: 'cohost',
+  EventUserRelation.registered: 'registered',
+  EventUserRelation.unregistered: 'unregistered',
 };

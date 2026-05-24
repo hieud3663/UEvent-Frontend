@@ -1,6 +1,7 @@
 // File: lib/features/user_events/views/empty_search_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -14,6 +15,7 @@ class EmptySearchView extends StatelessWidget {
   final ValueChanged<int> onNavTap;
   final VoidCallback? onBack;
   final VoidCallback? onGoHome;
+  final List<NavItemModel> navItems;
 
   const EmptySearchView({
     super.key,
@@ -21,6 +23,7 @@ class EmptySearchView extends StatelessWidget {
     required this.onNavTap,
     this.onBack,
     this.onGoHome,
+    this.navItems = GlassBottomNavBar.defaultItems,
   });
 
   @override
@@ -72,7 +75,7 @@ class EmptySearchView extends StatelessWidget {
           GlassBottomNavBar(
             currentIndex: currentNavIndex,
             onTap: onNavTap,
-            items: GlassBottomNavBar.defaultItems,
+            items: navItems,
           ),
         ],
       ),

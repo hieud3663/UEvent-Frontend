@@ -7,6 +7,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
+import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
@@ -22,6 +23,9 @@ class EventDetailScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onShare;
   final VoidCallback? onRegister;
+  final VoidCallback? onManage;
+  final VoidCallback? onMyTicket;
+  final VoidCallback? onUnregister;
   final VoidCallback? onAskQuestion;
 
   const EventDetailScreen({
@@ -31,6 +35,9 @@ class EventDetailScreen extends ConsumerStatefulWidget {
     this.onBack,
     this.onShare,
     this.onRegister,
+    this.onManage,
+    this.onMyTicket,
+    this.onUnregister,
     this.onAskQuestion,
   });
 
@@ -60,8 +67,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final detailState = ref.watch(userEventDetailProvider(widget.eventId));
-    final event =
-        detailState.whenOrNull(data: (value) => value) ?? widget.initialEvent;
+    final detailEvent = detailState.whenOrNull(data: (value) => value);
+    final event = detailEvent ?? widget.initialEvent;
 
     if (event == null && detailState.isLoading) {
       return const Scaffold(
@@ -153,6 +160,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 _organizerSummary(event),
                             onFollow: () {},
                           ),
+                          if (event?.isRegisteredByCurrentUser == true) ...[
+                            const SizedBox(height: 16),
+                            _MyTicketCard(onTap: widget.onMyTicket),
+                          ],
                           const SizedBox(height: 24),
                           _AboutSection(description: event?.description),
                           if (event?.registrationFields.isNotEmpty == true)
@@ -176,13 +187,25 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             left: 0,
             right: 0,
             child: EventActionBar(
-              mode: EventActionBarMode.unregistered,
+              mode: _actionBarMode(detailEvent),
               onRegister: widget.onRegister,
+              onManage: widget.onManage,
+              onUnregister: widget.onUnregister,
             ),
           ),
         ],
       ),
     );
+  }
+
+  EventActionBarMode _actionBarMode(EventModel? event) {
+    if (event?.canManageCurrentUser == true) {
+      return EventActionBarMode.manage;
+    }
+    if (event?.isRegisteredByCurrentUser == true) {
+      return EventActionBarMode.registered;
+    }
+    return EventActionBarMode.unregistered;
   }
 
   String _formatDate(DateTime? value) {
@@ -205,6 +228,64 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     final organizers = event?.organizers ?? const [];
     if (organizers.isEmpty) return 'Ban tổ chức UEvents';
     return organizers.first.user.displayName;
+  }
+}
+
+class _MyTicketCard extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _MyTicketCard({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+        child: GlassContainer(
+          padding: const EdgeInsets.all(16),
+          borderRadius: AppConstants.radiusCard,
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.confirmation_number_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Vé của tôi', style: AppTextStyles.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Xem thông tin vé đã đăng ký',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

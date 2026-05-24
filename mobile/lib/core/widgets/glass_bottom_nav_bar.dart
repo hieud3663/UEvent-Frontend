@@ -20,7 +20,7 @@ class GlassBottomNavBar extends StatelessWidget {
     required this.items,
   });
 
-  static List<NavItemModel> get defaultItems => const [
+  static const List<NavItemModel> defaultItems = [
     NavItemModel(
       label: 'Trang chủ',
       icon: Icons.explore_outlined,
@@ -32,11 +32,24 @@ class GlassBottomNavBar extends StatelessWidget {
       activeIcon: Icons.dashboard,
     ),
     NavItemModel(
-      label: 'VÉ',
-      icon: Icons.confirmation_number_outlined,
-      activeIcon: Icons.confirmation_number,
+      label: 'CÀI ĐẶT',
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+    ),
+  ];
+
+  static List<NavItemModel> itemsForRole({required bool isStudent}) => [
+    const NavItemModel(
+      label: 'Trang chủ',
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore,
     ),
     NavItemModel(
+      label: isStudent ? 'SỰ KIỆN' : 'QUẢN LÝ',
+      icon: isStudent ? Icons.event_outlined : Icons.dashboard_outlined,
+      activeIcon: isStudent ? Icons.event : Icons.dashboard,
+    ),
+    const NavItemModel(
       label: 'CÀI ĐẶT',
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,

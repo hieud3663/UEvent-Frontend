@@ -10,6 +10,8 @@ import 'package:frontend/features/user_events/services/user_event_service.dart';
 abstract interface class UserEventRepository {
   Future<List<EventModel>> getEvents({Map<String, dynamic>? queryParams});
 
+  Future<List<EventModel>> getMyRegisteredEvents();
+
   Future<List<EventModel>> searchEvents({
     int page = 1,
     int pageSize = 10,
@@ -24,6 +26,8 @@ abstract interface class UserEventRepository {
     required String eventId,
     List<EventRegistrationAnswerModel> answers = const [],
   });
+
+  Future<void> unregisterCurrentUserFromEvent({required String eventId});
 
   Future<List<EventQuestionModel>> getPublicEventQuestions({
     required String eventId,
@@ -57,6 +61,22 @@ class UserEventRepositoryImpl implements UserEventRepository {
     }
 
     return _service.getEvents(queryParams: queryParams);
+  }
+
+  @override
+  Future<List<EventModel>> getMyRegisteredEvents() async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return MockEventData.discoveryEvents
+          .take(3)
+          .map(
+            (event) =>
+                event.copyWith(userEventRelation: EventUserRelation.registered),
+          )
+          .toList();
+    }
+
+    return _service.getMyRegisteredEvents();
   }
 
   @override
@@ -128,6 +148,16 @@ class UserEventRepositoryImpl implements UserEventRepository {
     }
 
     return _service.registerEvent(eventId: eventId, answers: answers);
+  }
+
+  @override
+  Future<void> unregisterCurrentUserFromEvent({required String eventId}) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return;
+    }
+
+    return _service.unregisterCurrentUserFromEvent(eventId: eventId);
   }
 
   @override

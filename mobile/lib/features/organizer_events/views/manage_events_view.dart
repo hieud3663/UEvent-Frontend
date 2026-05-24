@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/widgets/async_state_slivers.dart';
@@ -19,6 +20,7 @@ class ManageEventsView extends ConsumerStatefulWidget {
   final VoidCallback? onCreateEventTap;
   final ValueChanged<EventModel>? onEventTap;
   final ValueChanged<EventModel>? onManageEventTap;
+  final List<NavItemModel> navItems;
 
   const ManageEventsView({
     super.key,
@@ -27,6 +29,7 @@ class ManageEventsView extends ConsumerStatefulWidget {
     this.onCreateEventTap,
     this.onEventTap,
     this.onManageEventTap,
+    this.navItems = GlassBottomNavBar.defaultItems,
   });
 
   @override
@@ -92,7 +95,7 @@ class _ManageEventsViewState extends ConsumerState<ManageEventsView> {
                             horizontal: AppConstants.pagePaddingH,
                           ),
                           child: SectionHeader(
-                            title: 'Sự kiện đang quản lý',
+                            title: 'Sự kiện của tôi',
                             actionText: '${events.length} EVENT',
                             onActionTap: () {},
                           ),
@@ -173,7 +176,7 @@ class _ManageEventsViewState extends ConsumerState<ManageEventsView> {
           GlassBottomNavBar(
             currentIndex: widget.currentNavIndex,
             onTap: widget.onNavTap,
-            items: GlassBottomNavBar.defaultItems,
+            items: widget.navItems,
           ),
         ],
       ),

@@ -16,14 +16,25 @@ import 'package:frontend/core/widgets/segmented_toggle.dart';
 import 'package:frontend/core/widgets/text_action_button.dart';
 import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
 import 'package:frontend/features/event_shared/models/event_category_model.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 class CreateEventView extends ConsumerStatefulWidget {
+  final String? eventId;
+  final EventModel? initialEvent;
   final VoidCallback? onBack;
-  const CreateEventView({super.key, this.onBack});
+  final VoidCallback? onSaved;
+
+  const CreateEventView({
+    super.key,
+    this.eventId,
+    this.initialEvent,
+    this.onBack,
+    this.onSaved,
+  });
 
   @override
   ConsumerState<CreateEventView> createState() => _CreateEventViewState();
@@ -41,13 +52,29 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
   bool _isPublic = true;
   bool _activateImmediately = true;
+  bool _hydrated = false;
+  bool _hydratedFromDetail = false;
   File? _coverImageFile;
   EventRoomModel? _selectedRoom;
   EventCategoryModel? _selectedCategory;
+  EventModel? _activeEvent;
+
+  bool get _isEditing => widget.eventId != null || widget.initialEvent != null;
+  String? get _resolvedEventId => widget.eventId ?? widget.initialEvent?.id;
 
   @override
   void initState() {
     super.initState();
+    final initialEvent = widget.initialEvent;
+    if (initialEvent != null) {
+      _hydrate(initialEvent);
+      return;
+    }
+
+    _setDefaultSchedule();
+  }
+
+  void _setDefaultSchedule() {
     final start = DateTime.now().add(const Duration(days: 1));
     final end = start.add(const Duration(hours: 2));
     _startDateController.text = DateFormat('yyyy-MM-dd').format(start);
@@ -70,6 +97,80 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
   @override
   Widget build(BuildContext context) {
+    final eventId = _resolvedEventId;
+    final detailState = _isEditing && eventId != null
+        ? ref.watch(organizerEventDetailProvider(eventId))
+        : null;
+    final detailEvent = detailState?.whenOrNull(data: (value) => value);
+    final event = detailEvent ?? widget.initialEvent;
+
+    if (_isEditing && !_hydrated && event != null) {
+      _activeEvent = event;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hydrated) _hydrate(event);
+      });
+    }
+
+    if (_isEditing &&
+        detailEvent != null &&
+        !_hydratedFromDetail &&
+        _canHydrateFromDetail()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hydratedFromDetail && _canHydrateFromDetail()) {
+          _hydrate(detailEvent, fromDetail: true);
+          setState(() {});
+        }
+      });
+    }
+
+    if (_isEditing && event == null && detailState?.isLoading == true) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF2F2F7),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_isEditing && event == null && detailState?.hasError == true) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF2F2F7),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Không tải được sự kiện',
+                    style: AppTextStyles.headlineMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Vui lòng thử lại sau.',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  PrimaryButton(
+                    label: 'Thử lại',
+                    icon: Icons.refresh,
+                    onPressed: eventId == null
+                        ? null
+                        : () => ref.invalidate(
+                            organizerEventDetailProvider(eventId),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
       body: Stack(
@@ -99,7 +200,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Tạo sự kiện',
+              title: _isEditing ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện',
               titleStyle: AppTextStyles.titleMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -120,10 +221,12 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
     return Column(
       children: [
+        GlassInputField(label: 'Tên sự kiện', controller: _titleController),
+        const SizedBox(height: 16),
         GlassInputField(
-          label: 'Tên sự kiện',
-          placeholder: 'Đêm nhạc sân thượng mùa hè',
-          controller: _titleController,
+          label: 'Mô tả',
+          controller: _descriptionController,
+          maxLines: 4,
         ),
         const SizedBox(height: 16),
         Row(
@@ -131,7 +234,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             Expanded(
               child: GlassInputField(
                 label: 'Ngày bắt đầu',
-                placeholder: '2026-05-22',
                 leadingIcon: Icons.calendar_today,
                 controller: _startDateController,
               ),
@@ -140,7 +242,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             Expanded(
               child: GlassInputField(
                 label: 'Giờ bắt đầu',
-                placeholder: '07:00',
                 leadingIcon: Icons.schedule,
                 controller: _startTimeController,
               ),
@@ -153,7 +254,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             Expanded(
               child: GlassInputField(
                 label: 'Ngày kết thúc',
-                placeholder: '2026-05-23',
                 leadingIcon: Icons.event_available,
                 controller: _endDateController,
               ),
@@ -162,7 +262,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             Expanded(
               child: GlassInputField(
                 label: 'Giờ kết thúc',
-                placeholder: '09:00',
                 leadingIcon: Icons.schedule,
                 controller: _endTimeController,
               ),
@@ -185,38 +284,37 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         ),
         const SizedBox(height: 16),
         _buildVisibilityToggle(),
-        const SizedBox(height: 16),
-        _buildPublishStateToggle(),
-        const SizedBox(height: 16),
-        GlassInputField(
-          label: 'Mô tả',
-          placeholder: 'Giới thiệu sự kiện của bạn...',
-          controller: _descriptionController,
-          maxLines: 4,
-        ),
+        if (!_isEditing) ...[
+          const SizedBox(height: 16),
+          _buildPublishStateToggle(),
+        ],
       ],
     );
   }
 
   Widget _buildRoomDropdown(AsyncValue<List<EventRoomModel>> roomsAsync) {
     return roomsAsync.when(
-      data: (rooms) => GlassDropdownField<EventRoomModel>(
-        label: 'Địa điểm',
-        placeholder: rooms.isEmpty ? 'Không có phòng khả dụng' : 'Chọn phòng',
-        value: _selectedRoom,
-        items: rooms
-            .map(
-              (room) => GlassDropdownItem(
-                value: room,
-                label: '${room.displayName} - ${room.capacity} chỗ',
-                icon: Icons.location_on,
-              ),
-            )
-            .toList(),
-        onChanged: rooms.isEmpty
-            ? null
-            : (room) => setState(() => _selectedRoom = room),
-      ),
+      data: (rooms) {
+        final selectedRoom = _selectedRoom ?? _matchingInitialRoom(rooms);
+
+        return GlassDropdownField<EventRoomModel>(
+          label: 'Địa điểm',
+          placeholder: rooms.isEmpty ? 'Không có phòng khả dụng' : 'Chọn phòng',
+          value: selectedRoom,
+          items: rooms
+              .map(
+                (room) => GlassDropdownItem(
+                  value: room,
+                  label: '${room.displayName} - ${room.capacity} chỗ',
+                  icon: Icons.location_on,
+                ),
+              )
+              .toList(),
+          onChanged: rooms.isEmpty
+              ? null
+              : (room) => setState(() => _selectedRoom = room),
+        );
+      },
       loading: () => const GlassInputField(
         label: 'Địa điểm',
         child: _LoadingFieldText(text: 'Đang tải phòng...'),
@@ -235,25 +333,30 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     AsyncValue<List<EventCategoryModel>> categoriesAsync,
   ) {
     return categoriesAsync.when(
-      data: (categories) => GlassDropdownField<EventCategoryModel>(
-        label: 'Danh mục',
-        placeholder: categories.isEmpty
-            ? 'Không có danh mục khả dụng'
-            : 'Chọn danh mục',
-        value: _selectedCategory,
-        items: categories
-            .map(
-              (category) => GlassDropdownItem(
-                value: category,
-                label: category.name,
-                icon: Icons.category_outlined,
-              ),
-            )
-            .toList(),
-        onChanged: categories.isEmpty
-            ? null
-            : (category) => setState(() => _selectedCategory = category),
-      ),
+      data: (categories) {
+        final selectedCategory =
+            _selectedCategory ?? _matchingInitialCategory(categories);
+
+        return GlassDropdownField<EventCategoryModel>(
+          label: 'Danh mục',
+          placeholder: categories.isEmpty
+              ? 'Không có danh mục khả dụng'
+              : 'Chọn danh mục',
+          value: selectedCategory,
+          items: categories
+              .map(
+                (category) => GlassDropdownItem(
+                  value: category,
+                  label: category.name,
+                  icon: Icons.category_outlined,
+                ),
+              )
+              .toList(),
+          onChanged: categories.isEmpty
+              ? null
+              : (category) => setState(() => _selectedCategory = category),
+        );
+      },
       loading: () => const GlassInputField(
         label: 'Danh mục',
         child: _LoadingFieldText(text: 'Đang tải danh mục...'),
@@ -270,6 +373,9 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
   Widget _buildCoverUpload() {
     final imageFile = _coverImageFile;
+    final currentImageUrl =
+        _activeEvent?.imageUrl ?? widget.initialEvent?.imageUrl ?? '';
+    final hasCurrentImage = currentImageUrl.isNotEmpty && imageFile == null;
 
     return AspectRatio(
       aspectRatio: 16 / 9,
@@ -284,16 +390,18 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: const Color(0xFFDCDCDF), width: 2),
               color: Colors.white.withValues(alpha: 0.3),
-              image: imageFile == null
-                  ? null
-                  : DecorationImage(
-                      image: FileImage(imageFile),
+              image: imageFile != null || hasCurrentImage
+                  ? DecorationImage(
+                      image: imageFile != null
+                          ? FileImage(imageFile)
+                          : NetworkImage(currentImageUrl) as ImageProvider,
                       fit: BoxFit.cover,
                       colorFilter: ColorFilter.mode(
                         Colors.black.withValues(alpha: 0.18),
                         BlendMode.darken,
                       ),
-                    ),
+                    )
+                  : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -315,21 +423,29 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  imageFile == null ? 'Thêm ảnh bìa' : 'Đổi ảnh bìa',
+                  imageFile == null && !hasCurrentImage
+                      ? 'Thêm ảnh bìa'
+                      : 'Đổi ảnh bìa',
                   style: AppTextStyles.titleSmall.copyWith(
-                    color: imageFile == null ? null : Colors.white,
+                    color: imageFile == null && !hasCurrentImage
+                        ? null
+                        : Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  imageFile == null
-                      ? 'KHUYẾN NGHỊ TỶ LỆ 16:9'
-                      : _fileNameFromPath(imageFile.path),
+                  imageFile != null
+                      ? _fileNameFromPath(imageFile.path)
+                      : hasCurrentImage
+                      ? 'ẢNH BÌA HIỆN TẠI'
+                      : 'KHUYẾN NGHỊ TỶ LỆ 16:9',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.inputLabel.copyWith(
                     letterSpacing: 1.5,
-                    color: imageFile == null ? null : Colors.white,
+                    color: imageFile == null && !hasCurrentImage
+                        ? null
+                        : Colors.white,
                   ),
                 ),
               ],
@@ -377,6 +493,19 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
       _endDateController.text,
       _endTimeController.text,
     );
+
+    if (_isEditing) {
+      await _submitEventUpdate(
+        title: title,
+        selectedCategory: selectedCategory,
+        selectedRoom: selectedRoom,
+        coverImage: coverImage,
+        maxCapacity: maxCapacity,
+        startAt: startAt,
+        endAt: endAt,
+      );
+      return;
+    }
 
     if (title.isEmpty ||
         selectedCategory == null ||
@@ -426,6 +555,68 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _showMessage(eventMutationErrorMessage(error ?? Object()));
   }
 
+  Future<void> _submitEventUpdate({
+    required String title,
+    required EventCategoryModel? selectedCategory,
+    required EventRoomModel? selectedRoom,
+    required File? coverImage,
+    required int? maxCapacity,
+    required DateTime? startAt,
+    required DateTime? endAt,
+  }) async {
+    final eventId = _resolvedEventId;
+    if (eventId == null) {
+      _showMessage('Không tìm thấy sự kiện để cập nhật.');
+      return;
+    }
+
+    if (title.isEmpty ||
+        maxCapacity == null ||
+        startAt == null ||
+        endAt == null) {
+      _showMessage('Vui lòng nhập tên, thời gian và sức chứa hợp lệ.');
+      return;
+    }
+
+    if (!endAt.isAfter(startAt)) {
+      _showMessage('Thời gian kết thúc phải sau thời gian bắt đầu.');
+      return;
+    }
+
+    if (selectedRoom != null &&
+        selectedRoom.capacity > 0 &&
+        maxCapacity > selectedRoom.capacity) {
+      _showMessage('Số khách không được vượt quá sức chứa phòng.');
+      return;
+    }
+
+    final updated = await ref
+        .read(organizerEventMutationControllerProvider.notifier)
+        .updateOrganizerEvent(
+          eventId: eventId,
+          title: title,
+          description: _descriptionController.text.trim(),
+          category: selectedCategory,
+          room: selectedRoom,
+          coverImage: coverImage,
+          maxCapacity: maxCapacity,
+          startAt: startAt,
+          endAt: endAt,
+          isPublic: _isPublic,
+        );
+
+    if (!mounted) return;
+
+    if (updated) {
+      _showMessage('Cập nhật sự kiện thành công.');
+      widget.onSaved?.call();
+      widget.onBack?.call();
+      return;
+    }
+
+    _showMessage('Không cập nhật được sự kiện. Vui lòng thử lại.');
+  }
+
   DateTime? _parseDateTime(String date, String time) {
     final normalized = '${date.trim()} ${time.trim()}';
     for (final pattern in ['yyyy-MM-dd HH:mm', 'yyyy-MM-dd HH:mm:ss']) {
@@ -446,6 +637,75 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
   void _showMessage(String message) {
     showAppSnackBar(context, message);
+  }
+
+  void _hydrate(EventModel event, {bool fromDetail = false}) {
+    _activeEvent = event;
+    _titleController.text = event.title;
+    _descriptionController.text = event.description ?? '';
+    _startDateController.text = DateFormat(
+      'yyyy-MM-dd',
+    ).format(event.startDate);
+    _startTimeController.text = DateFormat('HH:mm').format(event.startDate);
+    final end = event.endDate ?? event.startDate.add(const Duration(hours: 2));
+    _endDateController.text = DateFormat('yyyy-MM-dd').format(end);
+    _endTimeController.text = DateFormat('HH:mm').format(end);
+    _capacityController.text = event.guestCount?.toString() ?? '';
+    _isPublic = event.visibility != EventVisibility.private;
+    _activateImmediately = event.status != EventStatus.draft;
+    _hydrated = true;
+    if (fromDetail) _hydratedFromDetail = true;
+  }
+
+  bool _canHydrateFromDetail() {
+    final activeEvent = _activeEvent;
+    if (activeEvent == null) return true;
+
+    final activeEnd =
+        activeEvent.endDate ??
+        activeEvent.startDate.add(const Duration(hours: 2));
+
+    return _titleController.text == activeEvent.title &&
+        _descriptionController.text == (activeEvent.description ?? '') &&
+        _startDateController.text ==
+            DateFormat('yyyy-MM-dd').format(activeEvent.startDate) &&
+        _startTimeController.text ==
+            DateFormat('HH:mm').format(activeEvent.startDate) &&
+        _endDateController.text == DateFormat('yyyy-MM-dd').format(activeEnd) &&
+        _endTimeController.text == DateFormat('HH:mm').format(activeEnd) &&
+        _capacityController.text == (activeEvent.guestCount?.toString() ?? '');
+  }
+
+  EventRoomModel? _matchingInitialRoom(List<EventRoomModel> rooms) {
+    final location = (_activeEvent ?? widget.initialEvent)?.location
+        .trim()
+        .toLowerCase();
+    if (location == null || location.isEmpty) return null;
+
+    for (final room in rooms) {
+      final values = [room.id, room.name, room.code, room.displayName]
+          .map((value) => value.trim().toLowerCase())
+          .where((value) => value.isNotEmpty);
+      if (values.any(location.contains)) return room;
+    }
+    return null;
+  }
+
+  EventCategoryModel? _matchingInitialCategory(
+    List<EventCategoryModel> categories,
+  ) {
+    final category = (_activeEvent ?? widget.initialEvent)?.category
+        ?.trim()
+        .toLowerCase();
+    if (category == null || category.isEmpty) return null;
+
+    for (final item in categories) {
+      final values = [item.id, item.name, item.slug ?? '']
+          .map((value) => value.trim().toLowerCase())
+          .where((value) => value.isNotEmpty);
+      if (values.contains(category)) return item;
+    }
+    return null;
   }
 
   Widget _buildVisibilityToggle() {
@@ -519,8 +779,10 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           ),
         ),
         child: PrimaryButton(
-          label: isSubmitting ? 'Đang tạo sự kiện' : 'Tạo sự kiện',
-          icon: Icons.rocket_launch,
+          label: isSubmitting
+              ? (_isEditing ? 'Đang cập nhật' : 'Đang tạo sự kiện')
+              : (_isEditing ? 'Cập nhật sự kiện' : 'Tạo sự kiện'),
+          icon: _isEditing ? Icons.save_outlined : Icons.rocket_launch,
           isLoading: isSubmitting,
           onPressed: isSubmitting ? null : _submitEvent,
         ),

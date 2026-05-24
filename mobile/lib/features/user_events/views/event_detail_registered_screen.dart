@@ -140,8 +140,6 @@ class _EventDetailRegisteredScreenState
             right: 0,
             child: EventActionBar(
               mode: EventActionBarMode.registered,
-              onMyTicket: widget.onMyTicket,
-              onContact: widget.onContact,
               onUnregister: widget.onUnregister,
             ),
           ),

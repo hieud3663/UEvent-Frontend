@@ -8,8 +8,10 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/team_member_model.dart';
+import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
@@ -27,7 +29,6 @@ class EventDetailOrganizerView extends ConsumerWidget {
   final EventModel? initialEvent;
   final VoidCallback? onBack;
   final VoidCallback? onCheckIn;
-  final VoidCallback? onInvite;
   final VoidCallback? onNotify;
   final VoidCallback? onManage;
   final VoidCallback? onShare;
@@ -38,7 +39,6 @@ class EventDetailOrganizerView extends ConsumerWidget {
     this.initialEvent,
     this.onBack,
     this.onCheckIn,
-    this.onInvite,
     this.onNotify,
     this.onManage,
     this.onShare,
@@ -47,6 +47,7 @@ class EventDetailOrganizerView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailState = ref.watch(organizerEventDetailProvider(eventId));
+    final mutationState = ref.watch(organizerEventMutationControllerProvider);
     final event =
         detailState.whenOrNull(data: (value) => value) ?? initialEvent;
 
@@ -105,7 +106,7 @@ class EventDetailOrganizerView extends ConsumerWidget {
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                // ── Organizer Action Buttons (Invite / Notify / Manage) ──
+                // ── Organizer Action Buttons (Notify / Manage) ──
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -114,6 +115,24 @@ class EventDetailOrganizerView extends ConsumerWidget {
                     child: _buildActionButtons(),
                   ),
                 ),
+                if (resolvedEvent.status == EventStatus.draft) ...[
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.pagePaddingH,
+                      ),
+                      child: PrimaryButton(
+                        label: 'Kích hoạt sự kiện',
+                        icon: Icons.publish,
+                        isLoading: mutationState.isLoading,
+                        onPressed: mutationState.isLoading
+                            ? null
+                            : () => _activateDraftEvent(context, ref),
+                      ),
+                    ),
+                  ),
+                ],
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // ── Participant Check-in CTA ──
@@ -333,12 +352,10 @@ class EventDetailOrganizerView extends ConsumerWidget {
     );
   }
 
-  // ── Action Buttons: Invite / Notify / Manage ──
+  // ── Action Buttons: Notify / Manage ──
   Widget _buildActionButtons() {
     return Row(
       children: [
-        Expanded(child: _buildActionChip(Icons.person_add, 'Invite', onInvite)),
-        const SizedBox(width: 12),
         Expanded(child: _buildActionChip(Icons.send, 'Notify', onNotify)),
         const SizedBox(width: 12),
         Expanded(child: _buildActionChip(Icons.settings, 'Manage', onManage)),
@@ -608,6 +625,20 @@ class EventDetailOrganizerView extends ConsumerWidget {
     return ref
         .refresh(organizerEventDetailProvider(eventId).future)
         .then<void>((_) {});
+  }
+
+  Future<void> _activateDraftEvent(BuildContext context, WidgetRef ref) async {
+    final ok = await ref
+        .read(organizerEventMutationControllerProvider.notifier)
+        .activateDraftEvent(eventId: eventId);
+    if (!context.mounted) return;
+
+    if (ok) {
+      showAppSnackBar(context, 'Đã chuyển sự kiện sang Active.');
+      return;
+    }
+
+    showAppSnackBar(context, 'Không kích hoạt được sự kiện. Vui lòng thử lại.');
   }
 }
 

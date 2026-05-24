@@ -9,7 +9,7 @@ import 'package:frontend/features/event_shared/models/registration_field_model.d
 part 'event_model.g.dart';
 
 /// Data class representing an Event across Home, Discovery, Profile screens.
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable(fieldRename: FieldRename.snake, createFactory: false)
 class EventModel {
   final String id;
   final String title;
@@ -38,9 +38,17 @@ class EventModel {
   final int? guestCount;
   @JsonKey(name: 'deep_link')
   final String? deepLink;
+  @JsonKey(includeToJson: false)
   final List<RegistrationFieldModel> registrationFields;
+  @JsonKey(includeToJson: false)
   final List<EventOrganizerMemberModel> organizers;
+  @JsonKey(includeToJson: false)
   final EventUserSummaryModel? createdBy;
+  @JsonKey(
+    name: 'user_event_relation',
+    unknownEnumValue: EventUserRelation.unregistered,
+  )
+  final EventUserRelation userEventRelation;
 
   /// Whether the current user is the organizer/creator of this event.
   /// true = user created this event, false = user is attending/discovering.
@@ -67,8 +75,19 @@ class EventModel {
     this.registrationFields = const [],
     this.organizers = const [],
     this.createdBy,
+    this.userEventRelation = EventUserRelation.unregistered,
     this.isOrganizer = false,
   });
+
+  @JsonKey(includeToJson: false)
+  bool get canManageCurrentUser =>
+      userEventRelation == EventUserRelation.owner ||
+      userEventRelation == EventUserRelation.cohost ||
+      isOrganizer;
+
+  @JsonKey(includeToJson: false)
+  bool get isRegisteredByCurrentUser =>
+      userEventRelation == EventUserRelation.registered;
 
   EventModel copyWith({
     String? id,
@@ -91,6 +110,7 @@ class EventModel {
     List<RegistrationFieldModel>? registrationFields,
     List<EventOrganizerMemberModel>? organizers,
     EventUserSummaryModel? createdBy,
+    EventUserRelation? userEventRelation,
     bool? isOrganizer,
   }) {
     return EventModel(
@@ -115,6 +135,7 @@ class EventModel {
       registrationFields: registrationFields ?? this.registrationFields,
       organizers: organizers ?? this.organizers,
       createdBy: createdBy ?? this.createdBy,
+      userEventRelation: userEventRelation ?? this.userEventRelation,
       isOrganizer: isOrganizer ?? this.isOrganizer,
     );
   }
@@ -167,7 +188,11 @@ class EventModel {
       createdBy: rawCreatedBy is Map<String, dynamic>
           ? EventUserSummaryModel.fromJson(rawCreatedBy)
           : null,
-      isOrganizer: json['is_organizer'] as bool? ?? false,
+      userEventRelation: _parseUserEventRelation(json['user_event_relation']),
+      isOrganizer:
+          json['is_organizer'] as bool? ??
+          json['isOrganizer'] as bool? ??
+          false,
     );
   }
 
@@ -243,3 +268,15 @@ EventStatus _parseStatus(dynamic value) {
 enum EventVisibility { public, private }
 
 enum EventStatus { active, approved, draft, finished, cancelled }
+
+EventUserRelation _parseUserEventRelation(dynamic value) {
+  if (value is String) {
+    final normalized = value.trim().toLowerCase();
+    for (final relation in EventUserRelation.values) {
+      if (relation.name == normalized) return relation;
+    }
+  }
+  return EventUserRelation.unregistered;
+}
+
+enum EventUserRelation { owner, cohost, registered, unregistered }

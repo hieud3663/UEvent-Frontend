@@ -27,6 +27,16 @@ class UserEventService {
     }
   }
 
+  Future<List<EventModel>> getMyRegisteredEvents() async {
+    try {
+      final response = await _apiClient.dio.get('/events/registrations/me/');
+      final dataList = extractListData(response.data);
+      return dataList.map(_eventFromRegistrationListItem).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<List<EventModel>> searchEvents({
     int page = 1,
     int pageSize = 10,
@@ -79,6 +89,14 @@ class UserEventService {
         data: {'answers': answers.map((answer) => answer.toJson()).toList()},
       );
       return EventRegistrationModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> unregisterCurrentUserFromEvent({required String eventId}) async {
+    try {
+      await _apiClient.dio.delete('/events/$eventId/registrations/me/');
     } on DioException {
       rethrow;
     }
@@ -140,4 +158,17 @@ class UserEventService {
       rethrow;
     }
   }
+}
+
+EventModel _eventFromRegistrationListItem(Map<String, dynamic> json) {
+  final nestedEvent = json['event'];
+  if (nestedEvent is Map<String, dynamic>) {
+    return EventModel.fromJson(
+      nestedEvent,
+    ).copyWith(userEventRelation: EventUserRelation.registered);
+  }
+
+  return EventModel.fromJson(
+    json,
+  ).copyWith(userEventRelation: EventUserRelation.registered);
 }

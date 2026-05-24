@@ -51,6 +51,11 @@ abstract interface class OrganizerEventRepository {
     required String registrationId,
   });
 
+  Future<void> checkInRegistration({
+    required String eventId,
+    required String registrationId,
+  });
+
   Future<List<EventQuestionModel>> getOrganizerEventQuestions({
     required String eventId,
   });
@@ -278,6 +283,22 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
     }
 
     return _service.promoteRegistrationToCohost(
+      eventId: eventId,
+      registrationId: registrationId,
+    );
+  }
+
+  @override
+  Future<void> checkInRegistration({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return;
+    }
+
+    return _service.checkInRegistration(
       eventId: eventId,
       registrationId: registrationId,
     );

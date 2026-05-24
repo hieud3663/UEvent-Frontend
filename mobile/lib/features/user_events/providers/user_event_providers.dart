@@ -144,6 +144,13 @@ final userMyEventsProvider = FutureProvider<List<EventModel>>((ref) async {
   return repository.getEvents(queryParams: {'scope': 'mine'});
 });
 
+final userRegisteredEventsProvider = FutureProvider<List<EventModel>>((
+  ref,
+) async {
+  final repository = ref.read(userEventRepositoryProvider);
+  return repository.getMyRegisteredEvents();
+});
+
 final userEventDetailProvider = FutureProvider.family<EventModel, String>((
   ref,
   eventId,

@@ -3,18 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 
-enum EventActionBarMode { unregistered, registered }
+enum EventActionBarMode { manage, unregistered, registered }
 
 /// Fixed bottom action bar used in event detail screens.
-/// - [unregistered]: shows price + "Register Now →"
-/// - [registered]: shows "My Ticket" + "Contact" + "Unregister" text button
+/// - [unregistered]: shows price + register button
+/// - [registered]: shows unregister button
 class EventActionBar extends StatelessWidget {
   final EventActionBarMode mode;
   final String? price;
   final VoidCallback? onRegister;
-  final VoidCallback? onMyTicket;
-  final VoidCallback? onContact;
+  final VoidCallback? onManage;
   final VoidCallback? onUnregister;
 
   const EventActionBar({
@@ -22,8 +22,7 @@ class EventActionBar extends StatelessWidget {
     required this.mode,
     this.price,
     this.onRegister,
-    this.onMyTicket,
-    this.onContact,
+    this.onManage,
     this.onUnregister,
   });
 
@@ -46,11 +45,21 @@ class EventActionBar extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-          child: mode == EventActionBarMode.unregistered
-              ? _buildUnregistered()
-              : _buildRegistered(),
+          child: switch (mode) {
+            EventActionBarMode.manage => _buildManage(),
+            EventActionBarMode.unregistered => _buildUnregistered(),
+            EventActionBarMode.registered => _buildRegistered(),
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildManage() {
+    return PrimaryButton(
+      label: 'Quản lý',
+      icon: Icons.tune,
+      onPressed: onManage,
     );
   }
 
@@ -81,8 +90,8 @@ class EventActionBar extends StatelessWidget {
           const SizedBox(width: 16),
         ],
         Expanded(
-          child: _PrimaryActionButton(
-            label: 'Đăng ký ngay',
+          child: PrimaryButton(
+            label: 'Đăng ký',
             icon: Icons.arrow_forward,
             onPressed: onRegister,
           ),
@@ -92,130 +101,10 @@ class EventActionBar extends StatelessWidget {
   }
 
   Widget _buildRegistered() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _PrimaryActionButton(
-                label: 'Vé của tôi',
-                icon: Icons.confirmation_number_outlined,
-                onPressed: onMyTicket,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _SecondaryActionButton(
-                label: 'Liên hệ',
-                icon: Icons.chat_bubble_outline,
-                onPressed: onContact,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onUnregister,
-          child: Text(
-            'Unregister from event',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.onSurfaceVariant,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PrimaryActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _PrimaryActionButton({
-    required this.label,
-    required this.icon,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: AppColors.onPrimaryDark),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTextStyles.titleSmall.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.onPrimaryDark,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SecondaryActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _SecondaryActionButton({
-    required this.label,
-    required this.icon,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.outline),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: AppColors.onSurface),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.titleSmall.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return PrimaryButton(
+      label: 'Hủy đăng ký',
+      icon: Icons.event_busy_outlined,
+      onPressed: onUnregister,
     );
   }
 }

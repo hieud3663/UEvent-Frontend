@@ -3,29 +3,27 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/app/app_routes.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/providers/service_providers.dart';
+import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
 import 'package:frontend/features/user_events/controller/user_event_controller.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
-import 'package:frontend/features/event_shared/models/event_registration_model.dart';
-import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 import 'package:frontend/features/user_events/views/ask_question_screen.dart';
 import 'package:frontend/features/organizer_events/views/attendee_list_view.dart';
 import 'package:frontend/features/organizer_events/views/create_event_view.dart';
 import 'package:frontend/features/user_events/views/discovery_view.dart';
-import 'package:frontend/features/organizer_events/views/edit_event_details_view.dart';
 import 'package:frontend/features/user_events/views/empty_search_view.dart';
 import 'package:frontend/features/organizer_events/views/event_detail_organizer_view.dart';
 import 'package:frontend/features/user_events/views/event_detail_screen.dart';
-import 'package:frontend/features/organizer_events/views/invite_guests_view.dart';
 import 'package:frontend/features/organizer_events/views/manage_event_hub_view.dart';
 import 'package:frontend/features/organizer_events/views/manage_events_view.dart';
 import 'package:frontend/features/organizer_events/views/organizer_engagement_view.dart';
 import 'package:frontend/features/user_events/views/registration_confirmation_screen.dart';
-import 'package:frontend/features/user_events/views/registration_success_screen.dart';
+import 'package:frontend/features/user_events/views/student_events_view.dart';
 import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
 import 'package:frontend/features/event_shared/views/share_event_sheet.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
@@ -39,13 +37,8 @@ import 'package:frontend/features/profile/views/send_feedback_view.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
 import 'package:frontend/features/profile/views/sync_contacts_view.dart';
 import 'package:frontend/features/profile/views/user_profile_view.dart';
-import 'package:frontend/features/ticketing/models/ticket_model.dart';
 import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart';
-import 'package:frontend/features/ticketing/views/cancel_error_dialog.dart';
-import 'package:frontend/features/ticketing/views/my_tickets_view.dart';
-import 'package:frontend/features/ticketing/views/past_event_detail_view.dart';
 import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
-import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
 
 typedef SignedOutCallback = void Function(BuildContext context, WidgetRef ref);
 
@@ -60,6 +53,14 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
+
+  bool get _isStudent {
+    final role = ref.read(userProfileProvider).value?.primaryRole;
+    return role?.trim().toLowerCase() == 'student';
+  }
+
+  List<NavItemModel> get _navItems =>
+      GlassBottomNavBar.itemsForRole(isStudent: _isStudent);
 
   @override
   void initState() {
@@ -84,6 +85,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       appRoute(
         builder: (_) => NotificationsView(
           currentNavIndex: _currentIndex,
+          navItems: _navItems,
           onNavTap: (i) {
             Navigator.of(context).pop();
             _onNavTap(i);
@@ -108,6 +110,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       appRoute(
         builder: (_) => EmptySearchView(
           currentNavIndex: _currentIndex,
+          navItems: _navItems,
           onNavTap: (i) {
             Navigator.of(context).pop();
             _onNavTap(i);
@@ -131,7 +134,6 @@ class _AppShellState extends ConsumerState<AppShell> {
             initialEvent: event,
             onBack: () => Navigator.of(ctx).pop(),
             onCheckIn: _pushQrScanner,
-            onInvite: () => _pushInviteGuests(event),
             onNotify: () => _pushSendNotification(event),
             onManage: () => _pushManageEventHub(event),
             onShare: () => ShareEventSheet.show(ctx),
@@ -147,6 +149,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             onBack: () => Navigator.of(ctx).pop(),
             onShare: () => ShareEventSheet.show(ctx),
             onRegister: () => _pushRegistrationConfirmation(ctx, event),
+            onManage: () => _pushManageEventHub(event),
+            onMyTicket: () => _showMyTicketPlaceholder(ctx),
+            onUnregister: () => _showUnregisterConfirmation(ctx, event),
             onAskQuestion: () => _pushAskQuestion(ctx, event),
           ),
         ),
@@ -159,38 +164,14 @@ class _AppShellState extends ConsumerState<AppShell> {
       ctx,
       event: event,
       onConfirm: (answers) async {
-        final detail = ref
-            .read(userEventDetailProvider(event.id))
-            .whenOrNull(data: (value) => value);
         final registration = await ref
             .read(userEventRegistrationControllerProvider.notifier)
             .registerEvent(eventId: event.id, answers: answers);
-        if (registration != null && mounted) {
-          if (ctx.mounted) {
-            _pushRegistrationSuccess(ctx, detail ?? event, registration);
-          }
+        if (registration != null && mounted && ctx.mounted) {
+          _showSnackBar(ctx, 'Đăng ký thành công.');
         }
         return registration;
       },
-    );
-  }
-
-  void _pushRegistrationSuccess(
-    BuildContext ctx,
-    EventModel event,
-    EventRegistrationModel registration,
-  ) {
-    Navigator.of(ctx).push(
-      appRoute(
-        builder: (_) => RegistrationSuccessScreen(
-          eventName: event.title,
-          ticketId:
-              registration.ticket?.ticketCode ??
-              registration.status.toUpperCase(),
-          onViewTicket: () => Navigator.of(ctx).pop(),
-          onAddToWallet: () {},
-        ),
-      ),
     );
   }
 
@@ -222,38 +203,27 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushTicketDetail(TicketModel ticket) {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) => TicketDetailView(
-          ticket: ticket,
-          onBack: () => Navigator.of(ctx).pop(),
-          onCancelTap: () => _showCancelConfirmation(ctx, ticket),
-        ),
-      ),
-    );
-  }
-
-  void _showCancelConfirmation(BuildContext ctx, TicketModel ticket) {
+  void _showUnregisterConfirmation(BuildContext ctx, EventModel event) {
     CancelConfirmationSheet.show(
       ctx,
-      eventName: ticket.eventName,
-      onConfirm: () {
+      eventName: event.title,
+      onConfirm: () async {
         Navigator.of(ctx).pop();
-        CancelErrorDialog.show(ctx);
+        final ok = await ref
+            .read(userEventRegistrationControllerProvider.notifier)
+            .unregisterEvent(eventId: event.id);
+        if (!mounted || !ctx.mounted) return;
+
+        _showSnackBar(
+          ctx,
+          ok ? 'Đã hủy đăng ký sự kiện.' : 'Không thể hủy đăng ký sự kiện.',
+        );
       },
     );
   }
 
-  void _pushPastEventDetail(TicketModel ticket) {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) => PastEventDetailView(
-          ticket: ticket,
-          onBack: () => Navigator.of(ctx).pop(),
-        ),
-      ),
-    );
+  void _showMyTicketPlaceholder(BuildContext ctx) {
+    _showSnackBar(ctx, 'Tính năng vé của tôi sẽ được cập nhật sau.');
   }
 
   void _pushCreateEvent() {
@@ -293,15 +263,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushInviteGuests(EventModel event) {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (_) =>
-            InviteGuestsView(onBack: () => Navigator.of(context).pop()),
-      ),
-    );
-  }
-
   void _pushSendNotification(EventModel event) {
     Navigator.of(context).push(
       appRoute(
@@ -329,7 +290,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _pushEditEventDetails(EventModel event) {
     Navigator.of(context).push(
       appRoute(
-        builder: (ctx) => EditEventDetailsView(
+        builder: (ctx) => CreateEventView(
           eventId: event.id,
           initialEvent: event,
           onBack: () => Navigator.of(ctx).pop(),
@@ -483,33 +444,49 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(userProfileProvider).value;
+    final isStudent = profile?.primaryRole.trim().toLowerCase() == 'student';
+    final navItems = GlassBottomNavBar.itemsForRole(isStudent: isStudent);
+    final safeIndex = _currentIndex >= navItems.length
+        ? navItems.length - 1
+        : _currentIndex;
+
+    if (safeIndex != _currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _currentIndex = safeIndex);
+      });
+    }
+
     return IndexedStack(
-      index: _currentIndex,
+      index: safeIndex,
       children: [
         DiscoveryView(
-          currentNavIndex: _currentIndex,
+          currentNavIndex: safeIndex,
+          navItems: navItems,
           onNavTap: _onNavTap,
           onNotificationsTap: _pushNotifications,
           onProfileTap: _pushProfile,
           onSearchEmpty: _pushEmptySearch,
           onEventTap: _pushEventDetail,
         ),
-        ManageEventsView(
-          currentNavIndex: _currentIndex,
-          onNavTap: _onNavTap,
-          onCreateEventTap: _pushCreateEvent,
-          onEventTap: _pushEventDetail,
-          onManageEventTap: _pushManageEventHub,
-        ),
-        MyTicketsView(
-          currentNavIndex: _currentIndex,
-          onNavTap: _onNavTap,
-          onTicketTap: _pushTicketDetail,
-          onPastTicketTap: _pushPastEventDetail,
-          onScanTap: _pushQrScanner,
-        ),
+        isStudent
+            ? StudentEventsView(
+                currentNavIndex: safeIndex,
+                navItems: navItems,
+                onNavTap: _onNavTap,
+                onEventTap: _pushEventDetail,
+              )
+            : ManageEventsView(
+                currentNavIndex: safeIndex,
+                navItems: navItems,
+                onNavTap: _onNavTap,
+                onCreateEventTap: _pushCreateEvent,
+                onEventTap: _pushEventDetail,
+                onManageEventTap: _pushManageEventHub,
+              ),
         SettingsView(
-          currentNavIndex: _currentIndex,
+          currentNavIndex: safeIndex,
+          navItems: navItems,
           onNavTap: _onNavTap,
           onBack: () => _onNavTap(0),
           onEditProfile: _pushEditProfile,

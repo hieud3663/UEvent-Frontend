@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -16,12 +17,14 @@ class NotificationsView extends ConsumerWidget {
   final int currentNavIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback? onBack;
+  final List<NavItemModel> navItems;
 
   const NotificationsView({
     super.key,
-    this.currentNavIndex = 3,
+    this.currentNavIndex = 2,
     required this.onNavTap,
     this.onBack,
+    this.navItems = GlassBottomNavBar.defaultItems,
   });
 
   @override
@@ -125,7 +128,7 @@ class NotificationsView extends ConsumerWidget {
           GlassBottomNavBar(
             currentIndex: currentNavIndex,
             onTap: onNavTap,
-            items: GlassBottomNavBar.defaultItems,
+            items: navItems,
           ),
         ],
       ),

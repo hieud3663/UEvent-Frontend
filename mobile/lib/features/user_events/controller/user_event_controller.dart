@@ -28,12 +28,40 @@ class UserEventRegistrationController extends AsyncNotifier<void> {
           .read(userEventRepositoryProvider)
           .registerEvent(eventId: eventId, answers: answers);
 
-      ref.invalidate(userEventDetailProvider(eventId));
+      await _refreshEventDetail(eventId);
       ref.invalidate(userMyEventsProvider);
+      ref.invalidate(userRegisteredEventsProvider);
     });
 
     state = result;
     return result.hasValue ? registration : null;
+  }
+
+  Future<bool> unregisterEvent({required String eventId}) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(userEventRepositoryProvider)
+          .unregisterCurrentUserFromEvent(eventId: eventId);
+
+      await _refreshEventDetail(eventId);
+      ref.invalidate(userMyEventsProvider);
+      ref.invalidate(userRegisteredEventsProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<void> _refreshEventDetail(String eventId) async {
+    ref.invalidate(userEventDetailProvider(eventId));
+    try {
+      await ref.read(userEventDetailProvider(eventId).future);
+    } catch (_) {
+      // Registration mutations should keep their own result even if the
+      // follow-up detail refresh fails.
+    }
   }
 }
 

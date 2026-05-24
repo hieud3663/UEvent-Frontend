@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
@@ -23,10 +24,11 @@ class SettingsView extends ConsumerStatefulWidget {
   final VoidCallback? onPrivacyPolicy;
   final VoidCallback? onSyncContacts;
   final VoidCallback? onSignOut;
+  final List<NavItemModel> navItems;
 
   const SettingsView({
     super.key,
-    this.currentNavIndex = 3,
+    this.currentNavIndex = 2,
     this.onNavTap,
     this.onBack,
     this.onEditProfile,
@@ -38,6 +40,7 @@ class SettingsView extends ConsumerStatefulWidget {
     this.onPrivacyPolicy,
     this.onSyncContacts,
     this.onSignOut,
+    this.navItems = GlassBottomNavBar.defaultItems,
   });
 
   @override
@@ -337,7 +340,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       const SizedBox(height: 24),
                       Center(
                         child: Text(
-                          'Version 4.2.0 (Premium Build)',
+                          'Version 1.0.0',
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.onSurfaceVariant.withValues(
                               alpha: 0.6,
@@ -365,7 +368,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // usually this is part of Scaffold's bottomNavigationBar, but we'll include it here aligned with design)
           GlassBottomNavBar(
             currentIndex: widget.currentNavIndex,
-            items: GlassBottomNavBar.defaultItems,
+            items: widget.navItems,
             onTap: widget.onNavTap ?? (_) {},
           ),
         ],
