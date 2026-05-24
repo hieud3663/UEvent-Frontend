@@ -1,0 +1,143 @@
+import 'package:dio/dio.dart';
+import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/network/response_parsing.dart';
+import 'package:frontend/features/event_shared/models/event_category_model.dart';
+import 'package:frontend/features/event_shared/models/event_feedback_model.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_question_model.dart';
+import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+
+class UserEventService {
+  final ApiClient _apiClient;
+
+  UserEventService(this._apiClient);
+
+  Future<List<EventModel>> getEvents({
+    Map<String, dynamic>? queryParams,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/search/',
+        queryParameters: queryParams,
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventModel>> searchEvents({
+    int page = 1,
+    int pageSize = 10,
+    String category = '',
+    String status = 'active',
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/search/',
+        queryParameters: {
+          'page': page,
+          'page_size': pageSize,
+          'category': category,
+          'status': status,
+        },
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventCategoryModel>> getEventCategories() async {
+    try {
+      final response = await _apiClient.dio.get('/event-categories/');
+      final dataList = extractListData(response.data);
+      return dataList.map(EventCategoryModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventModel> getEventDetail(String eventId) async {
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/');
+      return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventRegistrationModel> registerEvent({
+    required String eventId,
+    List<EventRegistrationAnswerModel> answers = const [],
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/registrations/',
+        data: {'answers': answers.map((answer) => answer.toJson()).toList()},
+      );
+      return EventRegistrationModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventQuestionModel>> getPublicEventQuestions({
+    required String eventId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/questions/public/',
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventQuestionModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventQuestionModel> createEventQuestion({
+    required String eventId,
+    required String questionText,
+    required bool isAnonymous,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/questions/',
+        data: {'question_text': questionText, 'is_anonymous': isAnonymous},
+      );
+      return EventQuestionModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<EventFeedbackModel>> getEventFeedbacks({
+    required String eventId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/feedbacks/');
+      final dataList = extractListData(response.data);
+      return dataList.map(EventFeedbackModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventFeedbackSummaryModel> getEventFeedbackSummary({
+    required String eventId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/feedbacks/summary/',
+      );
+      return EventFeedbackSummaryModel.fromJson(
+        extractObjectData(response.data),
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+}

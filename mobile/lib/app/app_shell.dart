@@ -8,30 +8,30 @@ import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
-import 'package:frontend/features/events/controller/event_mutation_controller.dart';
-import 'package:frontend/features/events/models/event_model.dart';
-import 'package:frontend/features/events/models/event_registration_model.dart';
-import 'package:frontend/features/events/providers/event_providers.dart';
-import 'package:frontend/features/events/views/archive_event_view.dart';
-import 'package:frontend/features/events/views/ask_question_screen.dart';
-import 'package:frontend/features/events/views/attendee_list_view.dart';
-import 'package:frontend/features/events/views/create_event_view.dart';
-import 'package:frontend/features/events/views/discovery_view.dart';
-import 'package:frontend/features/events/views/edit_event_details_view.dart';
-import 'package:frontend/features/events/views/empty_search_view.dart';
-import 'package:frontend/features/events/views/event_detail_organizer_view.dart';
-import 'package:frontend/features/events/views/event_detail_screen.dart';
-import 'package:frontend/features/events/views/export_attendee_list_view.dart';
-import 'package:frontend/features/events/views/invite_guests_view.dart';
-import 'package:frontend/features/events/views/manage_event_hub_view.dart';
-import 'package:frontend/features/events/views/manage_events_view.dart';
-import 'package:frontend/features/events/views/manage_team_view.dart';
-import 'package:frontend/features/events/views/question_detail_view.dart';
-import 'package:frontend/features/events/views/registration_confirmation_screen.dart';
-import 'package:frontend/features/events/views/registration_questions_view.dart';
-import 'package:frontend/features/events/views/registration_success_screen.dart';
-import 'package:frontend/features/events/views/send_notification_view.dart';
-import 'package:frontend/features/events/views/share_event_sheet.dart';
+import 'package:frontend/features/user_events/controller/user_event_controller.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+import 'package:frontend/features/user_events/providers/user_event_providers.dart';
+import 'package:frontend/features/organizer_events/views/archive_event_view.dart';
+import 'package:frontend/features/user_events/views/ask_question_screen.dart';
+import 'package:frontend/features/organizer_events/views/attendee_list_view.dart';
+import 'package:frontend/features/organizer_events/views/create_event_view.dart';
+import 'package:frontend/features/user_events/views/discovery_view.dart';
+import 'package:frontend/features/organizer_events/views/edit_event_details_view.dart';
+import 'package:frontend/features/user_events/views/empty_search_view.dart';
+import 'package:frontend/features/organizer_events/views/event_detail_organizer_view.dart';
+import 'package:frontend/features/user_events/views/event_detail_screen.dart';
+import 'package:frontend/features/organizer_events/views/export_attendee_list_view.dart';
+import 'package:frontend/features/organizer_events/views/invite_guests_view.dart';
+import 'package:frontend/features/organizer_events/views/manage_event_hub_view.dart';
+import 'package:frontend/features/organizer_events/views/manage_events_view.dart';
+import 'package:frontend/features/organizer_events/views/manage_team_view.dart';
+import 'package:frontend/features/organizer_events/views/question_detail_view.dart';
+import 'package:frontend/features/user_events/views/registration_confirmation_screen.dart';
+import 'package:frontend/features/user_events/views/registration_questions_view.dart';
+import 'package:frontend/features/user_events/views/registration_success_screen.dart';
+import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
+import 'package:frontend/features/event_shared/views/share_event_sheet.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
@@ -162,10 +162,10 @@ class _AppShellState extends ConsumerState<AppShell> {
       event: event,
       onConfirm: (answers) async {
         final detail = ref
-            .read(eventDetailProvider(event.id))
+            .read(userEventDetailProvider(event.id))
             .whenOrNull(data: (value) => value);
         final registration = await ref
-            .read(eventRegistrationControllerProvider.notifier)
+            .read(userEventRegistrationControllerProvider.notifier)
             .registerEvent(eventId: event.id, answers: answers);
         if (registration != null && mounted) {
           if (ctx.mounted) {
@@ -206,7 +206,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onBack: () => Navigator.of(ctx).pop(),
           onSend: (q, anon, notify) async {
             final ok = await ref
-                .read(eventEngagementControllerProvider.notifier)
+                .read(userEventEngagementControllerProvider.notifier)
                 .createQuestion(
                   eventId: event.id,
                   questionText: q,
