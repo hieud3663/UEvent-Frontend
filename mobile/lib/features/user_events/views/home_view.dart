@@ -103,7 +103,7 @@ class HomeView extends ConsumerWidget {
                 loading: () => [const AppLoadingSliver()],
                 error: (error, _) => [
                   AppErrorSliver(
-                    title: 'Tai du lieu that bai',
+                    title: 'Tải dữ liệu thất bại',
                     description:
                         'Khong the lay danh sach su kien. Keo xuong de thu lai.',
                     onRetry: () => ref.refresh(userMyEventsProvider),
@@ -122,7 +122,7 @@ class HomeView extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Khám phá hôm nay',
+                        'Sự kiện hôm nay',
                         style: AppTextStyles.headlineLarge.copyWith(
                           fontSize: 24,
                         ),

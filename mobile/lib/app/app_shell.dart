@@ -12,7 +12,6 @@ import 'package:frontend/features/user_events/controller/user_event_controller.d
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
-import 'package:frontend/features/organizer_events/views/archive_event_view.dart';
 import 'package:frontend/features/user_events/views/ask_question_screen.dart';
 import 'package:frontend/features/organizer_events/views/attendee_list_view.dart';
 import 'package:frontend/features/organizer_events/views/create_event_view.dart';
@@ -21,14 +20,11 @@ import 'package:frontend/features/organizer_events/views/edit_event_details_view
 import 'package:frontend/features/user_events/views/empty_search_view.dart';
 import 'package:frontend/features/organizer_events/views/event_detail_organizer_view.dart';
 import 'package:frontend/features/user_events/views/event_detail_screen.dart';
-import 'package:frontend/features/organizer_events/views/export_attendee_list_view.dart';
 import 'package:frontend/features/organizer_events/views/invite_guests_view.dart';
 import 'package:frontend/features/organizer_events/views/manage_event_hub_view.dart';
 import 'package:frontend/features/organizer_events/views/manage_events_view.dart';
-import 'package:frontend/features/organizer_events/views/manage_team_view.dart';
-import 'package:frontend/features/organizer_events/views/question_detail_view.dart';
+import 'package:frontend/features/organizer_events/views/organizer_engagement_view.dart';
 import 'package:frontend/features/user_events/views/registration_confirmation_screen.dart';
-import 'package:frontend/features/user_events/views/registration_questions_view.dart';
 import 'package:frontend/features/user_events/views/registration_success_screen.dart';
 import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
 import 'package:frontend/features/event_shared/views/share_event_sheet.dart';
@@ -78,6 +74,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _onNavTap(int index) {
+    dismissAppSnackBar();
+    if (index == _currentIndex) return;
     setState(() => _currentIndex = index);
   }
 
@@ -202,7 +200,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         builder: (_) => AskQuestionScreen(
           eventName: event.title,
           eventImageUrl: event.imageUrl,
-          eventCategory: event.category ?? 'Live Q&A Session',
+          eventCategory: event.category ?? 'Phiên hỏi đáp trực tiếp',
           onBack: () => Navigator.of(ctx).pop(),
           onSend: (q, anon, notify) async {
             final ok = await ref
@@ -282,7 +280,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (!canCreateEvent) {
       _showSnackBar(
         context,
-        'Bạn không phải là người tổ chức, hãy liên hệ với administrator để cấp quyền cho bạn',
+        'Bạn không phải là người tổ chức, hãy liên hệ với quản trị viên để cấp quyền cho bạn',
       );
       return;
     }
@@ -317,14 +315,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     Navigator.of(context).push(
       appRoute(
         builder: (_) => ManageEventHubView(
+          event: event,
           onBack: () => Navigator.of(context).pop(),
           onEditDetailsTap: () => _pushEditEventDetails(event),
-          onManageTeamTap: () => _pushManageTeam(event),
-          onArchiveTap: _pushArchiveEvent,
           onAttendeeListTap: () => _pushAttendeeList(event),
-          onRegistrationQuestionsTap: _pushRegistrationQuestions,
           onParticipantCheckInTap: _pushQrScanner,
-          onExportAttendeeListTap: _pushExportAttendeeList,
+          onQuestionsFeedbackTap: () => _pushOrganizerEngagement(event),
         ),
       ),
     );
@@ -342,26 +338,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushManageTeam(EventModel event) {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) => ManageTeamView(
-          eventId: event.id,
-          onBack: () => Navigator.of(ctx).pop(),
-        ),
-      ),
-    );
-  }
-
-  void _pushArchiveEvent() {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) =>
-            ArchiveEventView(onBack: () => Navigator.of(ctx).pop()),
-      ),
-    );
-  }
-
   void _pushAttendeeList(EventModel event) {
     Navigator.of(context).push(
       appRoute(
@@ -373,31 +349,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushExportAttendeeList() {
+  void _pushOrganizerEngagement(EventModel event) {
     Navigator.of(context).push(
       appRoute(
-        builder: (ctx) =>
-            ExportAttendeeListView(onClose: () => Navigator.of(ctx).pop()),
-      ),
-    );
-  }
-
-  void _pushRegistrationQuestions() {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) => RegistrationQuestionsView(
+        builder: (ctx) => OrganizerEngagementView(
+          eventId: event.id,
           onBack: () => Navigator.of(ctx).pop(),
-          onQuestionTap: () => _pushQuestionDetail(),
         ),
-      ),
-    );
-  }
-
-  void _pushQuestionDetail() {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) =>
-            QuestionDetailView(onBack: () => Navigator.of(ctx).pop()),
       ),
     );
   }

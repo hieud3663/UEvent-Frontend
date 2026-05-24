@@ -38,11 +38,11 @@ class AttendeeCard extends StatelessWidget {
     final Color tagBgColor = badgeColor.withValues(alpha: 0.15);
     final Color tagTextColor = badgeColor;
     final String statusLabel = switch (status) {
-      AttendeeStatus.checkedIn => 'CHECKED-IN',
-      AttendeeStatus.registered => 'REGISTERED',
-      AttendeeStatus.waitlisted => 'WAITLISTED',
-      AttendeeStatus.pending => 'PENDING',
-      AttendeeStatus.cancelled => 'CANCELLED',
+      AttendeeStatus.checkedIn => 'ĐÃ CHECK-IN',
+      AttendeeStatus.registered => 'ĐÃ ĐĂNG KÝ',
+      AttendeeStatus.waitlisted => 'DANH SÁCH CHỜ',
+      AttendeeStatus.pending => 'ĐANG CHỜ',
+      AttendeeStatus.cancelled => 'ĐÃ HỦY',
     };
 
     return GestureDetector(
@@ -70,70 +70,80 @@ class AttendeeCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                // Avatar with indicator
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
-                        imageUrl,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+            Expanded(
+              child: Row(
+                children: [
+                  // Avatar with indicator
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          imageUrl,
                           width: 56,
                           height: 56,
-                          color: AppColors.surfaceVariant,
-                          child: const Icon(
-                            Icons.person,
-                            color: AppColors.onSurfaceVariant,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 56,
+                                height: 56,
+                                color: AppColors.surfaceVariant,
+                                child: const Icon(
+                                  Icons.person,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -4,
+                        right: -4,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: -4,
-                      right: -4,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: badgeColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
 
-                // Name & ID
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                      ),
+                  // Name & ID
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ID: $studentId',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.labelSmall.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.navInactive,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'ID: $studentId',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.navInactive,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 12),
 
             if (trailing != null)
               trailing!

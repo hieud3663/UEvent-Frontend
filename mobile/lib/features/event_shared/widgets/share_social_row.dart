@@ -27,7 +27,7 @@ class ShareSocialRow extends StatelessWidget {
           'https://lh3.googleusercontent.com/aida-public/AB6AXuACp-E15b4i_hzTYOQdOBZwmZJg97FRJluKDljRN_Ldb3iGczKbl6F12_Q3JzyPrjxZEXA5GlPrWK3W7g8fWpCZPDC6gFJiNbbjj3yOnNi9IbY4CIMCGzuHLiW2xb1qT3nCfdcPE0Ly04_mB3lPbpOqVs0xCJdrtoUWnjAQKxBz22ldA1H6HX-6zcagDBcuxSP75U6aC5KNnh05cGHYpHqR470IV24gKZDz5Era4UE8wFFXLRUwFDUi9ypQqhUt5OUnLT5gdQRmiEM',
     ),
     _SocialApp(
-      label: 'Messages',
+      label: 'Tin nhắn',
       solidColor: Color(0xFF101322),
       iconUrl:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDXVuYVCi9i3-BDISf5ujCH0maCWCMVQ_szyEA2pcv4c-zK_tIutKI6FTF3kFX0JBCLLWxIt64_m4ra7Lb-v1dba1mt_OoLuV3KQhA4AzLug5fh-0_ptqUmXsHq7btO1QQBfj8opMySICVj9H_H6sT2cz5qLoruYTGtIBU5m54lamlFVIp0fXkmFE0K_K_7QLtTDBimXa_Bu4D9bQGlvGFJ81qQx-aN_uTgI7wla4tRiGR_1q7afmLsnZEMpJu_-w1O0ILEK7knkL8',

@@ -131,7 +131,7 @@ class _RegistrationConfirmationScreenState
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Event Registration', style: AppTextStyles.headlineLarge),
+              Text('Đăng ký sự kiện', style: AppTextStyles.headlineLarge),
               const SizedBox(height: 16),
               Text.rich(
                 TextSpan(
@@ -140,7 +140,7 @@ class _RegistrationConfirmationScreenState
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(text: 'Register for '),
+                    const TextSpan(text: 'Đăng ký tham gia '),
                     TextSpan(
                       text: widget.event.title,
                       style: AppTextStyles.bodyLarge.copyWith(
@@ -162,7 +162,7 @@ class _RegistrationConfirmationScreenState
                 value: _agreedToTerms,
                 onChanged: (value) =>
                     setState(() => _agreedToTerms = value ?? false),
-                title: 'I agree to the Terms of Participation',
+                title: 'Tôi đồng ý với điều khoản tham gia',
                 icon: Icons.verified_user_outlined,
               ),
               if (_errorMessage != null) ...[
@@ -177,7 +177,7 @@ class _RegistrationConfirmationScreenState
               ],
               const SizedBox(height: 20),
               PrimaryButton(
-                label: 'Confirm Registration',
+                label: 'Xác nhận đăng ký',
                 icon: Icons.arrow_forward,
                 isLoading: _isSubmitting,
                 onPressed: _agreedToTerms ? _submit : null,
@@ -295,7 +295,7 @@ class _RegistrationConfirmationScreenState
 
   String _deadlineText() {
     final closeAt = widget.event.registrationCloseAt;
-    if (closeAt == null) return 'Seats are limited.';
-    return 'Registration closes at ${closeAt.toLocal()}. Seats are limited.';
+    if (closeAt == null) return 'Số chỗ có hạn.';
+    return 'Đăng ký đóng lúc ${closeAt.toLocal()}. Số chỗ có hạn.';
   }
 }

@@ -138,9 +138,9 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       horizontal: AppConstants.pagePaddingH,
                     ),
                     child: SectionHeader(
-                      title: 'Discover Events',
+                      title: 'Sự kiện nổi bật',
                       titleStyle: AppTextStyles.headlineLarge,
-                      actionText: 'See all',
+                      actionText: 'Xem tất cả',
                       onActionTap: () {},
                     ),
                   ),
@@ -221,7 +221,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Discovery',
+              title: 'Trang chủ',
               leadingWidget: GestureDetector(
                 onTap: widget.onProfileTap,
                 child: _buildAvatar(),
@@ -309,7 +309,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                 color: AppColors.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: 'Search events...',
+                hintText: 'Tìm kiếm sự kiện...',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.navInactive,
                 ),

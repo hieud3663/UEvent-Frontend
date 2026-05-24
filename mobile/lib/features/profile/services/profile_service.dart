@@ -32,7 +32,10 @@ class ProfileService {
     }
 
     try {
-      final response = await _apiClient.dio.patch('/auth/profile/', data: updateData);
+      final response = await _apiClient.dio.patch(
+        '/auth/profile/',
+        data: updateData,
+      );
       return UserModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;

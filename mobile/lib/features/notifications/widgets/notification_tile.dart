@@ -63,10 +63,7 @@ class NotificationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        title,
-                        style: AppTextStyles.titleSmall,
-                      ),
+                      child: Text(title, style: AppTextStyles.titleSmall),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -78,10 +75,7 @@ class NotificationTile extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 // Description
-                Text(
-                  description,
-                  style: AppTextStyles.bodyMedium,
-                ),
+                Text(description, style: AppTextStyles.bodyMedium),
 
                 // Action button
                 if (actionLabel != null) ...[
@@ -126,7 +120,9 @@ class NotificationTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: opacity >= 1.0 ? tileContent : Opacity(opacity: opacity, child: tileContent),
+      child: opacity >= 1.0
+          ? tileContent
+          : Opacity(opacity: opacity, child: tileContent),
     );
   }
 }

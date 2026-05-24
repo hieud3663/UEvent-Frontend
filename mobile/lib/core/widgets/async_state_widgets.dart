@@ -10,7 +10,9 @@ class AppLoadingState extends StatelessWidget {
   const AppLoadingState({
     super.key,
     this.height = 120,
-    this.padding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
     this.indicator,
   });
 
@@ -41,7 +43,9 @@ class AppErrorState extends StatelessWidget {
     required this.description,
     this.onRetry,
     this.retryText = 'Thử lại',
-    this.padding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
   });
 
   @override
@@ -54,10 +58,7 @@ class AppErrorState extends StatelessWidget {
         description: description,
         primaryAction: onRetry == null
             ? null
-            : TextButton(
-                onPressed: onRetry,
-                child: Text(retryText),
-              ),
+            : TextButton(onPressed: onRetry, child: Text(retryText)),
       ),
     );
   }
@@ -78,7 +79,9 @@ class AppSuccessState extends StatelessWidget {
     required this.emptyTitle,
     required this.emptyDescription,
     required this.child,
-    this.emptyPadding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.emptyPadding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
   });
 
   @override

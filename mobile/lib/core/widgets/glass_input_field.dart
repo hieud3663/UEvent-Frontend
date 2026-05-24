@@ -63,18 +63,12 @@ class GlassInputField extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  label.toUpperCase(),
-                  style: AppTextStyles.inputLabel,
-                ),
+                Text(label.toUpperCase(), style: AppTextStyles.inputLabel),
                 labelTrailing!,
               ],
             )
           else
-            Text(
-              label.toUpperCase(),
-              style: AppTextStyles.inputLabel,
-            ),
+            Text(label.toUpperCase(), style: AppTextStyles.inputLabel),
           const SizedBox(height: 4),
 
           // Input or child
@@ -84,11 +78,7 @@ class GlassInputField extends StatelessWidget {
             Row(
               children: [
                 if (leadingIcon != null) ...[
-                  Icon(
-                    leadingIcon,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                  Icon(leadingIcon, color: AppColors.primary, size: 20),
                   const SizedBox(width: 10),
                 ],
                 Expanded(

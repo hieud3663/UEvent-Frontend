@@ -26,17 +26,21 @@ class ShareActionGrid extends StatelessWidget {
       children: [
         _ActionItem(
           icon: Icons.link,
-          label: 'Copy Link',
+          label: 'Sao chép liên kết',
           isPrimary: true,
           onTap: onCopyLink,
         ),
-        _ActionItem(icon: Icons.qr_code_2, label: 'Share QR', onTap: onQrCode),
+        _ActionItem(
+          icon: Icons.qr_code_2,
+          label: 'Chia sẻ QR',
+          onTap: onQrCode,
+        ),
         _ActionItem(
           icon: Icons.save_alt,
-          label: 'Save Post',
+          label: 'Lưu bài đăng',
           onTap: onSavePost,
         ),
-        _ActionItem(icon: Icons.more_horiz, label: 'More', onTap: onMore),
+        _ActionItem(icon: Icons.more_horiz, label: 'Thêm', onTap: onMore),
       ],
     );
   }

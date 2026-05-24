@@ -100,13 +100,13 @@ class _EventDetailRegisteredScreenState
                         const SizedBox(height: 20),
                         EventInfoRow(
                           icon: Icons.calendar_today,
-                          label: 'Friday, Nov 15, 2024',
+                          label: 'Thứ Sáu, 15/11/2024',
                           subtitle: '09:00 AM – 06:00 PM',
                         ),
                         const SizedBox(height: 12),
                         EventInfoRow(
                           icon: Icons.location_on,
-                          label: 'Moscone Center West',
+                          label: 'Trung tâm Moscone West',
                           subtitle: '800 Howard St, San Francisco, CA',
                           onTap: () {},
                         ),
@@ -172,7 +172,7 @@ class _EventDetailRegisteredScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('About Event', style: AppTextStyles.headlineMedium),
+        Text('Về sự kiện', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         Text(
           'Join over 5,000 developers and innovators from around the world for a day of deep dives into the future of artificial intelligence, machine learning, and cloud infrastructure.\n\n'

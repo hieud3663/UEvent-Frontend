@@ -92,7 +92,7 @@ class _ManageEventsViewState extends ConsumerState<ManageEventsView> {
                             horizontal: AppConstants.pagePaddingH,
                           ),
                           child: SectionHeader(
-                            title: 'Event đang quản lý',
+                            title: 'Sự kiện đang quản lý',
                             actionText: '${events.length} EVENT',
                             onActionTap: () {},
                           ),
@@ -153,7 +153,7 @@ class _ManageEventsViewState extends ConsumerState<ManageEventsView> {
                   loading: () => const [AppLoadingSliver()],
                   error: (error, stackTrace) => [
                     AppErrorSliver(
-                      title: 'Không tải được event',
+                      title: 'Không tải được sự kiện',
                       description: 'Vui lòng kiểm tra mạng và thử lại.',
                       onRetry: () =>
                           ref.invalidate(organizerEventsPagerProvider),
@@ -168,7 +168,7 @@ class _ManageEventsViewState extends ConsumerState<ManageEventsView> {
             top: 0,
             left: 0,
             right: 0,
-            child: GlassTopBar(title: 'Quản lý event'),
+            child: GlassTopBar(title: 'Quản lý sự kiện'),
           ),
           GlassBottomNavBar(
             currentIndex: widget.currentNavIndex,

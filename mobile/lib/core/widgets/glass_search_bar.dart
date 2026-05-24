@@ -13,7 +13,7 @@ class GlassSearchBar extends StatelessWidget {
 
   const GlassSearchBar({
     super.key,
-    this.placeholder = 'Search...',
+    this.placeholder = 'Tìm kiếm...',
     this.controller,
     this.onChanged,
     this.onClear,

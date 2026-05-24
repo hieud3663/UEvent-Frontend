@@ -13,7 +13,8 @@ class MockNotificationData {
     NotificationModel(
       id: 'notif-002',
       title: 'Xác nhận đăng ký',
-      message: 'Bạn đã đăng ký thành công sự kiện. Quét mã QR tại cổng để vào cửa.',
+      message:
+          'Bạn đã đăng ký thành công sự kiện. Quét mã QR tại cổng để vào cửa.',
       type: NotificationType.ticketConfirm,
       deliveredAt: DateTime.now().subtract(const Duration(days: 2)),
       readAt: DateTime.now().subtract(const Duration(days: 1)),

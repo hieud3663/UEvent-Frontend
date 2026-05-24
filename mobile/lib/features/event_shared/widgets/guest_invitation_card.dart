@@ -141,7 +141,7 @@ class GuestInvitationCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'SENT',
+                        'ĐÃ GỬI',
                         style: AppTextStyles.labelSmall.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.navInactive,
@@ -171,7 +171,7 @@ class GuestInvitationCard extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      'INVITE',
+                      'MỜI',
                       style: AppTextStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.onPrimary,

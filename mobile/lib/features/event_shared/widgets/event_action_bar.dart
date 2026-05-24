@@ -63,7 +63,7 @@ class EventActionBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'PRICE',
+                'GIÁ',
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.onSurfaceVariant,
                   letterSpacing: 1.0,
@@ -82,7 +82,7 @@ class EventActionBar extends StatelessWidget {
         ],
         Expanded(
           child: _PrimaryActionButton(
-            label: 'Register Now',
+            label: 'Đăng ký ngay',
             icon: Icons.arrow_forward,
             onPressed: onRegister,
           ),
@@ -100,7 +100,7 @@ class EventActionBar extends StatelessWidget {
             Expanded(
               flex: 2,
               child: _PrimaryActionButton(
-                label: 'My Ticket',
+                label: 'Vé của tôi',
                 icon: Icons.confirmation_number_outlined,
                 onPressed: onMyTicket,
               ),
@@ -108,7 +108,7 @@ class EventActionBar extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _SecondaryActionButton(
-                label: 'Contact',
+                label: 'Liên hệ',
                 icon: Icons.chat_bubble_outline,
                 onPressed: onContact,
               ),

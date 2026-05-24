@@ -30,6 +30,7 @@ class UEventsApp extends ConsumerWidget {
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: [appSnackBarRouteObserver],
       home: Builder(
         builder: (context) => SplashView(
           onInitializationComplete: () {

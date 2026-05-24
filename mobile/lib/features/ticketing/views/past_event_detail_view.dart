@@ -49,7 +49,7 @@ class PastEventDetailView extends StatelessWidget {
               left: 0,
               right: 0,
               child: GlassTopBar(
-                title: 'Event Detail',
+                title: 'Chi tiết sự kiện',
                 leadingIcon: Icons.arrow_back_ios_new,
                 onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
               ),
@@ -159,7 +159,7 @@ class PastEventDetailView extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'ATTENDED',
+                          'ĐÃ THAM GIA',
                           style: AppTextStyles.labelSmall.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -217,14 +217,14 @@ class PastEventDetailView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Column(
           children: [
-            TicketInfoRow(label: 'Date', value: ticket.date),
-            TicketInfoRow(label: 'Time', value: ticket.timeRange),
-            TicketInfoRow(label: 'Location', value: ticket.location),
-            TicketInfoRow(label: 'Order ID', value: ticket.orderId),
-            TicketInfoRow(label: 'Section', value: ticket.section),
+            TicketInfoRow(label: 'Ngày', value: ticket.date),
+            TicketInfoRow(label: 'Thời gian', value: ticket.timeRange),
+            TicketInfoRow(label: 'Địa điểm', value: ticket.location),
+            TicketInfoRow(label: 'Mã đơn', value: ticket.orderId),
+            TicketInfoRow(label: 'Khu vực', value: ticket.section),
             if (ticket.guestType != null)
               TicketInfoRow(
-                label: 'Guest',
+                label: 'Khách',
                 value: ticket.guestType!,
                 showDivider: false,
               ),

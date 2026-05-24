@@ -72,7 +72,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Registration Successful!',
+                      'Đăng ký thành công!',
                       style: AppTextStyles.headlineMedium.copyWith(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -81,7 +81,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "You're all set for the $eventName. See you there!",
+                      'Bạn đã sẵn sàng cho $eventName. Hẹn gặp bạn tại sự kiện!',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -109,14 +109,14 @@ class RegistrationSuccessScreen extends StatelessWidget {
                           ),
                           elevation: 0,
                         ),
-                        child: const Text('View My Ticket'),
+                        child: const Text('Xem vé của tôi'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: onAddToWallet,
                       child: Text(
-                        'Add to Apple Wallet',
+                        'Thêm vào Apple Wallet',
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
@@ -217,7 +217,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'EVENT',
+                            'SỰ KIỆN',
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.onSurfaceVariant,
                               letterSpacing: 1.5,
@@ -238,7 +238,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'TICKET ID',
+                          'MÃ VÉ',
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.onSurfaceVariant,
                             letterSpacing: 1.5,

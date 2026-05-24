@@ -12,6 +12,7 @@ class BentoStatCard extends StatelessWidget {
   final String? percentageStr;
   final double? progressPercentage;
   final bool isHighlightIcon;
+  final bool centerContent;
 
   const BentoStatCard({
     super.key,
@@ -22,6 +23,7 @@ class BentoStatCard extends StatelessWidget {
     this.percentageStr,
     this.progressPercentage,
     this.isHighlightIcon = false,
+    this.centerContent = false,
   });
 
   @override
@@ -55,7 +57,9 @@ class BentoStatCard extends StatelessWidget {
           ),
           padding: EdgeInsets.all(padding),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: centerContent
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
@@ -79,7 +83,9 @@ class BentoStatCard extends StatelessWidget {
               Flexible(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: centerContent
+                      ? CrossAxisAlignment.center
+                      : CrossAxisAlignment.start,
                   children: [
                     Text(
                       title.toUpperCase(),
@@ -93,6 +99,9 @@ class BentoStatCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Row(
+                      mainAxisAlignment: centerContent
+                          ? MainAxisAlignment.center
+                          : MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [

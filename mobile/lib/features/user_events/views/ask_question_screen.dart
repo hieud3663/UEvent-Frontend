@@ -100,7 +100,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
                     ),
                     Expanded(
                       child: Text(
-                        'Ask a Question',
+                        'Đặt câu hỏi',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.titleMedium.copyWith(
                           fontWeight: FontWeight.w800,
@@ -242,7 +242,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Type your question here...',
+                hintText: 'Nhập câu hỏi của bạn...',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
@@ -257,8 +257,8 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             icon: Icons.visibility_off_outlined,
             iconBg: AppColors.primaryContainer,
             iconColor: AppColors.onPrimaryContainer,
-            title: 'Ask Anonymously',
-            subtitle: 'Hide your name from the audience',
+            title: 'Hỏi ẩn danh',
+            subtitle: 'Ẩn tên của bạn với người tham dự',
             value: _isAnonymous,
             onChanged: (v) => setState(() => _isAnonymous = v),
           ),
@@ -267,8 +267,8 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             icon: Icons.notifications_active_outlined,
             iconBg: AppColors.secondaryContainer,
             iconColor: AppColors.secondary,
-            title: 'Notify me on answer',
-            subtitle: 'Get a ping when the speaker responds',
+            title: 'Thông báo khi có trả lời',
+            subtitle: 'Nhận thông báo khi diễn giả phản hồi',
             value: _wantsNotification,
             onChanged: (v) => setState(() => _wantsNotification = v),
           ),
@@ -282,7 +282,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
           const SizedBox(height: 24),
           // Send button
           PrimaryButton(
-            label: 'Send Question',
+            label: 'Gửi câu hỏi',
             icon: Icons.send,
             isLoading: _isSending,
             onPressed: _handleSend,

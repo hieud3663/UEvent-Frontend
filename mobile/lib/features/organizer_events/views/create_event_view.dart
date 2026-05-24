@@ -40,6 +40,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   final _imagePicker = ImagePicker();
 
   bool _isPublic = true;
+  bool _activateImmediately = true;
   File? _coverImageFile;
   EventRoomModel? _selectedRoom;
   EventCategoryModel? _selectedCategory;
@@ -98,7 +99,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Create Event',
+              title: 'Tạo sự kiện',
               titleStyle: AppTextStyles.titleMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -120,8 +121,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     return Column(
       children: [
         GlassInputField(
-          label: 'Event Name',
-          placeholder: 'Summer Rooftop Gala',
+          label: 'Tên sự kiện',
+          placeholder: 'Đêm nhạc sân thượng mùa hè',
           controller: _titleController,
         ),
         const SizedBox(height: 16),
@@ -129,7 +130,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           children: [
             Expanded(
               child: GlassInputField(
-                label: 'Start Date',
+                label: 'Ngày bắt đầu',
                 placeholder: '2026-05-22',
                 leadingIcon: Icons.calendar_today,
                 controller: _startDateController,
@@ -138,7 +139,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             const SizedBox(width: 16),
             Expanded(
               child: GlassInputField(
-                label: 'Start Time',
+                label: 'Giờ bắt đầu',
                 placeholder: '07:00',
                 leadingIcon: Icons.schedule,
                 controller: _startTimeController,
@@ -151,7 +152,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           children: [
             Expanded(
               child: GlassInputField(
-                label: 'End Date',
+                label: 'Ngày kết thúc',
                 placeholder: '2026-05-23',
                 leadingIcon: Icons.event_available,
                 controller: _endDateController,
@@ -160,7 +161,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             const SizedBox(width: 16),
             Expanded(
               child: GlassInputField(
-                label: 'End Time',
+                label: 'Giờ kết thúc',
                 placeholder: '09:00',
                 leadingIcon: Icons.schedule,
                 controller: _endTimeController,
@@ -174,10 +175,10 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         _buildCategoryDropdown(categoriesAsync),
         const SizedBox(height: 16),
         GlassInputField(
-          label: 'Number of guests',
+          label: 'Số lượng khách',
           placeholder: _selectedRoom == null
-              ? 'e.g. 120'
-              : 'Max ${_selectedRoom!.capacity}',
+              ? 'VD: 120'
+              : 'Tối đa ${_selectedRoom!.capacity}',
           leadingIcon: Icons.group,
           controller: _capacityController,
           keyboardType: TextInputType.number,
@@ -185,9 +186,11 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         const SizedBox(height: 16),
         _buildVisibilityToggle(),
         const SizedBox(height: 16),
+        _buildPublishStateToggle(),
+        const SizedBox(height: 16),
         GlassInputField(
-          label: 'Description',
-          placeholder: 'Tell everyone about your event...',
+          label: 'Mô tả',
+          placeholder: 'Giới thiệu sự kiện của bạn...',
           controller: _descriptionController,
           maxLines: 4,
         ),
@@ -198,14 +201,14 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   Widget _buildRoomDropdown(AsyncValue<List<EventRoomModel>> roomsAsync) {
     return roomsAsync.when(
       data: (rooms) => GlassDropdownField<EventRoomModel>(
-        label: 'Location',
-        placeholder: rooms.isEmpty ? 'No rooms available' : 'Select room',
+        label: 'Địa điểm',
+        placeholder: rooms.isEmpty ? 'Không có phòng khả dụng' : 'Chọn phòng',
         value: _selectedRoom,
         items: rooms
             .map(
               (room) => GlassDropdownItem(
                 value: room,
-                label: '${room.displayName} - ${room.capacity} seats',
+                label: '${room.displayName} - ${room.capacity} chỗ',
                 icon: Icons.location_on,
               ),
             )
@@ -215,13 +218,13 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             : (room) => setState(() => _selectedRoom = room),
       ),
       loading: () => const GlassInputField(
-        label: 'Location',
-        child: _LoadingFieldText(text: 'Loading rooms...'),
+        label: 'Địa điểm',
+        child: _LoadingFieldText(text: 'Đang tải phòng...'),
       ),
       error: (_, _) => GlassInputField(
-        label: 'Location',
+        label: 'Địa điểm',
         child: _RetryFieldText(
-          text: 'Could not load rooms',
+          text: 'Không tải được danh sách phòng',
           onRetry: () => ref.invalidate(organizerEventRoomsProvider),
         ),
       ),
@@ -233,10 +236,10 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   ) {
     return categoriesAsync.when(
       data: (categories) => GlassDropdownField<EventCategoryModel>(
-        label: 'Category',
+        label: 'Danh mục',
         placeholder: categories.isEmpty
-            ? 'No categories available'
-            : 'Select category',
+            ? 'Không có danh mục khả dụng'
+            : 'Chọn danh mục',
         value: _selectedCategory,
         items: categories
             .map(
@@ -252,13 +255,13 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             : (category) => setState(() => _selectedCategory = category),
       ),
       loading: () => const GlassInputField(
-        label: 'Category',
-        child: _LoadingFieldText(text: 'Loading categories...'),
+        label: 'Danh mục',
+        child: _LoadingFieldText(text: 'Đang tải danh mục...'),
       ),
       error: (_, _) => GlassInputField(
-        label: 'Category',
+        label: 'Danh mục',
         child: _RetryFieldText(
-          text: 'Could not load categories',
+          text: 'Không tải được danh mục',
           onRetry: () => ref.invalidate(organizerEventCategoriesProvider),
         ),
       ),
@@ -312,7 +315,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  imageFile == null ? 'Add Event Cover' : 'Change Event Cover',
+                  imageFile == null ? 'Thêm ảnh bìa' : 'Đổi ảnh bìa',
                   style: AppTextStyles.titleSmall.copyWith(
                     color: imageFile == null ? null : Colors.white,
                   ),
@@ -320,7 +323,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
                 const SizedBox(height: 4),
                 Text(
                   imageFile == null
-                      ? '16:9 ASPECT RATIO RECOMMENDED'
+                      ? 'KHUYẾN NGHỊ TỶ LỆ 16:9'
                       : _fileNameFromPath(imageFile.path),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -408,6 +411,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           startAt: startAt,
           endAt: endAt,
           isPublic: _isPublic,
+          activateImmediately: _activateImmediately,
         );
 
     if (!mounted) return;
@@ -446,20 +450,46 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
 
   Widget _buildVisibilityToggle() {
     return GlassInputField(
-      label: 'Visibility',
+      label: 'Hiển thị',
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            _isPublic ? 'Public Event' : 'Private Event',
+            _isPublic ? 'Sự kiện công khai' : 'Sự kiện riêng tư',
             style: AppTextStyles.bodyLarge.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           SegmentedToggle(
-            options: const ['Public', 'Private'],
+            options: const ['Công khai', 'Riêng tư'],
             selectedIndex: _isPublic ? 0 : 1,
             onSelect: (index) => setState(() => _isPublic = index == 0),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishStateToggle() {
+    return GlassInputField(
+      label: 'Trạng thái xuất bản',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              _activateImmediately ? 'Kích hoạt ngay' : 'Lưu nháp',
+              style: AppTextStyles.bodyLarge.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SegmentedToggle(
+            options: const ['Kích hoạt', 'Nháp'],
+            selectedIndex: _activateImmediately ? 0 : 1,
+            onSelect: (index) =>
+                setState(() => _activateImmediately = index == 0),
           ),
         ],
       ),
@@ -489,7 +519,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           ),
         ),
         child: PrimaryButton(
-          label: isSubmitting ? 'Creating Event' : 'Create Event',
+          label: isSubmitting ? 'Đang tạo sự kiện' : 'Tạo sự kiện',
           icon: Icons.rocket_launch,
           isLoading: isSubmitting,
           onPressed: isSubmitting ? null : _submitEvent,
@@ -568,7 +598,7 @@ class _RetryFieldText extends StatelessWidget {
         const Icon(Icons.error_outline, color: AppColors.error, size: 20),
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: AppTextStyles.inputHint)),
-        TextActionButton(label: 'Retry', onPressed: onRetry),
+        TextActionButton(label: 'Thử lại', onPressed: onRetry),
       ],
     );
   }

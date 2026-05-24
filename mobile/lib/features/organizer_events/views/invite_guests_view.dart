@@ -52,7 +52,7 @@ class _InviteGuestsViewState extends State<InviteGuestsView> {
                   delegate: SliverChildListDelegate([
                     // Search Bar
                     GlassSearchBar(
-                      placeholder: 'Search students by name or ID...',
+                      placeholder: 'Tìm sinh viên theo tên hoặc MSSV...',
                       controller: _searchController,
                       onChanged: (val) {
                         setState(() {});
@@ -129,7 +129,7 @@ class _InviteGuestsViewState extends State<InviteGuestsView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Invite Guests',
+              title: 'Mời khách',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
               trailingWidget: IconButton(

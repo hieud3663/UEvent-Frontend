@@ -8,10 +8,7 @@ import 'package:frontend/core/widgets/glass_container.dart';
 class HelpCenterView extends StatelessWidget {
   final VoidCallback? onBack;
 
-  const HelpCenterView({
-    super.key,
-    this.onBack,
-  });
+  const HelpCenterView({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +27,11 @@ class HelpCenterView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 24),
                       Text(
-                        'How can we help?',
+                        'Chúng tôi có thể giúp gì?',
                         style: AppTextStyles.headlineLarge,
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Search Bar
                       ClipRRect(
                         borderRadius: BorderRadius.circular(999),
@@ -50,13 +47,17 @@ class HelpCenterView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
                               children: [
-                                const Icon(Icons.search, color: AppColors.outline),
+                                const Icon(
+                                  Icons.search,
+                                  color: AppColors.outline,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: TextField(
                                     decoration: InputDecoration(
-                                      hintText: 'Search for answers...',
-                                      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
+                                      hintText: 'Tìm câu trả lời...',
+                                      hintStyle: AppTextStyles.bodyMedium
+                                          .copyWith(color: AppColors.outline),
                                       border: InputBorder.none,
                                     ),
                                   ),
@@ -70,9 +71,11 @@ class HelpCenterView extends StatelessWidget {
 
                       // FAQ Section
                       Text(
-                        'FREQUENTLY ASKED QUESTIONS',
+                        'CÂU HỎI THƯỜNG GẶP',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.6,
+                          ),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -81,13 +84,22 @@ class HelpCenterView extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: [
-                            _buildFaqItem('How do I register for an event?'),
-                            Divider(height: 1, color: Colors.black.withValues(alpha: 0.05)),
-                            _buildFaqItem('How do I cancel my registration?'),
-                            Divider(height: 1, color: Colors.black.withValues(alpha: 0.05)),
-                            _buildFaqItem('Are there waitlists for events?'),
-                            Divider(height: 1, color: Colors.black.withValues(alpha: 0.05)),
-                            _buildFaqItem('How do I get my ticket?'),
+                            _buildFaqItem('Làm sao để đăng ký sự kiện?'),
+                            Divider(
+                              height: 1,
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
+                            _buildFaqItem('Làm sao để hủy đăng ký?'),
+                            Divider(
+                              height: 1,
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
+                            _buildFaqItem('Sự kiện có danh sách chờ không?'),
+                            Divider(
+                              height: 1,
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
+                            _buildFaqItem('Làm sao để nhận vé?'),
                           ],
                         ),
                       ),
@@ -95,9 +107,11 @@ class HelpCenterView extends StatelessWidget {
 
                       // Contact Support Option
                       Text(
-                        'STILL NEED HELP?',
+                        'VẪN CẦN HỖ TRỢ?',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.6,
+                          ),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -113,19 +127,34 @@ class HelpCenterView extends StatelessWidget {
                                 color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.support_agent, color: AppColors.primary),
+                              child: const Icon(
+                                Icons.support_agent,
+                                color: AppColors.primary,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Contact Support', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700)),
-                                  Text('We usually reply within 24 hours', style: AppTextStyles.bodySmall),
+                                  Text(
+                                    'Liên hệ hỗ trợ',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Chúng tôi thường phản hồi trong 24 giờ',
+                                    style: AppTextStyles.bodySmall,
+                                  ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.outline),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: AppColors.outline,
+                            ),
                           ],
                         ),
                       ),
@@ -142,7 +171,7 @@ class HelpCenterView extends StatelessWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Help Center',
+              title: 'Trung tâm hỗ trợ',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack,
             ),

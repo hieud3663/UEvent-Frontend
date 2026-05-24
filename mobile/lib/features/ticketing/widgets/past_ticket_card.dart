@@ -103,7 +103,7 @@ class PastTicketCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'ATTENDED',
+                            'ĐÃ THAM GIA',
                             style: AppTextStyles.labelSmall.copyWith(
                               color: const Color(0xFF10B981),
                               fontWeight: FontWeight.w700,

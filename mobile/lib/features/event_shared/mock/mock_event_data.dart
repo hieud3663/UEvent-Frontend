@@ -4,7 +4,7 @@ import 'package:frontend/features/event_shared/models/event_model.dart';
 class MockEventData {
   static final EventModel mockEventLaunchParty = EventModel(
     id: 'event-001',
-    title: 'UEvent Launch Party 2026',
+    title: 'Tiệc ra mắt UEvent 2026',
     description: 'Bữa tiệc ra mắt nền tảng UEvent hoành tráng.',
     category: 'Âm nhạc',
     startDate: DateTime.now().add(const Duration(days: 7)),
@@ -18,12 +18,12 @@ class MockEventData {
 
   static final EventModel mockEventTechSummit = EventModel(
     id: 'event-002',
-    title: 'Future Tech Summit 2024: The AI Revolution',
-    description: 'Join global leaders in artificial intelligence...',
-    category: 'Technology',
+    title: 'Hội nghị Công nghệ Tương lai 2024: Cách mạng AI',
+    description: 'Gặp gỡ các chuyên gia hàng đầu về trí tuệ nhân tạo...',
+    category: 'Công nghệ',
     startDate: DateTime(2024, 10, 24, 9),
     endDate: DateTime(2024, 10, 24, 18),
-    location: 'Convention Center, San Francisco',
+    location: 'Trung tâm hội nghị, San Francisco',
     guestCount: 2000,
     imageUrl: 'https://picsum.photos/900/420',
     isOrganizer: false,
@@ -33,9 +33,9 @@ class MockEventData {
   static final EventModel eventDetailOrganizer = mockEventLaunchParty;
 
   static const List<String> discoveryCategories = [
-    'All',
-    'Technology',
-    'Music',
+    'Tất cả',
+    'Công nghệ',
+    'Âm nhạc',
     'Workshop',
   ];
 

@@ -32,6 +32,7 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
     required DateTime startAt,
     required DateTime endAt,
     required bool isPublic,
+    required bool activateImmediately,
   }) async {
     state = const AsyncLoading();
 
@@ -64,7 +65,7 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
         'location_snapshot': room.displayName,
         'cover_image_key': '',
         'deep_link': '',
-        'status': 'draft',
+        'status': activateImmediately ? 'active' : 'draft',
       });
 
       final contentType = _contentTypeForPath(coverImage.path);

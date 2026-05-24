@@ -123,7 +123,7 @@ class EventDetailOrganizerView extends ConsumerWidget {
                       horizontal: AppConstants.pagePaddingH,
                     ),
                     child: PrimaryButton(
-                      label: 'Participant Check-in',
+                      label: 'Check-in người tham gia',
                       icon: Icons.qr_code_2,
                       onPressed: onCheckIn,
                     ),
@@ -181,7 +181,7 @@ class EventDetailOrganizerView extends ConsumerWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Event Details',
+              title: 'Chi tiết sự kiện',
               titleStyle: AppTextStyles.titleMedium.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
@@ -517,7 +517,7 @@ class EventDetailOrganizerView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Event Description', style: AppTextStyles.headlineMedium),
+        Text('Mô tả sự kiện', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         Text(
           event.description ?? 'Chưa có mô tả sự kiện.',
@@ -552,9 +552,9 @@ class EventDetailOrganizerView extends ConsumerWidget {
     return Column(
       children: [
         SectionHeader(
-          title: 'BTC Team',
+          title: 'Đội ngũ BTC',
           titleStyle: AppTextStyles.headlineMedium,
-          actionText: 'View All',
+          actionText: 'Xem tất cả',
           onActionTap: () {},
         ),
         const SizedBox(height: 12),
@@ -627,7 +627,7 @@ class _OrganizerEngagementSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Comments & Feedback', style: AppTextStyles.headlineMedium),
+        Text('Bình luận & góp ý', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         summaryState.when(
           loading: () =>
@@ -752,7 +752,7 @@ class _QuestionListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Questions', style: AppTextStyles.titleSmall),
+          Text('Câu hỏi', style: AppTextStyles.titleSmall),
           const SizedBox(height: 12),
           if (visible.isEmpty)
             Text(
@@ -835,7 +835,7 @@ class _FeedbackListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Feedback', style: AppTextStyles.titleSmall),
+          Text('Góp ý', style: AppTextStyles.titleSmall),
           const SizedBox(height: 12),
           if (visible.isEmpty)
             Text(

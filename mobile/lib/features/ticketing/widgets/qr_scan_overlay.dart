@@ -94,7 +94,7 @@ class _QrScanOverlayState extends State<QrScanOverlay>
             borderRadius: BorderRadius.circular(24),
           ),
           child: Text(
-            'Align ticket QR code within the frame',
+            'Đưa mã QR của vé vào khung',
             style: AppTextStyles.bodySmall.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w500,

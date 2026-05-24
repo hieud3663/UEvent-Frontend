@@ -22,22 +22,22 @@ class GlassBottomNavBar extends StatelessWidget {
 
   static List<NavItemModel> get defaultItems => const [
     NavItemModel(
-      label: 'DISCOVER',
+      label: 'Trang chủ',
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore,
     ),
     NavItemModel(
-      label: 'MANAGE',
+      label: 'QUẢN LÝ',
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard,
     ),
     NavItemModel(
-      label: 'TICKETS',
+      label: 'VÉ',
       icon: Icons.confirmation_number_outlined,
       activeIcon: Icons.confirmation_number,
     ),
     NavItemModel(
-      label: 'SETTINGS',
+      label: 'CÀI ĐẶT',
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,
     ),

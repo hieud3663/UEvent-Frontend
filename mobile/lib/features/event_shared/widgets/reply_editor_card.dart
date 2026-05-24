@@ -86,7 +86,7 @@ class _ReplyEditorCardState extends State<ReplyEditorCard> {
                 height: 1.6,
               ),
               decoration: InputDecoration(
-                hintText: 'Type your reply...',
+                hintText: 'Nhập câu trả lời...',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.navInactive,
                 ),

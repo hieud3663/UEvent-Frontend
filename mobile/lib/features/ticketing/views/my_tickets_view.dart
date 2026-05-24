@@ -83,7 +83,7 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'My Tickets',
+              title: 'Vé của tôi',
               titleStyle: AppTextStyles.titleLarge,
               trailingIcon: Icons.qr_code_scanner,
               onTrailingTap: widget.onScanTap,
@@ -152,8 +152,8 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
       loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
       error: (error, stackTrace) => [
         AppErrorSliver(
-          title: 'Cannot load tickets',
-          description: 'Please check your network and try again.',
+          title: 'Không tải được vé',
+          description: 'Vui lòng kiểm tra mạng và thử lại.',
           onRetry: () => ref.refresh(upcomingTicketsProvider),
           retryText: 'Retry',
         ),
@@ -205,8 +205,8 @@ class _MyTicketsViewState extends ConsumerState<MyTicketsView> {
       loading: () => const [AppLoadingSliver(padding: EdgeInsets.zero)],
       error: (error, stackTrace) => [
         AppErrorSliver(
-          title: 'Cannot load past tickets',
-          description: 'Please check your network and try again.',
+          title: 'Không tải được vé đã qua',
+          description: 'Vui lòng kiểm tra mạng và thử lại.',
           onRetry: () => ref.refresh(pastTicketsProvider),
           retryText: 'Retry',
         ),

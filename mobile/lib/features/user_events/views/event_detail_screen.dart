@@ -203,7 +203,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   String _organizerSummary(EventModel? event) {
     final organizers = event?.organizers ?? const [];
-    if (organizers.isEmpty) return 'UEvents Organizer';
+    if (organizers.isEmpty) return 'Ban tổ chức UEvents';
     return organizers.first.user.displayName;
   }
 }
@@ -287,7 +287,7 @@ class _QuestionsSection extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Questions & Answers', style: AppTextStyles.headlineMedium),
+              Text('Hỏi đáp', style: AppTextStyles.headlineMedium),
               const SizedBox(height: 12),
               Expanded(
                 child: SingleChildScrollView(
@@ -343,7 +343,7 @@ class _AboutSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('About Event', style: AppTextStyles.headlineMedium),
+        Text('Về sự kiện', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         Text(
           text?.isNotEmpty == true ? text! : 'Chưa có mô tả sự kiện.',
@@ -369,7 +369,7 @@ class _RegistrationFieldsPreview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Registration Form', style: AppTextStyles.headlineMedium),
+          Text('Biểu mẫu đăng ký', style: AppTextStyles.headlineMedium),
           const SizedBox(height: 12),
           ...event.registrationFields.map(
             (field) => Padding(

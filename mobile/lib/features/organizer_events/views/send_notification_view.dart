@@ -63,7 +63,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                         Expanded(
                           child: RecipientSelectionCard(
                             icon: Icons.group,
-                            title: 'All Participants',
+                            title: 'Tất cả người tham gia',
                             subtitle: '428 members',
                             isSelected: _selectedRecipientIndex == 0,
                             onTap: () {
@@ -77,8 +77,8 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                         Expanded(
                           child: RecipientSelectionCard(
                             icon: Icons.account_tree,
-                            title: 'Specific Groups',
-                            subtitle: 'Select segments',
+                            title: 'Nhóm cụ thể',
+                            subtitle: 'Chọn phân nhóm',
                             isSelected: _selectedRecipientIndex == 1,
                             onTap: () {
                               setState(() {
@@ -124,7 +124,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                           color: AppColors.onSurface,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Subject',
+                          hintText: 'Tiêu đề',
                           hintStyle: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.navInactive,
                           ),
@@ -155,7 +155,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                           color: AppColors.onSurface,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Your message...',
+                          hintText: 'Nội dung tin nhắn...',
                           hintStyle: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.navInactive,
                           ),
@@ -172,12 +172,12 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                       runSpacing: 8,
                       children: [
                         GlassFilterChip(
-                          label: 'Schedule for later',
+                          label: 'Lên lịch gửi sau',
                           isActive: false,
                           onTap: () {},
                         ),
                         GlassFilterChip(
-                          label: 'Add Attachment',
+                          label: 'Thêm tệp đính kèm',
                           isActive: false,
                           onTap: () {},
                         ),
@@ -187,7 +187,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
 
                     // ── Action Button ──
                     PrimaryButton(
-                      label: 'Send Notification',
+                      label: 'Gửi thông báo',
                       icon: Icons.send,
                       onPressed: () {},
                     ),
@@ -196,7 +196,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          'Your message will be sent as a push notification and email to all recipients immediately.',
+                          'Tin nhắn của bạn sẽ được gửi ngay dưới dạng thông báo đẩy và email đến tất cả người nhận.',
                           textAlign: TextAlign.center,
                           style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.secondary,
@@ -219,7 +219,7 @@ class _SendNotificationViewState extends State<SendNotificationView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Send Notification',
+              title: 'Gửi thông báo',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
               trailingWidget: IconButton(

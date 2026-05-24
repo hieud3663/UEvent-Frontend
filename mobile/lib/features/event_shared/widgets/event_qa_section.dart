@@ -31,9 +31,9 @@ class EventQaSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Questions & Answers', style: AppTextStyles.headlineMedium),
+            Text('Hỏi đáp', style: AppTextStyles.headlineMedium),
             TextActionButton(
-              label: 'Ask Question',
+              label: 'Đặt câu hỏi',
               onPressed: onAskQuestion,
               foregroundColor: AppColors.primary,
               textStyle: AppTextStyles.labelMedium.copyWith(
@@ -69,7 +69,7 @@ class EventQaSection extends StatelessWidget {
             ),
             child: Center(
               child: TextActionButton(
-                label: 'View all $totalCount questions',
+                label: 'Xem tất cả $totalCount câu hỏi',
                 onPressed: onViewAll,
                 foregroundColor: AppColors.onSurfaceVariant,
                 textStyle: AppTextStyles.bodySmall.copyWith(

@@ -12,7 +12,7 @@ class MockEventQuestions {
       answeredBy: 'Organizers',
       timeAgo: '2h ago',
     ),
-    EventQuestionModel(id: 'q2', question: 'Will the sessions be recorded?'),
+    EventQuestionModel(id: 'q2', question: 'Các phiên có được ghi hình không?'),
     EventQuestionModel(
       id: 'q3',
       question: 'Is parking available near the venue?',

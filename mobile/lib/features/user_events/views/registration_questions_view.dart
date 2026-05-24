@@ -37,7 +37,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                   delegate: SliverChildListDelegate([
                     // ── Screen Header ──
                     Text(
-                      'Registration Questions',
+                      'Câu hỏi đăng ký',
                       style: AppTextStyles.headlineLarge.copyWith(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -45,7 +45,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Manage what information attendees provide.',
+                      'Quản lý thông tin người tham gia cần cung cấp.',
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -55,8 +55,8 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     // ── Questions List ──
                     RegistrationQuestionTile(
                       icon: Icons.checkroom, // apparel equivalent
-                      title: 'T-shirt size',
-                      typeAndRequirement: 'Dropdown • Required',
+                      title: 'Kích cỡ áo',
+                      typeAndRequirement: 'Danh sách chọn • Bắt buộc',
                       onView: widget.onQuestionTap,
                       onDelete: () {
                         // TODO: Show delete confirmation dialog
@@ -64,8 +64,8 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     ),
                     RegistrationQuestionTile(
                       icon: Icons.restaurant,
-                      title: 'Dietary needs',
-                      typeAndRequirement: 'Multi-select • Optional',
+                      title: 'Nhu cầu ăn uống',
+                      typeAndRequirement: 'Chọn nhiều • Không bắt buộc',
                       onView: widget.onQuestionTap,
                       onDelete: () {
                         // TODO: Show delete confirmation dialog
@@ -73,8 +73,8 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     ),
                     RegistrationQuestionTile(
                       icon: Icons.medical_services_outlined,
-                      title: 'Emergency Contact',
-                      typeAndRequirement: 'Short Answer • Required',
+                      title: 'Liên hệ khẩn cấp',
+                      typeAndRequirement: 'Trả lời ngắn • Bắt buộc',
                       onView: widget.onQuestionTap,
                       onDelete: () {
                         // TODO: Show delete confirmation dialog
@@ -82,8 +82,8 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
                     ),
                     RegistrationQuestionTile(
                       icon: Icons.accessible_forward,
-                      title: 'Accessibility requirements',
-                      typeAndRequirement: 'Long Answer • Optional',
+                      title: 'Yêu cầu hỗ trợ tiếp cận',
+                      typeAndRequirement: 'Trả lời dài • Không bắt buộc',
                       onView: widget.onQuestionTap,
                       onDelete: () {
                         // TODO: Show delete confirmation dialog
@@ -150,7 +150,7 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Event Manager',
+              title: 'Quản lý sự kiện',
               leadingIcon: Icons.close,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
               trailingWidget: IconButton(

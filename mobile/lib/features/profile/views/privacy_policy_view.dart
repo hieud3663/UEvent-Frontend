@@ -7,10 +7,7 @@ import 'package:frontend/core/widgets/glass_container.dart';
 class PrivacyPolicyView extends StatelessWidget {
   final VoidCallback? onBack;
 
-  const PrivacyPolicyView({
-    super.key,
-    this.onBack,
-  });
+  const PrivacyPolicyView({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +26,15 @@ class PrivacyPolicyView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 24),
                       Text(
-                        'Privacy Policy',
+                        'Chính sách quyền riêng tư',
                         style: AppTextStyles.headlineLarge,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Last updated: October 2023',
-                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                        'Cập nhật lần cuối: tháng 10/2023',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
@@ -44,35 +43,59 @@ class PrivacyPolicyView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('1. Data Collection', style: AppTextStyles.titleMedium),
+                            Text(
+                              '1. Thu thập dữ liệu',
+                              style: AppTextStyles.titleMedium,
+                            ),
                             const SizedBox(height: 8),
                             Text(
-                              'We collect information you provide directly to us, such as when you create an account, update your profile, use the interactive features of our services, participate in a contest or promotion, request customer support or otherwise communicate with us.',
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant, height: 1.6),
+                              'Chúng tôi thu thập thông tin bạn cung cấp trực tiếp, chẳng hạn khi bạn tạo tài khoản, cập nhật hồ sơ, sử dụng tính năng tương tác, tham gia chương trình, yêu cầu hỗ trợ hoặc liên hệ với chúng tôi.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                             ),
                             const SizedBox(height: 24),
 
-                            Text('2. Use of Information', style: AppTextStyles.titleMedium),
+                            Text(
+                              '2. Sử dụng thông tin',
+                              style: AppTextStyles.titleMedium,
+                            ),
                             const SizedBox(height: 8),
                             Text(
-                              'We use the information we collect to provide, maintain, and improve our services, to develop new ones, and to protect UEvents and our users.',
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant, height: 1.6),
+                              'Chúng tôi sử dụng thông tin đã thu thập để cung cấp, duy trì, cải thiện dịch vụ, phát triển tính năng mới và bảo vệ UEvents cùng người dùng.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                             ),
                             const SizedBox(height: 24),
 
-                            Text('3. Information Sharing', style: AppTextStyles.titleMedium),
+                            Text(
+                              '3. Chia sẻ thông tin',
+                              style: AppTextStyles.titleMedium,
+                            ),
                             const SizedBox(height: 8),
                             Text(
-                              'We do not share your personal information with companies, organizations, or individuals outside of UEvents except in the following cases: With your consent, for legal reasons, or with domain administrators.',
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant, height: 1.6),
+                              'Chúng tôi không chia sẻ thông tin cá nhân của bạn với công ty, tổ chức hoặc cá nhân bên ngoài UEvents, trừ khi có sự đồng ý của bạn, yêu cầu pháp lý hoặc quản trị viên miền liên quan.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                             ),
                             const SizedBox(height: 24),
-                            
-                            Text('4. Data Security', style: AppTextStyles.titleMedium),
+
+                            Text(
+                              '4. Bảo mật dữ liệu',
+                              style: AppTextStyles.titleMedium,
+                            ),
                             const SizedBox(height: 8),
                             Text(
-                              'We work hard to protect UEvents and our users from unauthorized access to or unauthorized alteration, disclosure or destruction of information we hold.',
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant, height: 1.6),
+                              'Chúng tôi nỗ lực bảo vệ UEvents và người dùng khỏi truy cập trái phép, thay đổi, tiết lộ hoặc phá hủy thông tin mà chúng tôi lưu giữ.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                             ),
                           ],
                         ),
@@ -90,7 +113,7 @@ class PrivacyPolicyView extends StatelessWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Privacy Policy',
+              title: 'Chính sách quyền riêng tư',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack,
             ),

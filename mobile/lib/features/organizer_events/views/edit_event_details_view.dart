@@ -130,7 +130,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
                   ),
                   const SizedBox(height: 20),
                   PrimaryButton(
-                    label: 'Retry',
+                    label: 'Thử lại',
                     icon: Icons.refresh,
                     onPressed: () => ref.invalidate(
                       organizerEventDetailProvider(widget.eventId),
@@ -166,7 +166,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
                     _buildForm(),
                     const SizedBox(height: 28),
                     TextActionButton(
-                      label: 'Cancel and Delete Event',
+                      label: 'Hủy và xóa sự kiện',
                       foregroundColor: AppColors.error,
                       textStyle: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.error,
@@ -190,7 +190,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Edit Event',
+              title: 'Chỉnh sửa sự kiện',
               leadingIcon: Icons.arrow_back,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
               trailingWidget: GlassIconButton(
@@ -213,13 +213,13 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
 
     return Column(
       children: [
-        GlassInputField(label: 'Event Name', controller: _nameCtrl),
+        GlassInputField(label: 'Tên sự kiện', controller: _nameCtrl),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: GlassInputField(
-                label: 'Start Date',
+                label: 'Ngày bắt đầu',
                 leadingIcon: Icons.calendar_today,
                 controller: _startDateCtrl,
                 keyboardType: TextInputType.datetime,
@@ -228,7 +228,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
             const SizedBox(width: 16),
             Expanded(
               child: GlassInputField(
-                label: 'Start Time',
+                label: 'Giờ bắt đầu',
                 leadingIcon: Icons.schedule,
                 controller: _startTimeCtrl,
                 keyboardType: TextInputType.datetime,
@@ -241,7 +241,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
           children: [
             Expanded(
               child: GlassInputField(
-                label: 'End Date',
+                label: 'Ngày kết thúc',
                 leadingIcon: Icons.event_available,
                 controller: _endDateCtrl,
                 keyboardType: TextInputType.datetime,
@@ -250,7 +250,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
             const SizedBox(width: 16),
             Expanded(
               child: GlassInputField(
-                label: 'End Time',
+                label: 'Giờ kết thúc',
                 leadingIcon: Icons.schedule,
                 controller: _endTimeCtrl,
                 keyboardType: TextInputType.datetime,
@@ -264,7 +264,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
         _buildCategoryDropdown(categoriesAsync),
         const SizedBox(height: 16),
         GlassInputField(
-          label: 'Max Capacity',
+          label: 'Sức chứa tối đa',
           leadingIcon: Icons.group,
           controller: _capacityCtrl,
           keyboardType: TextInputType.number,
@@ -272,11 +272,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
         const SizedBox(height: 16),
         _buildVisibilityToggle(),
         const SizedBox(height: 16),
-        GlassInputField(
-          label: 'Description',
-          maxLines: 8,
-          controller: _descCtrl,
-        ),
+        GlassInputField(label: 'Mô tả', maxLines: 8, controller: _descCtrl),
       ],
     );
   }
@@ -287,7 +283,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
         final selectedRoom = _selectedRoom ?? _matchingInitialRoom(rooms);
 
         return GlassDropdownField<EventRoomModel>(
-          label: 'Location',
+          label: 'Địa điểm',
           placeholder: rooms.isEmpty ? 'No rooms available' : 'Select room',
           value: selectedRoom,
           items: rooms
@@ -305,11 +301,11 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
         );
       },
       loading: () => const GlassInputField(
-        label: 'Location',
-        child: _FieldStatusText(text: 'Loading rooms...'),
+        label: 'Địa điểm',
+        child: _FieldStatusText(text: 'Đang tải phòng...'),
       ),
       error: (_, _) => GlassInputField(
-        label: 'Location',
+        label: 'Địa điểm',
         child: _RetryFieldText(
           text: 'Could not load rooms',
           onRetry: () => ref.invalidate(organizerEventRoomsProvider),
@@ -327,7 +323,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
             _selectedCategory ?? _matchingInitialCategory(categories);
 
         return GlassDropdownField<EventCategoryModel>(
-          label: 'Category',
+          label: 'Danh mục',
           placeholder: categories.isEmpty
               ? 'No categories available'
               : 'Select category',
@@ -347,11 +343,11 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
         );
       },
       loading: () => const GlassInputField(
-        label: 'Category',
-        child: _FieldStatusText(text: 'Loading categories...'),
+        label: 'Danh mục',
+        child: _FieldStatusText(text: 'Đang tải danh mục...'),
       ),
       error: (_, _) => GlassInputField(
-        label: 'Category',
+        label: 'Danh mục',
         child: _RetryFieldText(
           text: 'Could not load categories',
           onRetry: () => ref.invalidate(organizerEventCategoriesProvider),
@@ -362,7 +358,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
 
   Widget _buildVisibilityToggle() {
     return GlassInputField(
-      label: 'Visibility',
+      label: 'Hiển thị',
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -373,7 +369,7 @@ class _EditEventDetailsViewState extends ConsumerState<EditEventDetailsView> {
             ),
           ),
           SegmentedToggle(
-            options: const ['Public', 'Private'],
+            options: const ['Công khai', 'Riêng tư'],
             selectedIndex: _isPublic ? 0 : 1,
             onSelect: (index) => setState(() => _isPublic = index == 0),
           ),
@@ -565,7 +561,7 @@ class _RetryFieldText extends StatelessWidget {
       children: [
         Expanded(child: Text(text, style: AppTextStyles.inputHint)),
         TextActionButton(
-          label: 'Retry',
+          label: 'Thử lại',
           foregroundColor: AppColors.primary,
           textStyle: AppTextStyles.labelSmall.copyWith(
             color: AppColors.primary,

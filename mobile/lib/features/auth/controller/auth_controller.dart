@@ -5,6 +5,14 @@ import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
 import 'package:frontend/features/auth/models/auth_session_model.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
+import 'package:frontend/features/notifications/providers/notifications_controller_provider.dart';
+import 'package:frontend/features/notifications/providers/push_notification_provider.dart';
+import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
+import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
+import 'package:frontend/features/ticketing/providers/ticketing_providers.dart';
+import 'package:frontend/features/user_events/controller/user_event_controller.dart';
+import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 
 /// Manages the global authentication state.
 ///
@@ -83,6 +91,7 @@ class AuthController extends AsyncNotifier<AuthSessionModel?> {
   Future<void> signOut() async {
     final repository = ref.read(authRepositoryProvider);
     await repository.signOut();
+    _invalidateSessionScopedProviders();
     state = const AsyncData(null);
   }
 
@@ -95,6 +104,38 @@ class AuthController extends AsyncNotifier<AuthSessionModel?> {
   Future<void> forceSignOut() async {
     final local = ref.read(authLocalDataSourceProvider);
     await local.clearSession();
+    _invalidateSessionScopedProviders();
     state = const AsyncData(null);
+  }
+
+  void _invalidateSessionScopedProviders() {
+    ref
+      ..invalidate(userProfileProvider)
+      ..invalidate(profileOverviewProvider)
+      ..invalidate(userDiscoveryEventsPagerProvider)
+      ..invalidate(userDiscoverySearchEventsProvider)
+      ..invalidate(userDiscoveryEventsProvider)
+      ..invalidate(userMyEventsProvider)
+      ..invalidate(userEventDetailProvider)
+      ..invalidate(userPublicEventQuestionsProvider)
+      ..invalidate(userEventFeedbacksProvider)
+      ..invalidate(userEventFeedbackSummaryProvider)
+      ..invalidate(userEventRegistrationControllerProvider)
+      ..invalidate(userEventEngagementControllerProvider)
+      ..invalidate(organizerEventsPagerProvider)
+      ..invalidate(organizerEventsProvider)
+      ..invalidate(organizerEventDetailProvider)
+      ..invalidate(organizerEventRegistrationsProvider)
+      ..invalidate(organizerEventQuestionsProvider)
+      ..invalidate(organizerEventFeedbacksProvider)
+      ..invalidate(organizerEventFeedbackSummaryProvider)
+      ..invalidate(organizerEventRoomsProvider)
+      ..invalidate(organizerEventCategoriesProvider)
+      ..invalidate(organizerEventMutationControllerProvider)
+      ..invalidate(organizerEventRegistrationControllerProvider)
+      ..invalidate(upcomingTicketsProvider)
+      ..invalidate(pastTicketsProvider)
+      ..invalidate(notificationsControllerProvider)
+      ..invalidate(pushNotificationControllerProvider);
   }
 }

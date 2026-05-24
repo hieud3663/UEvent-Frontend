@@ -12,7 +12,7 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 /// QrScanResultSheet.show(
 ///   context,
 ///   isSuccess: true,
-///   attendeeName: 'Nguyen Van A',
+///   attendeeName: 'Nguyễn Văn A',
 ///   attendeeId: '21520000',
 ///   onScanNext: () {},
 ///   onTryAgain: () {},
@@ -95,14 +95,17 @@ class QrScanResultSheet extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.warning_amber_rounded,
-              color: AppColors.primary, size: 28),
+          child: const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.primary,
+            size: 28,
+          ),
         ),
         const SizedBox(height: 16),
 
         // Title
         Text(
-          'Check-in Successful',
+          'Check-in thành công',
           style: AppTextStyles.titleMedium.copyWith(fontSize: 22),
           textAlign: TextAlign.center,
         ),
@@ -124,12 +127,13 @@ class QrScanResultSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E7FF),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
-                child: const Icon(Icons.person, color: Color(0xFF6366F1), size: 26),
+                child: const Icon(
+                  Icons.person,
+                  color: Color(0xFF6366F1),
+                  size: 26,
+                ),
               ),
               const SizedBox(width: 12),
 
@@ -139,7 +143,7 @@ class QrScanResultSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      attendeeName ?? 'Nguyen Van A',
+                      attendeeName ?? 'Nguyễn Văn A',
                       style: AppTextStyles.titleSmall,
                     ),
                     const SizedBox(height: 2),
@@ -153,13 +157,16 @@ class QrScanResultSheet extends StatelessWidget {
 
               // VALID badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981),
                   borderRadius: BorderRadius.circular(AppConstants.radiusFull),
                 ),
                 child: const Text(
-                  'VALID',
+                  'HỢP LỆ',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
@@ -189,7 +196,7 @@ class QrScanResultSheet extends StatelessWidget {
             ),
             onPressed: onScanNext,
             child: const Text(
-              'Scan Next',
+              'Quét vé tiếp theo',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,
@@ -224,7 +231,7 @@ class QrScanResultSheet extends StatelessWidget {
 
         // Title
         Text(
-          'Invalid Ticket',
+          'Vé không hợp lệ',
           style: AppTextStyles.titleMedium.copyWith(fontSize: 22),
           textAlign: TextAlign.center,
         ),
@@ -232,8 +239,8 @@ class QrScanResultSheet extends StatelessWidget {
 
         // Description
         Text(
-          'This ticket has already been used or is not valid for this event. '
-          'Please contact the event organizer for assistance.',
+          'Vé này đã được sử dụng hoặc không hợp lệ cho sự kiện này. '
+          'Vui lòng liên hệ ban tổ chức để được hỗ trợ.',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.onSurfaceVariant,
             height: 1.5,
@@ -257,7 +264,7 @@ class QrScanResultSheet extends StatelessWidget {
             ),
             onPressed: onTryAgain,
             child: const Text(
-              'Try Again',
+              'Thử lại',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,
@@ -273,7 +280,7 @@ class QrScanResultSheet extends StatelessWidget {
         TextButton(
           onPressed: onCancel,
           child: Text(
-            'Cancel',
+            'Hủy',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.onSurfaceVariant,
               fontWeight: FontWeight.w600,

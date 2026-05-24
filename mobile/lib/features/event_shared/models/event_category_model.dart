@@ -15,7 +15,7 @@ class EventCategoryModel {
     this.icon,
   });
 
-  static const all = EventCategoryModel(id: '', name: 'All');
+  static const all = EventCategoryModel(id: '', name: 'Tất cả');
 
   String get queryValue => slug?.isNotEmpty == true ? slug! : name;
 

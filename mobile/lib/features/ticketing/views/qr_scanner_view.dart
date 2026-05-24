@@ -17,10 +17,7 @@ import 'package:frontend/features/ticketing/views/qr_scan_result_sheet.dart';
 class QrScannerView extends StatefulWidget {
   final VoidCallback onBack;
 
-  const QrScannerView({
-    super.key,
-    required this.onBack,
-  });
+  const QrScannerView({super.key, required this.onBack});
 
   @override
   State<QrScannerView> createState() => _QrScannerViewState();
@@ -39,19 +36,23 @@ class _QrScannerViewState extends State<QrScannerView> {
   void initState() {
     super.initState();
     // Use dark status bar icons on the dark background
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarIconBrightness: Brightness.light,
-      statusBarColor: Colors.transparent,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.light,
+        statusBarColor: Colors.transparent,
+      ),
+    );
   }
 
   @override
   void dispose() {
     // Restore light status bar icons when leaving
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarIconBrightness: Brightness.dark,
-      statusBarColor: Colors.transparent,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.dark,
+        statusBarColor: Colors.transparent,
+      ),
+    );
     super.dispose();
   }
 
@@ -63,7 +64,7 @@ class _QrScannerViewState extends State<QrScannerView> {
     QrScanResultSheet.show(
       context,
       isSuccess: isSuccess,
-      attendeeName: 'Nguyen Van A',
+      attendeeName: 'Nguyễn Văn A',
       attendeeId: '21520000',
       onScanNext: () {
         Navigator.of(context).pop();
@@ -117,10 +118,7 @@ class _QrScannerViewState extends State<QrScannerView> {
           GestureDetector(
             onTap: _simulateScan,
             behavior: HitTestBehavior.translucent,
-            child: SizedBox(
-              width: screenW,
-              height: screenH,
-            ),
+            child: SizedBox(width: screenW, height: screenH),
           ),
 
           // ── Scan overlay centred in screen ─────────────────────────────
@@ -136,10 +134,7 @@ class _QrScannerViewState extends State<QrScannerView> {
             left: AppConstants.pagePaddingHLarge,
             right: AppConstants.pagePaddingHLarge,
             bottom: 110,
-            child: QrStatsRow(
-              checkedIn: _checkedIn,
-              remaining: _remaining,
-            ),
+            child: QrStatsRow(checkedIn: _checkedIn, remaining: _remaining),
           ),
 
           // ── Manual entry button ────────────────────────────────────────
@@ -162,7 +157,7 @@ class _QrScannerViewState extends State<QrScannerView> {
               onPressed: () {},
               icon: const Icon(Icons.keyboard_outlined, size: 18),
               label: const Text(
-                'Enter Ticket ID Manually',
+                'Nhập mã vé thủ công',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
@@ -228,11 +223,7 @@ class _QrScannerViewState extends State<QrScannerView> {
               padding: const EdgeInsets.only(right: 60, top: 8),
               child: Align(
                 alignment: Alignment.topRight,
-                child: Icon(
-                  Icons.star,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
+                child: Icon(Icons.star, color: AppColors.primary, size: 18),
               ),
             ),
           ),
