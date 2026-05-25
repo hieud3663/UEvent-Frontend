@@ -1,7 +1,5 @@
 // File: lib/apps/app_constants.dart
 
-
-
 /// Centralized spacing, dimensions and decoration constants
 /// extracted from UEvents Stitch design.
 class AppConstants {

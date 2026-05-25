@@ -88,7 +88,7 @@ class TicketDetailView extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  'Show QR Code',
+                                  'Hiển thị mã QR',
                                   style: AppTextStyles.buttonLarge.copyWith(
                                     color: AppColors.onPrimaryDark,
                                   ),
@@ -116,7 +116,7 @@ class TicketDetailView extends StatelessWidget {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              'Cancel Registration',
+                              'Hủy đăng ký',
                               style: AppTextStyles.buttonLarge.copyWith(
                                 color: AppColors.error,
                               ),
@@ -145,7 +145,7 @@ class TicketDetailView extends StatelessWidget {
               left: 0,
               right: 0,
               child: GlassTopBar(
-                title: 'My Tickets',
+                title: 'Vé của tôi',
                 leadingIcon: Icons.arrow_back_ios_new,
                 onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
               ),
@@ -270,11 +270,11 @@ class TicketDetailView extends StatelessWidget {
                         Wrap(
                           spacing: 8,
                           children: [
-                            _buildMetaChip('Section', ticket.section),
+                            _buildMetaChip('Khu vực', ticket.section),
                             if (ticket.row != null)
-                              _buildMetaChip('Row', ticket.row!),
+                              _buildMetaChip('Hàng', ticket.row!),
                             if (ticket.seat != null)
-                              _buildMetaChip('Seat', ticket.seat!),
+                              _buildMetaChip('Ghế', ticket.seat!),
                           ],
                         ),
                       ],
@@ -401,16 +401,16 @@ class TicketDetailView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Column(
           children: [
-            TicketInfoRow(label: 'Date', value: ticket.date),
-            TicketInfoRow(label: 'Time', value: ticket.timeRange),
-            TicketInfoRow(label: 'Location', value: ticket.location),
-            TicketInfoRow(label: 'Order ID', value: ticket.orderId),
-            TicketInfoRow(label: 'Section', value: ticket.section),
+            TicketInfoRow(label: 'Ngày', value: ticket.date),
+            TicketInfoRow(label: 'Thời gian', value: ticket.timeRange),
+            TicketInfoRow(label: 'Địa điểm', value: ticket.location),
+            TicketInfoRow(label: 'Mã đơn', value: ticket.orderId),
+            TicketInfoRow(label: 'Khu vực', value: ticket.section),
             if (ticket.row != null)
-              TicketInfoRow(label: 'Row', value: ticket.row!),
+              TicketInfoRow(label: 'Hàng', value: ticket.row!),
             if (ticket.seat != null)
               TicketInfoRow(
-                label: 'Seat',
+                label: 'Ghế',
                 value: ticket.seat!,
                 showDivider: false,
               ),

@@ -48,11 +48,7 @@ class TicketInfoRow extends StatelessWidget {
             ],
           ),
         ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            color: AppColors.outlineVariant,
-          ),
+        if (showDivider) Divider(height: 1, color: AppColors.outlineVariant),
       ],
     );
   }

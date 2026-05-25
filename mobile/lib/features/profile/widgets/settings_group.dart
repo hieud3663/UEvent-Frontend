@@ -7,11 +7,7 @@ class SettingsGroup extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const SettingsGroup({
-    super.key,
-    required this.title,
-    required this.children,
-  });
+  const SettingsGroup({super.key, required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {

@@ -28,12 +28,12 @@ class TicketsTabBar extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            label: 'Upcoming',
+            label: 'Sắp diễn ra',
             isSelected: selectedIndex == 0,
             onTap: () => onTabChanged(0),
           ),
           _Tab(
-            label: 'Past',
+            label: 'Đã qua',
             isSelected: selectedIndex == 1,
             onTap: () => onTabChanged(1),
           ),
@@ -78,7 +78,9 @@ class _Tab extends StatelessWidget {
           child: Text(
             label,
             style: AppTextStyles.labelMedium.copyWith(
-              color: isSelected ? AppColors.onPrimaryDark : AppColors.onSurfaceVariant,
+              color: isSelected
+                  ? AppColors.onPrimaryDark
+                  : AppColors.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),

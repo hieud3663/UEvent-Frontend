@@ -16,9 +16,7 @@ final authLocalDataSourceProvider = Provider<AuthLocalDataSource>(
 
 // ── Services ──
 
-final authServiceProvider = Provider<AuthService>(
-  (ref) => AuthService(),
-);
+final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 // ── Repository ──
 
@@ -33,5 +31,5 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, AuthSessionModel?>(
-  AuthController.new,
-);
+      AuthController.new,
+    );

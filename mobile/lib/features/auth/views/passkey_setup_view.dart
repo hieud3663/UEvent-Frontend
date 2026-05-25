@@ -9,11 +9,7 @@ class PasskeySetupView extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onCreatePasskey;
 
-  const PasskeySetupView({
-    super.key,
-    this.onBack,
-    this.onCreatePasskey,
-  });
+  const PasskeySetupView({super.key, this.onBack, this.onCreatePasskey});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +31,9 @@ class PasskeySetupView extends StatelessWidget {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                          color: AppColors.primaryContainer.withValues(
+                            alpha: 0.1,
+                          ),
                           shape: BoxShape.circle,
                         ),
                         child: Stack(
@@ -47,7 +45,9 @@ class PasskeySetupView extends StatelessWidget {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                                  color: AppColors.primaryContainer.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   width: 2,
                                 ),
                               ),
@@ -63,7 +63,9 @@ class PasskeySetupView extends StatelessWidget {
                       const SizedBox(height: 24),
                       Text(
                         'The Future of Security',
-                        style: AppTextStyles.headlineLarge.copyWith(fontSize: 24),
+                        style: AppTextStyles.headlineLarge.copyWith(
+                          fontSize: 24,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
@@ -77,20 +79,23 @@ class PasskeySetupView extends StatelessWidget {
                       // Bento grid - rendered as list
                       _buildBentoItem(
                         icon: Icons.verified_user,
-                        title: 'Hack-Proof Protection',
-                        desc: 'Passkeys are unique to your account and never shared with our servers.',
+                        title: 'Bảo vệ chống tấn công',
+                        desc:
+                            'Passkeys are unique to your account and never shared with our servers.',
                       ),
                       const SizedBox(height: 16),
                       _buildBentoItem(
                         icon: Icons.speed,
-                        title: 'Instant Sign-In',
-                        desc: 'Forget remembering complex characters. Use FaceID or TouchID.',
+                        title: 'Đăng nhập tức thì',
+                        desc:
+                            'Không cần ghi nhớ mật khẩu phức tạp. Dùng FaceID hoặc TouchID.',
                       ),
                       const SizedBox(height: 16),
                       _buildBentoItem(
                         icon: Icons.sync,
-                        title: 'Seamless Syncing',
-                        desc: 'Your passkeys are safely stored across all your devices.',
+                        title: 'Đồng bộ liền mạch',
+                        desc:
+                            'Passkey của bạn được lưu an toàn trên mọi thiết bị.',
                       ),
                       const SizedBox(height: 40),
 
@@ -102,7 +107,9 @@ class PasskeySetupView extends StatelessWidget {
                           child: Text(
                             'CURRENT STATUS',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: AppColors.onSurfaceVariant.withValues(
+                                alpha: 0.6,
+                              ),
                               letterSpacing: 1.5,
                             ),
                           ),
@@ -115,27 +122,51 @@ class PasskeySetupView extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Active Passkeys', style: AppTextStyles.bodyMedium),
-                                  Text('0 Found', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant)),
+                                  Text(
+                                    'Passkey đang hoạt động',
+                                    style: AppTextStyles.bodyMedium,
+                                  ),
+                                  Text(
+                                    'Tìm thấy 0',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            Divider(height: 1, color: Colors.black.withValues(alpha: 0.05)),
+                            Divider(
+                              height: 1,
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Security Level', style: AppTextStyles.bodyMedium),
+                                  Text(
+                                    'Mức độ bảo mật',
+                                    style: AppTextStyles.bodyMedium,
+                                  ),
                                   Row(
                                     children: [
-                                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle)),
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.error,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
                                       const SizedBox(width: 8),
                                       Text(
                                         'Enhancement Needed',
-                                        style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
+                                        style: AppTextStyles.labelMedium
+                                            .copyWith(color: AppColors.error),
                                       ),
                                     ],
                                   ),
@@ -148,7 +179,7 @@ class PasskeySetupView extends StatelessWidget {
                       const SizedBox(height: 40),
 
                       PrimaryButton(
-                        label: 'Create Passkey',
+                        label: 'Tạo passkey',
                         icon: Icons.add_circle,
                         onPressed: onCreatePasskey,
                       ),
@@ -156,7 +187,9 @@ class PasskeySetupView extends StatelessWidget {
                       Text(
                         'SECURELY STORED IN YOUR VAULT',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.4,
+                          ),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -173,7 +206,7 @@ class PasskeySetupView extends StatelessWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Passkey Login',
+              title: 'Đăng nhập bằng passkey',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack,
               trailingIcon: Icons.more_horiz,
@@ -184,7 +217,11 @@ class PasskeySetupView extends StatelessWidget {
     );
   }
 
-  Widget _buildBentoItem({required IconData icon, required String title, required String desc}) {
+  Widget _buildBentoItem({
+    required IconData icon,
+    required String title,
+    required String desc,
+  }) {
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: 24,
@@ -204,12 +241,17 @@ class PasskeySetupView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(desc, style: AppTextStyles.bodySmall),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

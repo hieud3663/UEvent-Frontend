@@ -10,7 +10,9 @@ class AppLoadingSliver extends StatelessWidget {
   const AppLoadingSliver({
     super.key,
     this.height = 120,
-    this.padding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
     this.indicator,
   });
 
@@ -42,7 +44,9 @@ class AppErrorSliver extends StatelessWidget {
     required this.description,
     this.onRetry,
     this.retryText = 'Thử lại',
-    this.padding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
     this.fillRemaining = false,
   });
 
@@ -58,9 +62,7 @@ class AppErrorSliver extends StatelessWidget {
     );
 
     if (fillRemaining) {
-      return SliverFillRemaining(
-        child: Center(child: content),
-      );
+      return SliverFillRemaining(child: Center(child: content));
     }
 
     return SliverToBoxAdapter(child: content);
@@ -83,7 +85,9 @@ class AppSuccessSliver extends StatelessWidget {
     required this.emptyTitle,
     required this.emptyDescription,
     required this.contentSlivers,
-    this.emptyPadding = const EdgeInsets.symmetric(horizontal: AppConstants.pagePaddingH),
+    this.emptyPadding = const EdgeInsets.symmetric(
+      horizontal: AppConstants.pagePaddingH,
+    ),
     this.emptyFillRemaining = false,
   });
 

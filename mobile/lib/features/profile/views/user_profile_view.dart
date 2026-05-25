@@ -1,4 +1,4 @@
-// File: lib/views/user_profile_view.dart
+// File: lib/features/profile/views/user_profile_view.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_slivers.dart';
-import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
@@ -22,7 +22,7 @@ class UserProfileView extends ConsumerStatefulWidget {
 
 class _UserProfileViewState extends ConsumerState<UserProfileView> {
   int _selectedTab = 0;
-  final _tabs = ['Created', 'Upcoming', 'Finished'];
+  final _tabs = ['Created', 'Sắp diễn ra', 'Đã kết thúc'];
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +88,8 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                 loading: () => const [AppLoadingSliver()],
                 error: (error, stackTrace) => [
                   AppErrorSliver(
-                    title: 'Cannot load profile',
-                    description: 'Please try again.',
+                    title: 'Không tải được hồ sơ',
+                    description: 'Vui lòng thử lại.',
                     onRetry: () => ref.refresh(profileOverviewProvider),
                     fillRemaining: true,
                   ),
@@ -102,7 +102,7 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'PROFILE',
+              title: 'HỒ SƠ',
               titleStyle: AppTextStyles.titleMedium.copyWith(
                 letterSpacing: 2,
                 fontWeight: FontWeight.w700,
@@ -201,7 +201,7 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                 Text('$eventCount', style: AppTextStyles.statNumber),
                 const SizedBox(height: 4),
                 Text(
-                  'EVENTS',
+                  'SỰ KIỆN',
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.navInactive,
                   ),
@@ -219,7 +219,7 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                 Text('$clubCount', style: AppTextStyles.statNumber),
                 const SizedBox(height: 4),
                 Text(
-                  'CLUBS',
+                  'CLB',
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.navInactive,
                   ),
@@ -405,15 +405,15 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
   String _statusText(EventStatus status) {
     switch (status) {
       case EventStatus.active:
-        return 'Active';
+        return 'Đang hoạt động';
       case EventStatus.approved:
-        return 'Approved';
+        return 'Đã duyệt';
       case EventStatus.draft:
-        return 'Draft';
+        return 'Nháp';
       case EventStatus.finished:
-        return 'Finished';
+        return 'Đã kết thúc';
       case EventStatus.cancelled:
-        return 'Cancelled';
+        return 'Đã hủy';
     }
   }
 }

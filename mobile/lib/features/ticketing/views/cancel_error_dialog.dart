@@ -48,16 +48,20 @@ class CancelErrorDialog extends StatelessWidget {
 
             // Title
             Text(
-              'Cannot Cancel Registration',
-              style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w700),
+              'Không thể hủy đăng ký',
+              style: AppTextStyles.titleLarge.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
 
             // Body
             Text(
-              'Registrations can only be cancelled at least 24 hours before the event starts. Please contact the organizers for assistance.',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+              'Bạn chỉ có thể hủy đăng ký ít nhất 24 giờ trước khi sự kiện bắt đầu. Vui lòng liên hệ ban tổ chức để được hỗ trợ.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
@@ -82,7 +86,7 @@ class CancelErrorDialog extends StatelessWidget {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    'OK, Got It',
+                    'Đã hiểu',
                     style: AppTextStyles.buttonLarge.copyWith(
                       color: AppColors.onPrimaryDark,
                     ),

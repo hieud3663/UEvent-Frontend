@@ -44,9 +44,4 @@ class NotificationModel {
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 }
 
-enum NotificationType {
-  eventInvite,
-  announcement,
-  reminder,
-  ticketConfirm,
-}
+enum NotificationType { eventInvite, announcement, reminder, ticketConfirm }

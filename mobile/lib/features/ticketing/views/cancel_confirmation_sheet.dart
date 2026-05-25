@@ -74,22 +74,30 @@ class CancelConfirmationSheet extends StatelessWidget {
               color: AppColors.errorContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 32),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.error,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 20),
 
           // Title
           Text(
-            'Cancel Registration?',
-            style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w700),
+            'Hủy đăng ký?',
+            style: AppTextStyles.titleLarge.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
 
           // Body
           Text(
-            'Are you sure you want to cancel your registration for $eventName? This action cannot be undone.',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+            'Bạn chắc chắn muốn hủy đăng ký $eventName? Hành động này không thể hoàn tác.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -114,8 +122,10 @@ class CancelConfirmationSheet extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Yes, Cancel Registration',
-                  style: AppTextStyles.buttonLarge.copyWith(color: Colors.white),
+                  'Có, hủy đăng ký',
+                  style: AppTextStyles.buttonLarge.copyWith(
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -135,7 +145,7 @@ class CancelConfirmationSheet extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Keep My Registration',
+                  'Giữ đăng ký của tôi',
                   style: AppTextStyles.buttonLarge.copyWith(
                     color: AppColors.onSurface,
                   ),

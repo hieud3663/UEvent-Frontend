@@ -9,11 +9,7 @@ class ChangeEmailView extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSave;
 
-  const ChangeEmailView({
-    super.key,
-    this.onBack,
-    this.onSave,
-  });
+  const ChangeEmailView({super.key, this.onBack, this.onSave});
 
   @override
   Widget build(BuildContext context) {
@@ -32,39 +28,40 @@ class ChangeEmailView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 24),
                       Text(
-                        'Change Email Address',
+                        'Đổi địa chỉ email',
                         style: AppTextStyles.headlineLarge,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Your current email address is alex.rivera@uevents.com',
-                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                        'Email hiện tại của bạn là alex.rivera@uevents.com',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 48),
 
                       const GlassInputField(
-                        label: 'NEW EMAIL ADDRESS',
-                        placeholder: 'Enter new email address',
+                        label: 'EMAIL MỚI',
+                        placeholder: 'Nhập email mới',
                         leadingIcon: Icons.mail_outline,
                       ),
                       const SizedBox(height: 24),
 
                       const GlassInputField(
-                        label: 'CONFIRM PASSWORD',
-                        placeholder: 'Enter current password',
+                        label: 'XÁC NHẬN MẬT KHẨU',
+                        placeholder: 'Nhập mật khẩu hiện tại',
                         leadingIcon: Icons.lock_outline,
                         obscureText: true,
                       ),
                       const SizedBox(height: 48),
 
-                      PrimaryButton(
-                        label: 'Update Email',
-                        onPressed: onSave,
-                      ),
+                      PrimaryButton(label: 'Cập nhật email', onPressed: onSave),
                       const SizedBox(height: 16),
                       Text(
-                        'We will send a verification link to your new email address. Please follow the link to complete the change.',
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
+                        'Chúng tôi sẽ gửi liên kết xác thực đến email mới. Vui lòng mở liên kết để hoàn tất thay đổi.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -79,7 +76,7 @@ class ChangeEmailView extends StatelessWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Change Email',
+              title: 'Đổi email',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack,
             ),

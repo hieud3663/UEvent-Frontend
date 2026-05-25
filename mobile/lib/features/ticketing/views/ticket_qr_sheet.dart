@@ -52,10 +52,7 @@ class TicketQrSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Title
-          Text(
-            'Your Ticket QR Code',
-            style: AppTextStyles.titleMedium,
-          ),
+          Text('Mã QR vé của bạn', style: AppTextStyles.titleMedium),
           const SizedBox(height: 4),
           Text(
             ticket.eventName,
@@ -86,7 +83,8 @@ class TicketQrSheet extends StatelessWidget {
             child: Column(
               children: [
                 QrImageView(
-                  data: '${ticket.orderId}|${ticket.ticketCode}|${ticket.eventId}',
+                  data:
+                      '${ticket.orderId}|${ticket.ticketCode}|${ticket.eventId}',
                   version: QrVersions.auto,
                   size: 220,
                   eyeStyle: const QrEyeStyle(
@@ -102,10 +100,15 @@ class TicketQrSheet extends StatelessWidget {
                 const SizedBox(height: 16),
                 // Ticket code below QR
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusFull,
+                    ),
                   ),
                   child: Text(
                     ticket.ticketCode,
@@ -128,7 +131,7 @@ class TicketQrSheet extends StatelessWidget {
               Icon(Icons.info_outline, size: 14, color: AppColors.navInactive),
               const SizedBox(width: 6),
               Text(
-                'Present this QR code at the venue entrance.',
+                'Xuất trình mã QR này tại cổng vào địa điểm.',
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.navInactive,
                 ),
@@ -150,7 +153,7 @@ class TicketQrSheet extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Close',
+                  'Đóng',
                   style: AppTextStyles.buttonLarge.copyWith(
                     color: AppColors.onSurface,
                   ),

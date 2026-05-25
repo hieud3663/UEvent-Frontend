@@ -9,11 +9,7 @@ class SendFeedbackView extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSubmit;
 
-  const SendFeedbackView({
-    super.key,
-    this.onBack,
-    this.onSubmit,
-  });
+  const SendFeedbackView({super.key, this.onBack, this.onSubmit});
 
   @override
   State<SendFeedbackView> createState() => _SendFeedbackViewState();
@@ -21,7 +17,12 @@ class SendFeedbackView extends StatefulWidget {
 
 class _SendFeedbackViewState extends State<SendFeedbackView> {
   String selectedCategory = 'Bug Report';
-  final List<String> categories = ['Bug Report', 'Feature Request', 'General', 'Other'];
+  final List<String> categories = [
+    'Bug Report',
+    'Feature Request',
+    'General',
+    'Other',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +47,18 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
                       const SizedBox(height: 8),
                       Text(
                         'Let us know how we can improve your UEvents experience.',
-                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
                       // Category Selection
                       Text(
                         'CATEGORY',
-                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -64,18 +69,27 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
                           return GestureDetector(
                             onTap: () => setState(() => selectedCategory = cat),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.5),
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : Colors.white.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.outlineVariant,
                                 ),
                               ),
                               child: Text(
                                 cat,
                                 style: AppTextStyles.labelMedium.copyWith(
-                                  color: isSelected ? Colors.white : AppColors.onSurfaceVariant,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -87,7 +101,9 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
                       // Message Input
                       Text(
                         'MESSAGE',
-                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       ClipRRect(
@@ -105,8 +121,11 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
                             child: TextField(
                               maxLines: null,
                               decoration: InputDecoration(
-                                hintText: 'Please describe the issue or your suggestion in detail...',
-                                hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
+                                hintText:
+                                    'Vui lòng mô tả chi tiết vấn đề hoặc góp ý của bạn...',
+                                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.outline,
+                                ),
                                 border: InputBorder.none,
                               ),
                               style: AppTextStyles.bodyMedium,
@@ -117,7 +136,7 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
                       const SizedBox(height: 48),
 
                       PrimaryButton(
-                        label: 'Submit Feedback',
+                        label: 'Gửi góp ý',
                         onPressed: widget.onSubmit,
                       ),
                       const SizedBox(height: 40),
@@ -133,7 +152,7 @@ class _SendFeedbackViewState extends State<SendFeedbackView> {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Feedback',
+              title: 'Góp ý',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: widget.onBack,
             ),

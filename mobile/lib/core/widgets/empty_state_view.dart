@@ -92,11 +92,7 @@ class EmptyStateView extends StatelessWidget {
             ),
           ),
           // Main icon
-          Icon(
-            icon,
-            size: 96,
-            color: AppColors.primary.withValues(alpha: 0.8),
-          ),
+          Icon(icon, size: 96, color: AppColors.primary.withValues(alpha: 0.8)),
           // Secondary icon card
           if (secondaryIcon != null)
             Positioned(
@@ -120,11 +116,7 @@ class EmptyStateView extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Icon(
-                  secondaryIcon,
-                  size: 40,
-                  color: AppColors.primary,
-                ),
+                child: Icon(secondaryIcon, size: 40, color: AppColors.primary),
               ),
             ),
           // Floating glow dots

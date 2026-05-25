@@ -141,7 +141,7 @@ class _SplashViewState extends State<SplashView> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Your Gateway to Amazing Experiences',
+                      'Ứng dụng quản lý sự kiện UTC2',
                       style: AppTextStyles.titleMedium.copyWith(
                         color: Colors.black.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w500,
@@ -209,7 +209,7 @@ class _SplashViewState extends State<SplashView> {
               left: 0,
               right: 0,
               child: Text(
-                'UEVENTS GLOBAL • 2026',
+                'UCODE TEAM • 2026',
                 style: AppTextStyles.labelSmall.copyWith(
                   color: Colors.black.withValues(alpha: 0.3),
                   letterSpacing: 2.0,

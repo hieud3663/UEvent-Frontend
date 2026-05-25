@@ -30,14 +30,14 @@ class QrStatsRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _StatColumn(label: 'CHECKED IN', value: checkedIn),
+          _StatColumn(label: 'ĐÃ CHECK-IN', value: checkedIn),
           Container(
             height: 42,
             width: 1,
             margin: const EdgeInsets.symmetric(horizontal: 16),
             color: Colors.white.withValues(alpha: 0.3),
           ),
-          _StatColumn(label: 'REMAINING', value: remaining),
+          _StatColumn(label: 'CÒN LẠI', value: remaining),
         ],
       ),
     );

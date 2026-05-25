@@ -8,11 +8,7 @@ class SyncContactsView extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSync;
 
-  const SyncContactsView({
-    super.key,
-    this.onBack,
-    this.onSync,
-  });
+  const SyncContactsView({super.key, this.onBack, this.onSync});
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +55,13 @@ class SyncContactsView extends StatelessWidget {
                       const SizedBox(height: 48),
 
                       Text(
-                        'Find Your Friends',
+                        'Tìm bạn bè',
                         style: AppTextStyles.headlineLarge,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Sync your contacts to easily find and connect with friends who are already on UEvents. We will only use this to suggest connections.',
+                        'Đồng bộ danh bạ để dễ tìm và kết nối với bạn bè đã dùng UEvents. Chúng tôi chỉ dùng dữ liệu này để gợi ý kết nối.',
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontSize: 16,
                           color: AppColors.onSurfaceVariant,
@@ -75,14 +71,14 @@ class SyncContactsView extends StatelessWidget {
                       const SizedBox(height: 64),
 
                       PrimaryButton(
-                        label: 'Sync Contacts',
+                        label: 'Đồng bộ danh bạ',
                         onPressed: onSync,
                       ),
                       const SizedBox(height: 24),
                       TextButton(
                         onPressed: onBack,
                         child: Text(
-                          'Maybe Later',
+                          'Để sau',
                           style: AppTextStyles.titleSmall.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -100,7 +96,7 @@ class SyncContactsView extends StatelessWidget {
             left: 0,
             right: 0,
             child: GlassTopBar(
-              title: 'Sync Contacts',
+              title: 'Đồng bộ danh bạ',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: onBack,
             ),

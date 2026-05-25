@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
-import 'package:frontend/features/events/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 
 class ProfileOverviewModel {
   final UserModel user;
@@ -15,13 +16,15 @@ final userProfileProvider = FutureProvider<UserModel>((ref) async {
   return profileService.getMyProfile();
 });
 
-final profileOverviewProvider = FutureProvider<ProfileOverviewModel>((ref) async {
+final profileOverviewProvider = FutureProvider<ProfileOverviewModel>((
+  ref,
+) async {
   final profileService = ref.read(profileServiceProvider);
-  final eventService = ref.read(eventServiceProvider);
+  final eventRepository = ref.read(userEventRepositoryProvider);
 
   final results = await Future.wait<dynamic>([
     profileService.getMyProfile(),
-    eventService.getEvents(queryParams: {'scope': 'mine'}),
+    eventRepository.getEvents(queryParams: {'scope': 'mine'}),
   ]);
 
   return ProfileOverviewModel(

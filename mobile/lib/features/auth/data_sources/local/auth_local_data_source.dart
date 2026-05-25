@@ -14,7 +14,9 @@ const _kMethod = 'auth_method';
 // ── Platform-specific options ──
 // first_unlock (NOT whenUnlocked): tokens readable while screen is locked,
 // so a foreground 401-refresh during a notification-tap flow still works.
-const _iosOptions = IOSOptions(accessibility: KeychainAccessibility.first_unlock);
+const _iosOptions = IOSOptions(
+  accessibility: KeychainAccessibility.first_unlock,
+);
 
 // EncryptedSharedPreferences requires minSdk 23 (enforced in build.gradle.kts).
 const _androidOptions = AndroidOptions(encryptedSharedPreferences: true);
@@ -39,11 +41,12 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final FlutterSecureStorage _storage;
 
   AuthLocalDataSourceImpl({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              iOptions: _iosOptions,
-              aOptions: _androidOptions,
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            iOptions: _iosOptions,
+            aOptions: _androidOptions,
+          );
 
   @override
   Future<AuthSessionModel?> readSession() async {
