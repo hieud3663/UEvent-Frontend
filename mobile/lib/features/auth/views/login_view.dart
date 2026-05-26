@@ -2,22 +2,28 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:frontend/core/localization/app_localizations.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/social_login_button.dart';
+import 'package:frontend/core/widgets/text_action_button.dart';
 
 class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
   final FutureOr<void> Function()? onLoginWithGoogle;
   final VoidCallback? onLoginWithPasskey;
+  final bool preferPasskey;
+  final bool passkeyAvailable;
 
   const LoginView({
     super.key,
     this.onLoginWithEmail,
     this.onLoginWithGoogle,
     this.onLoginWithPasskey,
+    this.preferPasskey = false,
+    this.passkeyAvailable = true,
   });
 
   @override
@@ -67,6 +73,10 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final canUsePasskey =
+        widget.passkeyAvailable && widget.onLoginWithPasskey != null;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -140,19 +150,29 @@ class _LoginViewState extends State<LoginView> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Đăng nhập để tiếp tục',
+                                strings.loginSubtitle,
                                 style: AppTextStyles.bodyMedium,
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 40),
-                              Text(
-                                'EMAIL SINH VIÊN',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                  letterSpacing: 1,
+                              if (widget.preferPasskey && canUsePasskey) ...[
+                                PrimaryButton(
+                                  label: strings.passkeyLogin,
+                                  icon: Icons.fingerprint,
+                                  onPressed: _isBusy
+                                      ? null
+                                      : widget.onLoginWithPasskey,
                                 ),
-                              ),
-                              const SizedBox(height: 8),
+                                const SizedBox(height: 24),
+                                Text(
+                                  strings.studentEmail,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.5),
@@ -186,8 +206,8 @@ class _LoginViewState extends State<LoginView> {
                               const SizedBox(height: 24),
                               PrimaryButton(
                                 label: _isSubmittingEmail
-                                    ? 'Đang gửi mã...'
-                                    : 'Tiếp tục với Email',
+                                    ? strings.sendingCode
+                                    : strings.emailContinue,
                                 isLoading: _isSubmittingEmail,
                                 onPressed: _isBusy ? null : _submitEmail,
                               ),
@@ -205,7 +225,7 @@ class _LoginViewState extends State<LoginView> {
                                       horizontal: 16,
                                     ),
                                     child: Text(
-                                      'HOẶC',
+                                      strings.or,
                                       style: AppTextStyles.labelSmall,
                                     ),
                                   ),
@@ -220,25 +240,37 @@ class _LoginViewState extends State<LoginView> {
                               const SizedBox(height: 24),
                               SocialLoginButton(
                                 label: _isSubmittingGoogle
-                                    ? 'Đang mở Google...'
-                                    : 'Tiếp tục với Google',
+                                    ? strings.openingGoogle
+                                    : strings.googleContinue,
                                 iconPath: 'assets/images/google_icon.png',
                                 isLoading: _isSubmittingGoogle,
                                 onPressed: _isBusy ? null : _submitGoogle,
                               ),
-                              // const SizedBox(height: 16),
-                              // TextActionButton(
-                              //   label: 'Đăng nhập bằng Passkey',
-                              //   height: 48,
-                              //   onPressed: _isBusy
-                              //       ? null
-                              //       : widget.onLoginWithPasskey,
-                              //   foregroundColor: AppColors.onSurfaceVariant,
-                              //   icon: const Icon(Icons.fingerprint, size: 20),
-                              //   textStyle: AppTextStyles.titleSmall.copyWith(
-                              //     color: AppColors.onSurfaceVariant,
-                              //   ),
-                              // ),
+                              if (!widget.preferPasskey && canUsePasskey) ...[
+                                const SizedBox(height: 16),
+                                TextActionButton(
+                                  label: strings.passkeyLogin,
+                                  height: 48,
+                                  onPressed: _isBusy
+                                      ? null
+                                      : widget.onLoginWithPasskey,
+                                  foregroundColor: AppColors.onSurfaceVariant,
+                                  icon: const Icon(Icons.fingerprint, size: 20),
+                                  textStyle: AppTextStyles.titleSmall.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                              if (widget.preferPasskey && !canUsePasskey) ...[
+                                const SizedBox(height: 16),
+                                Text(
+                                  strings.passkeyUnavailable,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
                               // const SizedBox(height: 32),
                               // Row(
                               //   mainAxisAlignment: MainAxisAlignment.center,

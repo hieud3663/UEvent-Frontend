@@ -27,7 +27,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>UEvents uses the camera to scan event ticket QR codes for check-in.</string>
+	<string>UEvents cần quyền camera để quét mã và cập nhật hình ảnh khi bạn chọn sử dụng tính năng này.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>UEvents cần quyền danh bạ để giúp bạn tìm và mời bạn bè tham gia sự kiện.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>UEvents sử dụng Face ID để mở khóa ứng dụng khi bạn bật khóa bảo mật.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>UEvents cần quyền vị trí khi sử dụng ứng dụng để gợi ý sự kiện và địa điểm phù hợp.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>UEvents cần quyền thư viện ảnh để bạn chọn hình ảnh cho hồ sơ hoặc nội dung sự kiện.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

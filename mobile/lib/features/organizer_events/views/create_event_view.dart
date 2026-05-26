@@ -14,6 +14,8 @@ import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/segmented_toggle.dart';
 import 'package:frontend/core/widgets/text_action_button.dart';
+import 'package:frontend/features/app_setting/models/app_permission.dart';
+import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
 import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
 import 'package:frontend/features/event_shared/models/event_category_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
@@ -457,6 +459,23 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   }
 
   Future<void> _pickCoverImage() async {
+    final settingsController = ref.read(appSettingControllerProvider.notifier);
+    final permission = await settingsController.requestPermission(
+      AppPermissionKey.photos,
+    );
+    final allowed =
+        permission?.status == AppPermissionStatus.granted ||
+        permission?.status == AppPermissionStatus.limited;
+    if (!allowed) {
+      if (permission?.status.canOpenSystemSettings == true) {
+        await settingsController.openSystemSettings(AppPermissionKey.photos);
+      }
+      if (mounted) {
+        _showMessage('Cần quyền ảnh và thư viện để chọn ảnh bìa sự kiện.');
+      }
+      return;
+    }
+
     XFile? pickedImage;
     try {
       pickedImage = await _imagePicker.pickImage(

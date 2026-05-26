@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **UEvent-Frontend** (1739 symbols, 3400 relationships, 130 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **UEvent-Frontend** (1623 symbols, 3232 relationships, 120 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -46,6 +46,8 @@ This project is indexed by GitNexus as **UEvent-Frontend** (1739 symbols, 3400 r
 
 - Before implementing or modifying any Flutter page, screen, feature widget, or dialog under `mobile/lib/features`, audit the existing controls in that file for direct uses of `ElevatedButton`, `OutlinedButton`, `TextButton`, `IconButton`, `GestureDetector`, `InkWell`, and locally declared private button widgets such as `_PrimaryActionButton`, `_SecondaryActionButton`, or `_CircleIconButton`.
 - Prefer shared widgets from `mobile/lib/core/widgets` for app-standard controls: `PrimaryButton`, `SecondaryButton`, `GlassTopBar`, `GlassBottomNavBar`, `GlassSearchBar`, `GlassFilterChip`, `SegmentedToggle`, `GlassCheckboxTile`, `GlassRadioCard`, `GlassDropdownField`, `GlassActionTile`, `GlassInputField`, `GlassContainer`, and `SectionHeader`.
+- Prefer Flutter's built-in controls and APIs for standard behavior before adding custom state or controller logic. Examples: use `TextInputFormatter`, `Form`/validators, `ValueListenableBuilder`, `ListView`, `Animated*` widgets, and platform plugins' documented setup when they already solve the problem.
+- Do not over-engineer simple Flutter interactions. If a basic Flutter API can express the behavior clearly, use it instead of manual controller mutation, custom timers, duplicated validation pipelines, or page-local abstractions.
 - If a page needs a control style that is not covered by the shared core widgets, extend or add a reusable widget in `mobile/lib/core/widgets` first, keeping the current visual design unchanged, then replace the page-local implementation with that shared widget.
 - Do not add new page-local custom buttons or tappable controls when an equivalent shared widget exists. Page-local `GestureDetector`/`InkWell` controls are acceptable only for layout-specific interactions that are not reusable app controls.
 - When touching an existing page that already has page-local custom buttons or duplicated control styling, include migration to the closest shared widget in the same change unless it would materially expand the task scope; if deferred, call it out explicitly.

@@ -7,6 +7,10 @@ import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
+import 'package:frontend/features/app_setting/data/app_setting_legal.dart';
+import 'package:frontend/features/app_setting/models/app_permission.dart';
+import 'package:frontend/features/app_setting/models/app_setting_key.dart';
+import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
@@ -35,12 +39,13 @@ import 'package:frontend/features/profile/views/help_center_view.dart';
 import 'package:frontend/features/profile/views/privacy_policy_view.dart';
 import 'package:frontend/features/profile/views/send_feedback_view.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
-import 'package:frontend/features/profile/views/sync_contacts_view.dart';
 import 'package:frontend/features/profile/views/user_profile_view.dart';
 import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart';
 import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
 import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 typedef SignedOutCallback = void Function(BuildContext context, WidgetRef ref);
 
@@ -75,6 +80,18 @@ class _AppShellState extends ConsumerState<AppShell> {
   Future<void> _bootstrapAppPermissions() async {
     await _requestInitialCameraPermission();
     if (!mounted) return;
+
+    await _registerPushDeviceIfEnabled();
+  }
+
+  Future<void> _registerPushDeviceIfEnabled() async {
+    final settings = await ref.read(appSettingControllerProvider.future);
+    if (!settings.boolValue(
+      AppSettingKey.notificationPushEnabled,
+      fallback: true,
+    )) {
+      return;
+    }
 
     await ref
         .read(pushNotificationControllerProvider.notifier)
@@ -359,7 +376,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushQrScanner(EventModel event) {
+  Future<void> _pushQrScanner(EventModel event) async {
+    final allowed = await _ensureDevicePermission(
+      permissionKey: AppPermissionKey.camera,
+      deniedMessage:
+          'Cần quyền camera để mở trình quét QR. Vui lòng cấp quyền trong cài đặt hệ thống.',
+    );
+    if (!allowed || !mounted) return;
+
     Navigator.of(context).push(
       appRoute(
         builder: (ctx) => QrScannerView(
@@ -375,7 +399,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       appRoute(
         builder: (ctx) => Consumer(
           builder: (ctx, ref, _) {
-            final currentUser = ref.read(userProfileProvider).value;
+            final currentUser = ref.watch(userProfileProvider).value;
             return EditProfileView(
               user: currentUser,
               profileService: ref.read(profileServiceProvider),
@@ -385,6 +409,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ref.invalidate(profileOverviewProvider);
                 Navigator.of(ctx).pop();
               },
+              onChangeEmail: () =>
+                  _pushChangeEmail(ctx, currentUser?.email ?? ''),
             );
           },
         ),
@@ -392,12 +418,19 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushChangeEmail() {
-    Navigator.of(context).push(
+  void _pushChangeEmail(BuildContext parentContext, String currentEmail) {
+    Navigator.of(parentContext).push(
       appRoute(
-        builder: (ctx) => ChangeEmailView(
-          onBack: () => Navigator.of(ctx).pop(),
-          onSave: () => Navigator.of(ctx).pop(),
+        builder: (ctx) => Consumer(
+          builder: (ctx, ref, _) => ChangeEmailView(
+            currentEmail: currentEmail,
+            profileService: ref.read(profileServiceProvider),
+            onBack: () => Navigator.of(ctx).pop(),
+            onChanged: (_) {
+              ref.invalidate(userProfileProvider);
+              ref.invalidate(profileOverviewProvider);
+            },
+          ),
         ),
       ),
     );
@@ -427,30 +460,93 @@ class _AppShellState extends ConsumerState<AppShell> {
       appRoute(
         builder: (ctx) => SendFeedbackView(
           onBack: () => Navigator.of(ctx).pop(),
-          onSubmit: () => Navigator.of(ctx).pop(),
+          onRate: () => _openPlayStoreRating(ctx),
         ),
       ),
     );
+  }
+
+  Future<void> _openPlayStoreRating(BuildContext ctx) async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final marketUri = Uri.parse(
+        'market://details?id=${packageInfo.packageName}',
+      );
+      final webUri = Uri.https('play.google.com', '/store/apps/details', {
+        'id': packageInfo.packageName,
+      });
+
+      final openedMarket = await launchUrl(
+        marketUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!openedMarket) {
+        final openedWeb = await launchUrl(
+          webUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!openedWeb && ctx.mounted) {
+          _showSnackBar(ctx, 'Không thể mở Play Store. Vui lòng thử lại sau.');
+        }
+      }
+    } catch (_) {
+      if (ctx.mounted) {
+        _showSnackBar(ctx, 'Không thể mở Play Store. Vui lòng thử lại sau.');
+      }
+    }
   }
 
   void _pushPrivacyPolicy() {
     Navigator.of(context).push(
       appRoute(
-        builder: (ctx) =>
-            PrivacyPolicyView(onBack: () => Navigator.of(ctx).pop()),
+        builder: (ctx) => PrivacyPolicyView(
+          onBack: () => Navigator.of(ctx).pop(),
+          onAccept: () async {
+            await ref
+                .read(appSettingControllerProvider.notifier)
+                .setString(
+                  AppSettingKey.legalPrivacyPolicyAcceptedVersion,
+                  AppSettingLegal.privacyPolicyVersion,
+                );
+            if (!ctx.mounted) return;
+            _showSnackBar(ctx, 'Đã ghi nhận đồng ý chính sách quyền riêng tư.');
+            Navigator.of(ctx).pop();
+          },
+        ),
       ),
     );
   }
 
-  void _pushSyncContacts() {
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) => SyncContactsView(
-          onBack: () => Navigator.of(ctx).pop(),
-          onSync: () => Navigator.of(ctx).pop(),
-        ),
-      ),
-    );
+  Future<bool> _ensureDevicePermission({
+    required AppPermissionKey permissionKey,
+    required String deniedMessage,
+    String? settingKey,
+  }) async {
+    final controller = ref.read(appSettingControllerProvider.notifier);
+    final state = ref.read(appSettingControllerProvider).value;
+
+    if (settingKey != null && state?.boolValue(settingKey) == false) {
+      await controller.setBool(settingKey, true);
+    }
+
+    final permission = await controller.requestPermission(permissionKey);
+    final allowed =
+        permission?.status == AppPermissionStatus.granted ||
+        permission?.status == AppPermissionStatus.limited ||
+        permission?.status == AppPermissionStatus.provisional;
+
+    if (!allowed && mounted) {
+      _showSnackBar(context, deniedMessage);
+      if (permission?.status.canOpenSystemSettings == true) {
+        await controller.openSystemSettings(permissionKey);
+      }
+    }
+
+    if (settingKey != null) {
+      await controller.setBool(settingKey, allowed);
+    }
+
+    return allowed;
   }
 
   void _signOut() {
@@ -531,13 +627,10 @@ class _AppShellState extends ConsumerState<AppShell> {
           onNavTap: _onNavTap,
           onBack: () => _onNavTap(0),
           onEditProfile: _pushEditProfile,
-          onChangeEmail: _pushChangeEmail,
           onPasskeyLogin: _pushPasskeyLogin,
-          onTwoFactorAuth: () {},
           onHelpCenter: _pushHelpCenter,
           onSendFeedback: _pushSendFeedback,
           onPrivacyPolicy: _pushPrivacyPolicy,
-          onSyncContacts: _pushSyncContacts,
           onSignOut: _signOut,
         ),
       ],

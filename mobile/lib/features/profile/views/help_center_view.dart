@@ -5,13 +5,34 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 
-class HelpCenterView extends StatelessWidget {
+class HelpCenterView extends StatefulWidget {
   final VoidCallback? onBack;
 
   const HelpCenterView({super.key, this.onBack});
 
   @override
+  State<HelpCenterView> createState() => _HelpCenterViewState();
+}
+
+class _HelpCenterViewState extends State<HelpCenterView> {
+  static const _faqItems = [
+    'Làm sao để đăng ký sự kiện?',
+    'Làm sao để hủy đăng ký?',
+    'Sự kiện có danh sách chờ không?',
+    'Làm sao để nhận vé?',
+  ];
+
+  String _query = '';
+
+  @override
   Widget build(BuildContext context) {
+    final normalizedQuery = _query.trim().toLowerCase();
+    final visibleFaqItems = normalizedQuery.isEmpty
+        ? _faqItems
+        : _faqItems
+              .where((item) => item.toLowerCase().contains(normalizedQuery))
+              .toList(growable: false);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -54,6 +75,8 @@ class HelpCenterView extends StatelessWidget {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: TextField(
+                                    onChanged: (value) =>
+                                        setState(() => _query = value),
                                     decoration: InputDecoration(
                                       hintText: 'Tìm câu trả lời...',
                                       hintStyle: AppTextStyles.bodyMedium
@@ -82,26 +105,34 @@ class HelpCenterView extends StatelessWidget {
                       const SizedBox(height: 16),
                       GlassContainer(
                         padding: EdgeInsets.zero,
-                        child: Column(
-                          children: [
-                            _buildFaqItem('Làm sao để đăng ký sự kiện?'),
-                            Divider(
-                              height: 1,
-                              color: Colors.black.withValues(alpha: 0.05),
-                            ),
-                            _buildFaqItem('Làm sao để hủy đăng ký?'),
-                            Divider(
-                              height: 1,
-                              color: Colors.black.withValues(alpha: 0.05),
-                            ),
-                            _buildFaqItem('Sự kiện có danh sách chờ không?'),
-                            Divider(
-                              height: 1,
-                              color: Colors.black.withValues(alpha: 0.05),
-                            ),
-                            _buildFaqItem('Làm sao để nhận vé?'),
-                          ],
-                        ),
+                        child: visibleFaqItems.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'Không tìm thấy câu hỏi phù hợp.',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  for (
+                                    var index = 0;
+                                    index < visibleFaqItems.length;
+                                    index++
+                                  ) ...[
+                                    _buildFaqItem(visibleFaqItems[index]),
+                                    if (index < visibleFaqItems.length - 1)
+                                      Divider(
+                                        height: 1,
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                      ),
+                                  ],
+                                ],
+                              ),
                       ),
                       const SizedBox(height: 48),
 
@@ -173,7 +204,7 @@ class HelpCenterView extends StatelessWidget {
             child: GlassTopBar(
               title: 'Trung tâm hỗ trợ',
               leadingIcon: Icons.chevron_left,
-              onLeadingTap: onBack,
+              onLeadingTap: widget.onBack,
             ),
           ),
         ],
