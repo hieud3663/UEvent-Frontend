@@ -1,6 +1,7 @@
 // File: lib/features/user_events/views/registration_confirmation_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_checkbox_tile.dart';
@@ -254,6 +255,14 @@ class _RegistrationConfirmationScreenState
           () => _errorMessage = 'Không đăng ký được sự kiện. Vui lòng thử lại.',
         );
       }
+    } on DioException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = error.response?.statusCode == 409
+            ? 'Bạn đã đăng ký sự kiện này.'
+            : 'Không đăng ký được sự kiện. Vui lòng thử lại.';
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {

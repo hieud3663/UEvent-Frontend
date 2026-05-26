@@ -1,41 +1,43 @@
-// File: lib/features/ticketing/views/qr_scanner_view.dart
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/glass_icon_button.dart';
+import 'package:frontend/core/widgets/glass_input_field.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
+import 'package:frontend/features/organizer_events/models/check_in_model.dart';
 import 'package:frontend/features/ticketing/widgets/qr_scan_overlay.dart';
-import 'package:frontend/features/ticketing/widgets/qr_stats_row.dart';
 import 'package:frontend/features/ticketing/views/qr_scan_result_sheet.dart';
 
-/// Full-screen QR check-in scanner screen.
-/// Push navigation (no bottom nav). Dark gradient background simulates camera.
-///
-/// For demo purposes, each tap on the scan area toggles between
-/// the Success and Error result states.
-class QrScannerView extends StatefulWidget {
+class QrScannerView extends ConsumerStatefulWidget {
+  final String eventId;
   final VoidCallback onBack;
 
-  const QrScannerView({super.key, required this.onBack});
+  const QrScannerView({super.key, required this.eventId, required this.onBack});
 
   @override
-  State<QrScannerView> createState() => _QrScannerViewState();
+  ConsumerState<QrScannerView> createState() => _QrScannerViewState();
 }
 
-class _QrScannerViewState extends State<QrScannerView> {
-  // Demo state: toggle between success and error on each scan
-  bool _nextResultIsSuccess = true;
-  bool _isSheetOpen = false;
+class _QrScannerViewState extends ConsumerState<QrScannerView> {
+  final MobileScannerController _scannerController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
+  final TextEditingController _emailController = TextEditingController();
 
-  // Mock stats
-  int _checkedIn = 142;
-  final int _remaining = 58;
+  bool _isProcessing = false;
+  bool _isSheetOpen = false;
 
   @override
   void initState() {
     super.initState();
-    // Use dark status bar icons on the dark background
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.light,
@@ -46,7 +48,8 @@ class _QrScannerViewState extends State<QrScannerView> {
 
   @override
   void dispose() {
-    // Restore light status bar icons when leaving
+    _scannerController.dispose();
+    _emailController.dispose();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.dark,
@@ -56,35 +59,147 @@ class _QrScannerViewState extends State<QrScannerView> {
     super.dispose();
   }
 
-  void _simulateScan() {
-    if (_isSheetOpen) return;
-    _isSheetOpen = true;
-    final isSuccess = _nextResultIsSuccess;
+  Future<void> _handleDetect(BarcodeCapture capture) async {
+    if (_isProcessing || _isSheetOpen) return;
+    final rawValue = capture.barcodes.firstOrNull?.rawValue;
+    if (rawValue == null || rawValue.trim().isEmpty) return;
 
-    QrScanResultSheet.show(
+    final parsed = _parseQr(rawValue);
+    if (parsed == null) {
+      await _showResult(const CheckInResultModel(result: 'invalid_format'));
+      return;
+    }
+
+    await _submitCheckIn(
+      qrPayload: parsed.qrPayload,
+      qrSignature: parsed.qrSignature,
+      note: 'QR scan',
+    );
+  }
+
+  _ParsedQr? _parseQr(String rawValue) {
+    try {
+      final decoded = jsonDecode(rawValue);
+      if (decoded is! Map<String, dynamic>) return null;
+
+      final qrPayload = decoded['qr_payload']?.toString() ?? '';
+      final qrSignature = decoded['qr_signature']?.toString() ?? '';
+      if (qrPayload.isEmpty || qrSignature.isEmpty) return null;
+
+      return _ParsedQr(qrPayload: qrPayload, qrSignature: qrSignature);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _submitCheckIn({
+    String? qrPayload,
+    String? qrSignature,
+    String? email,
+    String? note,
+  }) async {
+    if (_isProcessing || _isSheetOpen) return;
+    setState(() => _isProcessing = true);
+
+    final result = await ref
+        .read(organizerEventRegistrationControllerProvider.notifier)
+        .checkInRegistration(
+          eventId: widget.eventId,
+          qrPayload: qrPayload,
+          qrSignature: qrSignature,
+          email: email,
+          note: note,
+        );
+
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
+    await _showResult(
+      result ?? const CheckInResultModel(result: 'invalid_ticket'),
+    );
+  }
+
+  Future<void> _showResult(CheckInResultModel result) async {
+    if (_isSheetOpen || !mounted) return;
+    _isSheetOpen = true;
+    unawaited(_scannerController.stop());
+
+    await QrScanResultSheet.show(
       context,
-      isSuccess: isSuccess,
-      attendeeName: 'Nguyễn Văn A',
-      attendeeId: '21520000',
-      onScanNext: () {
-        Navigator.of(context).pop();
-        _isSheetOpen = false;
-        setState(() {
-          _nextResultIsSuccess = !_nextResultIsSuccess;
-          if (isSuccess) _checkedIn++;
-        });
-      },
-      onTryAgain: () {
-        Navigator.of(context).pop();
-        _isSheetOpen = false;
-        setState(() => _nextResultIsSuccess = !_nextResultIsSuccess);
-      },
-      onCancel: () {
-        Navigator.of(context).pop();
-        _isSheetOpen = false;
-        setState(() => _nextResultIsSuccess = !_nextResultIsSuccess);
+      isSuccess: result.result == 'success',
+      title: _resultTitle(result.result),
+      description: _resultDescription(result.result),
+      attendeeName: result.registration?.user?.displayName,
+      attendeeId: result.registration?.user?.email,
+      onScanNext: _closeSheetAndResume,
+      onTryAgain: _closeSheetAndResume,
+      onCancel: _closeSheetAndResume,
+    );
+  }
+
+  void _closeSheetAndResume() {
+    Navigator.of(context).pop();
+    _isSheetOpen = false;
+    if (mounted) {
+      unawaited(_scannerController.start());
+    }
+  }
+
+  Future<void> _showManualEmailDialog() async {
+    _emailController.clear();
+
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Check-in thủ công'),
+          content: GlassInputField(
+            label: 'Email',
+            placeholder: 'attendee@example.com',
+            leadingIcon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            controller: _emailController,
+          ),
+          actions: [
+            SecondaryButton(
+              label: 'Hủy',
+              isFullWidth: false,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            PrimaryButton(
+              label: 'Check-in',
+              isFullWidth: false,
+              onPressed: () {
+                Navigator.of(dialogContext).pop(_emailController.text.trim());
+              },
+            ),
+          ],
+        );
       },
     );
+
+    if (email == null || email.isEmpty) return;
+    await _submitCheckIn(email: email, note: 'Manual email');
+  }
+
+  String _resultTitle(String result) {
+    return switch (result) {
+      'success' => 'Check-in thành công',
+      'already_checked_in' => 'Vé đã check-in',
+      'invalid_format' => 'QR sai định dạng',
+      'event_unavailable' => 'Sự kiện chưa thể check-in',
+      _ => 'Vé không hợp lệ',
+    };
+  }
+
+  String _resultDescription(String result) {
+    return switch (result) {
+      'success' => 'Người tham dự đã được ghi nhận vào sự kiện.',
+      'already_checked_in' => 'Vé này đã được check-in trước đó.',
+      'invalid_format' => 'QR thiếu payload hoặc signature hợp lệ.',
+      'event_unavailable' =>
+        'Event chưa bắt đầu, đã kết thúc, hoặc chưa cho phép check-in.',
+      _ => 'QR hết hạn, vé không hợp lệ, hoặc không tìm thấy ticket.',
+    };
   }
 
   @override
@@ -96,79 +211,34 @@ class _QrScannerViewState extends State<QrScannerView> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ── Dark camera background ──────────────────────────────────────
-          Container(
+          SizedBox(
             width: screenW,
             height: screenH,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1A1A1A),
-                  Color(0xFF3A3A3A),
-                  Color(0xFF2D2D2D),
-                ],
-                stops: [0.0, 0.5, 1.0],
-              ),
+            child: MobileScanner(
+              controller: _scannerController,
+              onDetect: _handleDetect,
             ),
           ),
-
-          // ── Tappable scan area ────────────────────────────────────────
-          GestureDetector(
-            onTap: _simulateScan,
-            behavior: HitTestBehavior.translucent,
-            child: SizedBox(width: screenW, height: screenH),
-          ),
-
-          // ── Scan overlay centred in screen ─────────────────────────────
+          Container(color: Colors.black.withValues(alpha: 0.25)),
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 80),
               child: const QrScanOverlay(frameSize: 260),
             ),
           ),
-
-          // ── Stats row, near the bottom ─────────────────────────────────
-          Positioned(
-            left: AppConstants.pagePaddingHLarge,
-            right: AppConstants.pagePaddingHLarge,
-            bottom: 110,
-            child: QrStatsRow(checkedIn: _checkedIn, remaining: _remaining),
-          ),
-
-          // ── Manual entry button ────────────────────────────────────────
+          if (_isProcessing)
+            const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           Positioned(
             left: AppConstants.pagePaddingH,
             right: AppConstants.pagePaddingH,
             bottom: 48,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  width: 1,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-                ),
-              ),
-              onPressed: () {},
-              icon: const Icon(Icons.keyboard_outlined, size: 18),
-              label: const Text(
-                'Nhập mã vé thủ công',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
+            child: SecondaryButton(
+              label: 'Nhập email thủ công',
+              onPressed: _isProcessing ? null : _showManualEmailDialog,
             ),
           ),
-
-          // ── Top Bar ───────────────────────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -177,14 +247,13 @@ class _QrScannerViewState extends State<QrScannerView> {
               ),
               child: Row(
                 children: [
-                  // Back button
-                  _CircleIconButton(
+                  GlassIconButton(
                     icon: Icons.arrow_back,
-                    onTap: widget.onBack,
+                    iconColor: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    onPressed: widget.onBack,
                   ),
                   const SizedBox(width: 12),
-
-                  // Title block
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -206,24 +275,14 @@ class _QrScannerViewState extends State<QrScannerView> {
                       ],
                     ),
                   ),
-
-                  // Flash / refresh icon
-                  _CircleIconButton(
-                    icon: Icons.refresh_rounded,
-                    onTap: () => setState(() {}),
+                  GlassIconButton(
+                    icon: Icons.flash_on_rounded,
+                    iconColor: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    onPressed: () =>
+                        unawaited(_scannerController.toggleTorch()),
                   ),
                 ],
-              ),
-            ),
-          ),
-
-          // ── Yellow star icon (decorative, top-right of bar) ────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 60, top: 8),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Icon(Icons.star, color: AppColors.primary, size: 18),
               ),
             ),
           ),
@@ -233,30 +292,9 @@ class _QrScannerViewState extends State<QrScannerView> {
   }
 }
 
-/// A frosted-glass-style circular icon button for the dark top bar.
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
+class _ParsedQr {
+  final String qrPayload;
+  final String qrSignature;
 
-  const _CircleIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
+  const _ParsedQr({required this.qrPayload, required this.qrSignature});
 }

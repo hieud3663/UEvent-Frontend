@@ -136,6 +136,7 @@ class UserEventRepositoryImpl implements UserEventRepository {
       await Future.delayed(const Duration(milliseconds: 700));
       return EventRegistrationModel(
         id: 'mock-registration-$eventId',
+        eventId: eventId,
         status: 'registered',
         registeredAt: DateTime.now(),
         answers: answers,

@@ -8,6 +8,7 @@ import 'package:frontend/features/event_shared/models/event_organizer_member_mod
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
+import 'package:frontend/features/organizer_events/models/check_in_model.dart';
 import 'package:frontend/features/organizer_events/services/organizer_event_service.dart';
 
 abstract interface class OrganizerEventRepository {
@@ -44,6 +45,8 @@ abstract interface class OrganizerEventRepository {
 
   Future<List<EventRegistrationModel>> getEventRegistrations({
     required String eventId,
+    String? status,
+    String? search,
   });
 
   Future<EventOrganizerMemberModel> promoteRegistrationToCohost({
@@ -51,9 +54,20 @@ abstract interface class OrganizerEventRepository {
     required String registrationId,
   });
 
-  Future<void> checkInRegistration({
+  Future<CheckInResultModel> checkInRegistration({
     required String eventId,
-    required String registrationId,
+    String? qrPayload,
+    String? qrSignature,
+    String? email,
+    String? note,
+  });
+
+  Future<List<CheckInLogModel>> getCheckInLogs({
+    required String eventId,
+    String? result,
+    String? search,
+    String? userId,
+    String? ticketId,
   });
 
   Future<List<EventQuestionModel>> getOrganizerEventQuestions({
@@ -225,6 +239,8 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
   @override
   Future<List<EventRegistrationModel>> getEventRegistrations({
     required String eventId,
+    String? status,
+    String? search,
   }) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 700));
@@ -259,7 +275,11 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
       ];
     }
 
-    return _service.getEventRegistrations(eventId: eventId);
+    return _service.getEventRegistrations(
+      eventId: eventId,
+      status: status,
+      search: search,
+    );
   }
 
   @override
@@ -289,18 +309,59 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
   }
 
   @override
-  Future<void> checkInRegistration({
+  Future<CheckInResultModel> checkInRegistration({
     required String eventId,
-    required String registrationId,
+    String? qrPayload,
+    String? qrSignature,
+    String? email,
+    String? note,
   }) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 500));
-      return;
+      return CheckInResultModel(
+        result: 'success',
+        registration: EventRegistrationModel(
+          id: 'mock-registration-001',
+          eventId: eventId,
+          status: 'checked_in',
+          user: const EventUserSummaryModel(
+            id: 'mock-user-001',
+            username: 'attendee',
+            fullName: 'Attendee Name',
+            email: 'attendee@example.com',
+          ),
+        ),
+      );
     }
 
     return _service.checkInRegistration(
       eventId: eventId,
-      registrationId: registrationId,
+      qrPayload: qrPayload,
+      qrSignature: qrSignature,
+      email: email,
+      note: note,
+    );
+  }
+
+  @override
+  Future<List<CheckInLogModel>> getCheckInLogs({
+    required String eventId,
+    String? result,
+    String? search,
+    String? userId,
+    String? ticketId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return const [];
+    }
+
+    return _service.getCheckInLogs(
+      eventId: eventId,
+      result: result,
+      search: search,
+      userId: userId,
+      ticketId: ticketId,
     );
   }
 

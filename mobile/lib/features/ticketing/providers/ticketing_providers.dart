@@ -11,3 +11,12 @@ final pastTicketsProvider = FutureProvider<List<TicketModel>>((ref) async {
   final service = ref.read(ticketingServiceProvider);
   return service.getMyTickets(status: 'past');
 });
+
+final eventTicketProvider =
+    FutureProvider.family<RegistrationTicketModel, String>((
+      ref,
+      eventId,
+    ) async {
+      final service = ref.read(ticketingServiceProvider);
+      return service.getEventTicket(eventId);
+    });
