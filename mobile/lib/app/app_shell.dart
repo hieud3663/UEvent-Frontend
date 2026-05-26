@@ -38,7 +38,9 @@ import 'package:frontend/features/profile/views/settings_view.dart';
 import 'package:frontend/features/profile/views/sync_contacts_view.dart';
 import 'package:frontend/features/profile/views/user_profile_view.dart';
 import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart';
+import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
 import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 typedef SignedOutCallback = void Function(BuildContext context, WidgetRef ref);
 
@@ -66,12 +68,24 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(
-        ref
-            .read(pushNotificationControllerProvider.notifier)
-            .registerCurrentDevice(),
-      );
+      unawaited(_bootstrapAppPermissions());
     });
+  }
+
+  Future<void> _bootstrapAppPermissions() async {
+    await _requestInitialCameraPermission();
+    if (!mounted) return;
+
+    await ref
+        .read(pushNotificationControllerProvider.notifier)
+        .registerCurrentDevice();
+  }
+
+  Future<void> _requestInitialCameraPermission() async {
+    final status = await Permission.camera.status;
+    if (status.isDenied) {
+      await Permission.camera.request();
+    }
   }
 
   void _onNavTap(int index) {
@@ -133,7 +147,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             eventId: event.id,
             initialEvent: event,
             onBack: () => Navigator.of(ctx).pop(),
-            onCheckIn: _pushQrScanner,
+            onCheckIn: () => _pushQrScanner(event),
             onNotify: () => _pushSendNotification(event),
             onManage: () => _pushManageEventHub(event),
             onShare: () => ShareEventSheet.show(ctx),
@@ -150,7 +164,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             onShare: () => ShareEventSheet.show(ctx),
             onRegister: () => _pushRegistrationConfirmation(ctx, event),
             onManage: () => _pushManageEventHub(event),
-            onMyTicket: () => _showMyTicketPlaceholder(ctx),
+            onMyTicket: () => _pushMyTicket(ctx, event),
             onUnregister: () => _showUnregisterConfirmation(ctx, event),
             onAskQuestion: () => _pushAskQuestion(ctx, event),
           ),
@@ -168,7 +182,24 @@ class _AppShellState extends ConsumerState<AppShell> {
             .read(userEventRegistrationControllerProvider.notifier)
             .registerEvent(eventId: event.id, answers: answers);
         if (registration != null && mounted && ctx.mounted) {
-          _showSnackBar(ctx, 'Đăng ký thành công.');
+          if (registration.status == 'waitlisted') {
+            _showSnackBar(ctx, 'Bạn đã vào danh sách chờ.');
+            return registration;
+          }
+
+          if (registration.status == 'registered' &&
+              registration.ticket != null) {
+            _showSnackBar(ctx, 'Đăng ký thành công.');
+            unawaited(
+              Future<void>.delayed(const Duration(milliseconds: 200), () {
+                if (mounted && ctx.mounted) {
+                  _pushMyTicket(ctx, event);
+                }
+              }),
+            );
+          } else {
+            _showSnackBar(ctx, 'Đăng ký thành công.');
+          }
         }
         return registration;
       },
@@ -222,8 +253,15 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _showMyTicketPlaceholder(BuildContext ctx) {
-    _showSnackBar(ctx, 'Tính năng vé của tôi sẽ được cập nhật sau.');
+  void _pushMyTicket(BuildContext ctx, EventModel event) {
+    Navigator.of(ctx).push(
+      appRoute(
+        builder: (routeCtx) => EventTicketDetailView(
+          event: event,
+          onBack: () => Navigator.of(routeCtx).pop(),
+        ),
+      ),
+    );
   }
 
   void _pushCreateEvent() {
@@ -280,7 +318,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onBack: () => Navigator.of(context).pop(),
           onEditDetailsTap: () => _pushEditEventDetails(event),
           onAttendeeListTap: () => _pushAttendeeList(event),
-          onParticipantCheckInTap: _pushQrScanner,
+          onParticipantCheckInTap: () => _pushQrScanner(event),
           onQuestionsFeedbackTap: () => _pushOrganizerEngagement(event),
         ),
       ),
@@ -321,10 +359,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  void _pushQrScanner() {
+  void _pushQrScanner(EventModel event) {
     Navigator.of(context).push(
       appRoute(
-        builder: (ctx) => QrScannerView(onBack: () => Navigator.of(ctx).pop()),
+        builder: (ctx) => QrScannerView(
+          eventId: event.id,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
     );
   }

@@ -52,15 +52,49 @@ class TicketingService {
     }
   }
 
-  Future<TicketModel> getTicketForEvent(String eventId) async {
+  Future<RegistrationTicketModel> getEventTicket(String eventId) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 500));
-      return MockTicketData.myValidTicket;
+      return RegistrationTicketModel(
+        registrationId:
+            MockTicketData.myValidTicket.registrationId ?? 'mock-reg-001',
+        eventId: eventId,
+        ticketCode: MockTicketData.myValidTicket.ticketCode,
+        status: 'valid',
+        issuedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        expiresAt: DateTime.now().add(const Duration(hours: 2)),
+      );
     }
 
     try {
-      final response = await _apiClient.dio.get('/events/$eventId/ticket');
-      return TicketModel.fromJson(extractObjectData(response.data));
+      final response = await _apiClient.dio.get('/events/$eventId/ticket/');
+      return RegistrationTicketModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<TicketQrTokenModel> getEventTicketToken(String eventId) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      final now = DateTime.now();
+      return TicketQrTokenModel(
+        registrationId:
+            MockTicketData.myValidTicket.registrationId ?? 'mock-reg-001',
+        eventId: eventId,
+        ticketCode: MockTicketData.myValidTicket.ticketCode,
+        qrPayload: 'TICKET:mock-${now.millisecondsSinceEpoch}',
+        qrSignature: 'mock-signature-${now.millisecondsSinceEpoch}',
+        validFrom: now,
+        validTo: now.add(const Duration(seconds: 15)),
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/ticket/token/',
+      );
+      return TicketQrTokenModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

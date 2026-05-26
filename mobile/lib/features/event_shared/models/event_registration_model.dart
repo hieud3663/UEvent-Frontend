@@ -48,7 +48,7 @@ class EventTicketSummaryModel {
 
   factory EventTicketSummaryModel.fromJson(Map<String, dynamic> json) {
     return EventTicketSummaryModel(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ?? json['registration_id']?.toString() ?? '',
       ticketCode: json['ticket_code']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       issuedAt: _parseDate(json['issued_at']),
@@ -82,6 +82,7 @@ class EventRegistrationAnswerModel {
 
 class EventRegistrationModel {
   final String id;
+  final String? eventId;
   final String status;
   final DateTime? registeredAt;
   final DateTime? cancelledAt;
@@ -92,6 +93,7 @@ class EventRegistrationModel {
 
   const EventRegistrationModel({
     required this.id,
+    this.eventId,
     required this.status,
     this.registeredAt,
     this.cancelledAt,
@@ -107,9 +109,16 @@ class EventRegistrationModel {
     final rawAnswers = json['answers'];
     final rawUser = json['user'];
     final rawTicket = json['ticket'];
+    final rawEvent = json['event'];
 
     return EventRegistrationModel(
       id: json['id']?.toString() ?? '',
+      eventId:
+          json['event_id']?.toString() ??
+          json['eventId']?.toString() ??
+          (rawEvent is Map<String, dynamic>
+              ? rawEvent['id']?.toString()
+              : null),
       status: json['status']?.toString() ?? '',
       registeredAt: _parseDate(json['registered_at']),
       cancelledAt: _parseDate(json['cancelled_at']),

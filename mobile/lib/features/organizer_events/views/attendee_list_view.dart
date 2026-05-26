@@ -143,6 +143,7 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
   Widget _buildRegistrationActions(EventRegistrationModel registration) {
     final isBusy = _pendingRegistrationId == registration.id;
     final isCheckedIn = registration.status == 'checked_in';
+    final attendeeEmail = registration.user?.email ?? '';
 
     return SizedBox(
       width: 142,
@@ -154,7 +155,7 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
             label: isCheckedIn ? 'Đã check-in' : 'Check-in',
             isFullWidth: true,
             isLoading: isBusy && _pendingAction == _RegistrationAction.checkIn,
-            onPressed: isBusy || isCheckedIn
+            onPressed: isBusy || isCheckedIn || attendeeEmail.isEmpty
                 ? null
                 : () => _checkInRegistration(registration),
           ),
@@ -177,11 +178,12 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       _pendingAction = _RegistrationAction.checkIn;
     });
 
-    final ok = await ref
+    final result = await ref
         .read(organizerEventRegistrationControllerProvider.notifier)
         .checkInRegistration(
           eventId: widget.eventId,
-          registrationId: registration.id,
+          email: registration.user?.email,
+          note: 'Attendee list',
         );
 
     if (!mounted) return;
@@ -190,11 +192,10 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       _pendingAction = null;
     });
 
-    if (ok) {
-      showAppSnackBar(context, 'Đã check-in người đăng ký.');
-    } else {
-      showAppSnackBar(context, 'Không thể check-in người đăng ký.');
-    }
+    showAppSnackBar(
+      context,
+      _checkInMessage(result?.result ?? 'invalid_ticket'),
+    );
   }
 
   Future<void> _promoteRegistration(EventRegistrationModel registration) async {
@@ -239,6 +240,16 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       'waitlisted' => AttendeeStatus.waitlisted,
       'cancelled' || 'rejected' => AttendeeStatus.cancelled,
       _ => AttendeeStatus.pending,
+    };
+  }
+
+  String _checkInMessage(String result) {
+    return switch (result) {
+      'success' => 'Đã check-in người đăng ký.',
+      'already_checked_in' => 'Vé đã được check-in trước đó.',
+      'event_unavailable' => 'Sự kiện chưa mở check-in hoặc đã kết thúc.',
+      'invalid_format' => 'Thông tin check-in không hợp lệ.',
+      _ => 'Không thể check-in người đăng ký.',
     };
   }
 }

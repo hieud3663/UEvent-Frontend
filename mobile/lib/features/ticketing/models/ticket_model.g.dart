@@ -8,16 +8,21 @@ part of 'ticket_model.dart';
 
 TicketModel _$TicketModelFromJson(Map<String, dynamic> json) => TicketModel(
   id: json['id'] as String,
+  registrationId: json['registration_id'] as String?,
   eventId: json['event_id'] as String,
   eventName: json['event_name'] as String,
   eventImageUrl: json['event_image_url'] as String,
   qrPayload: json['qr_payload'] as String?,
+  qrSignature: json['qr_signature'] as String?,
   validFrom: json['valid_from'] == null
       ? null
       : DateTime.parse(json['valid_from'] as String),
   validTo: json['valid_to'] == null
       ? null
       : DateTime.parse(json['valid_to'] as String),
+  usedAt: json['used_at'] == null
+      ? null
+      : DateTime.parse(json['used_at'] as String),
   date: json['date'] as String,
   timeRange: json['time_range'] as String,
   location: json['location'] as String,
@@ -39,12 +44,15 @@ TicketModel _$TicketModelFromJson(Map<String, dynamic> json) => TicketModel(
 Map<String, dynamic> _$TicketModelToJson(TicketModel instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'registration_id': instance.registrationId,
       'event_id': instance.eventId,
       'event_name': instance.eventName,
       'event_image_url': instance.eventImageUrl,
       'qr_payload': instance.qrPayload,
+      'qr_signature': instance.qrSignature,
       'valid_from': instance.validFrom?.toIso8601String(),
       'valid_to': instance.validTo?.toIso8601String(),
+      'used_at': instance.usedAt?.toIso8601String(),
       'date': instance.date,
       'time_range': instance.timeRange,
       'location': instance.location,
@@ -61,6 +69,8 @@ const _$TicketStatusEnumMap = {
   TicketStatus.upcoming: 'upcoming',
   TicketStatus.past: 'past',
   TicketStatus.cancelled: 'cancelled',
+  TicketStatus.checkedIn: 'checked_in',
+  TicketStatus.used: 'used',
 };
 
 UserRegistrationModel _$UserRegistrationModelFromJson(

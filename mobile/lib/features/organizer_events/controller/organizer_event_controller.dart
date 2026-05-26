@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/event_shared/models/event_category_model.dart';
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
+import 'package:frontend/features/organizer_events/models/check_in_model.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 
@@ -273,28 +274,36 @@ class OrganizerEventRegistrationController extends AsyncNotifier<void> {
     return result.hasValue;
   }
 
-  Future<bool> checkInRegistration({
+  Future<CheckInResultModel?> checkInRegistration({
     required String eventId,
-    required String registrationId,
+    String? qrPayload,
+    String? qrSignature,
+    String? email,
+    String? note,
   }) async {
     state = const AsyncLoading();
 
+    CheckInResultModel? checkInResult;
     final result = await AsyncValue.guard(() async {
-      await ref
+      checkInResult = await ref
           .read(organizerEventRepositoryProvider)
           .checkInRegistration(
             eventId: eventId,
-            registrationId: registrationId,
+            qrPayload: qrPayload,
+            qrSignature: qrSignature,
+            email: email,
+            note: note,
           );
 
       ref.invalidate(organizerEventDetailProvider(eventId));
       ref.invalidate(organizerEventRegistrationsProvider(eventId));
+      ref.invalidate(organizerCheckInLogsProvider(eventId));
       ref.invalidate(organizerEventsProvider);
       ref.invalidate(organizerEventsPagerProvider);
     });
 
     state = result;
-    return result.hasValue;
+    return result.hasValue ? checkInResult : null;
   }
 }
 
