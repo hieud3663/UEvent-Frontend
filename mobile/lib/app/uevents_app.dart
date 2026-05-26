@@ -2,12 +2,17 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/app/app_routes.dart';
 import 'package:frontend/app/app_shell.dart';
+import 'package:frontend/core/localization/app_localizations.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
+import 'package:frontend/features/app_setting/models/app_setting_key.dart';
+import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
+import 'package:frontend/features/app_setting/widgets/app_lock_gate.dart';
 import 'package:frontend/features/auth/controller/otp_controller.dart';
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
@@ -26,12 +31,33 @@ class UEventsApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final appSettings = ref.watch(appSettingControllerProvider).value;
+
     return MaterialApp(
       title: 'UEvents',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      builder: (context, child) =>
-          AppSnackBarHost(child: child ?? const SizedBox.shrink()),
+      darkTheme: AppTheme.darkTheme,
+      themeMode: appSettings?.themeMode ?? ThemeMode.system,
+      locale: appSettings?.locale,
+      supportedLocales: const [Locale('vi'), Locale('en')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        final reduceMotion = appSettings?.reduceMotionEnabled ?? false;
+
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            disableAnimations: reduceMotion || mediaQuery.disableAnimations,
+          ),
+          child: AppSnackBarHost(
+            child: AppLockGate(child: child ?? const SizedBox.shrink()),
+          ),
+        );
+      },
       home: Builder(
         builder: (context) => SplashView(
           onInitializationComplete: () {
@@ -230,14 +256,27 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
   Navigator.of(context).pushAndRemoveUntil(
     appRoute(
       builder: (ctx) => Consumer(
-        builder: (ctx, loginRef, _) => LoginView(
-          onLoginWithEmail: (email) =>
-              _handleEmailOtpStart(ctx, loginRef, email),
-          onLoginWithGoogle: () =>
-              _handleSignIn(ctx, loginRef, AuthMethod.google),
-          onLoginWithPasskey: () =>
-              _handleSignIn(ctx, loginRef, AuthMethod.passkey),
-        ),
+        builder: (ctx, loginRef, _) {
+          final preferPasskey =
+              loginRef
+                  .watch(appSettingControllerProvider)
+                  .value
+                  ?.boolValue(AppSettingKey.securityPreferPasskeyLogin) ??
+              false;
+          final passkeyAvailable =
+              loginRef.watch(passkeyCapabilityProvider).value ?? false;
+
+          return LoginView(
+            preferPasskey: preferPasskey,
+            passkeyAvailable: passkeyAvailable,
+            onLoginWithEmail: (email) =>
+                _handleEmailOtpStart(ctx, loginRef, email),
+            onLoginWithGoogle: () =>
+                _handleSignIn(ctx, loginRef, AuthMethod.google),
+            onLoginWithPasskey: () =>
+                _handleSignIn(ctx, loginRef, AuthMethod.passkey),
+          );
+        },
       ),
     ),
     (route) => false,

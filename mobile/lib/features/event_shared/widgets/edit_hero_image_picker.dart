@@ -89,7 +89,7 @@ class EditHeroImagePicker extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Change Cover',
+                        'Đổi ảnh bìa',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w700,

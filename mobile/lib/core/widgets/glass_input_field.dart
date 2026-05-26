@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -14,6 +15,7 @@ class GlassInputField extends StatelessWidget {
   final IconData? leadingIcon;
   final TextEditingController? controller;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final int maxLines;
   final Widget? child;
   final Widget? trailing;
@@ -27,6 +29,7 @@ class GlassInputField extends StatelessWidget {
     this.leadingIcon,
     this.controller,
     this.keyboardType,
+    this.inputFormatters,
     this.maxLines = 1,
     this.child,
     this.trailing,
@@ -85,6 +88,7 @@ class GlassInputField extends StatelessWidget {
                   child: TextField(
                     controller: controller,
                     keyboardType: keyboardType,
+                    inputFormatters: inputFormatters,
                     obscureText: obscureText,
                     maxLines: maxLines,
                     style: AppTextStyles.bodyLarge,

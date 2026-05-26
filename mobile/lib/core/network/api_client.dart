@@ -82,18 +82,21 @@ class ApiClient {
     DioException error,
     ErrorInterceptorHandler handler,
   ) async {
+    final normalizedError = _withDetailedApiMessage(error);
     final request = error.requestOptions;
 
     // Only intercept 401 Unauthorized.
-    if (error.response?.statusCode != 401) return handler.next(error);
+    if (normalizedError.response?.statusCode != 401) {
+      return handler.next(normalizedError);
+    }
 
     // Never retry more than once to prevent infinite loops.
-    if (request.extra['retried'] == true) return handler.next(error);
+    if (request.extra['retried'] == true) return handler.next(normalizedError);
 
     // Don't try to refresh if the 401 came from the token endpoint itself
     // (the refresh token was rejected).
     if (request.path.contains('/protocol/openid-connect/')) {
-      return handler.next(error);
+      return handler.next(normalizedError);
     }
 
     final refreshSucceeded = await _refreshSingleFlight();
@@ -101,14 +104,14 @@ class ApiClient {
     if (!refreshSucceeded) {
       // Refresh definitively failed → force sign-out and propagate.
       await _onForceSignOut();
-      return handler.next(error);
+      return handler.next(normalizedError);
     }
 
     // Replay the original request with the new token.
     final session = await _authLocal.readSession();
     if (session == null) {
       await _onForceSignOut();
-      return handler.next(error);
+      return handler.next(normalizedError);
     }
 
     request.extra['retried'] = true;
@@ -118,8 +121,61 @@ class ApiClient {
       final response = await dio.fetch(request);
       return handler.resolve(response);
     } on DioException catch (retryError) {
-      return handler.next(retryError);
+      return handler.next(_withDetailedApiMessage(retryError));
     }
+  }
+
+  DioException _withDetailedApiMessage(DioException error) {
+    final message = _extractDetailedApiMessage(error.response?.data);
+    if (message == null) return error;
+
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      data['message'] = message;
+    }
+
+    return error.copyWith(message: message);
+  }
+
+  String? _extractDetailedApiMessage(Object? data) {
+    if (data is! Map<String, dynamic>) return null;
+
+    final baseMessage = _stringValue(data['message'] ?? data['detail']);
+    final details = _flattenErrorDetails(data['errors']);
+    if (details.isEmpty) return baseMessage;
+
+    final lines = <String>[
+      ?baseMessage,
+      ...details.where((detail) => detail != baseMessage),
+    ];
+    if (lines.isEmpty) return null;
+    return lines.join('\n');
+  }
+
+  List<String> _flattenErrorDetails(Object? errors) {
+    if (errors == null) return const [];
+
+    if (errors is String) {
+      final value = errors.trim();
+      return value.isEmpty ? const [] : [value];
+    }
+
+    if (errors is List) {
+      return errors.expand(_flattenErrorDetails).toList(growable: false);
+    }
+
+    if (errors is Map) {
+      return errors.values.expand(_flattenErrorDetails).toList(growable: false);
+    }
+
+    final value = errors.toString().trim();
+    return value.isEmpty ? const [] : [value];
+  }
+
+  String? _stringValue(Object? value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 
   /// Ensures exactly one refresh call runs at a time.

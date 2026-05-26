@@ -1,6 +1,10 @@
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/app_setting/models/app_setting_key.dart';
+import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
+import 'package:frontend/features/notifications/models/notification_category.dart';
 import 'package:frontend/features/notifications/providers/notification_data_providers.dart';
 import 'package:frontend/features/notifications/providers/notifications_controller_provider.dart';
 
@@ -21,6 +25,8 @@ class PushNotificationController extends AsyncNotifier<void> {
   }
 
   Future<void> registerCurrentDevice() async {
+    if (!_pushNotificationsEnabled()) return;
+
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final pushService = ref.read(pushNotificationServiceProvider);
@@ -55,11 +61,12 @@ class PushNotificationController extends AsyncNotifier<void> {
         .read(pushNotificationServiceProvider)
         .onTokenRefresh
         .listen((token) async {
+          if (!_pushNotificationsEnabled()) return;
+
           _currentToken = token;
-          await ref.read(notificationRepositoryProvider).registerDevice(
-            fcmToken: token,
-            deviceName: 'Ứng dụng UEvent',
-          );
+          await ref
+              .read(notificationRepositoryProvider)
+              .registerDevice(fcmToken: token, deviceName: 'Ứng dụng UEvent');
         });
   }
 
@@ -68,7 +75,9 @@ class PushNotificationController extends AsyncNotifier<void> {
     _foregroundMessageSubscription ??= pushService.onForegroundMessage.listen((
       message,
     ) async {
-      await pushService.showForegroundNotification(message);
+      if (_shouldShowForegroundNotification(message)) {
+        await pushService.showForegroundNotification(message);
+      }
       await _refreshNotifications();
     });
     _openedMessageSubscription ??= pushService.onNotificationOpenedApp.listen((
@@ -101,5 +110,47 @@ class PushNotificationController extends AsyncNotifier<void> {
           .read(notificationsControllerProvider.notifier)
           .refreshSilently();
     } catch (_) {}
+  }
+
+  bool _pushNotificationsEnabled() {
+    return ref
+            .read(appSettingControllerProvider)
+            .value
+            ?.boolValue(
+              AppSettingKey.notificationPushEnabled,
+              fallback: true,
+            ) ??
+        true;
+  }
+
+  bool _shouldShowForegroundNotification(RemoteMessage message) {
+    final settings = ref.read(appSettingControllerProvider).value;
+    if (settings == null) return true;
+    if (!settings.boolValue(
+      AppSettingKey.notificationPushEnabled,
+      fallback: true,
+    )) {
+      return false;
+    }
+    if (settings.isQuietHoursActive) return false;
+
+    return switch (NotificationCategory.fromPayload(message.data)) {
+      NotificationCategory.ticket => settings.boolValue(
+        AppSettingKey.notificationTicketUpdatesEnabled,
+        fallback: true,
+      ),
+      NotificationCategory.organizer => settings.boolValue(
+        AppSettingKey.notificationOrganizerUpdatesEnabled,
+        fallback: true,
+      ),
+      NotificationCategory.marketing => settings.boolValue(
+        AppSettingKey.notificationMarketingEnabled,
+      ),
+      NotificationCategory.event => settings.boolValue(
+        AppSettingKey.notificationEventRemindersEnabled,
+        fallback: true,
+      ),
+      NotificationCategory.unknown => true,
+    };
   }
 }

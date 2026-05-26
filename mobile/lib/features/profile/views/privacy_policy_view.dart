@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
+import 'package:frontend/core/widgets/glass_top_bar.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/features/app_setting/data/app_setting_legal.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
   final VoidCallback? onBack;
+  final FutureOr<void> Function()? onAccept;
 
-  const PrivacyPolicyView({super.key, this.onBack});
+  const PrivacyPolicyView({super.key, this.onBack, this.onAccept});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +36,7 @@ class PrivacyPolicyView extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Cập nhật lần cuối: tháng 10/2023',
+                        'Cập nhật lần cuối: ${AppSettingLegal.privacyPolicyUpdatedLabel}',
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurfaceVariant,
                         ),
@@ -99,6 +104,15 @@ class PrivacyPolicyView extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        label: 'Tôi đã đọc và đồng ý',
+                        onPressed: onAccept == null
+                            ? null
+                            : () {
+                                unawaited(Future.sync(onAccept!));
+                              },
                       ),
                       const SizedBox(height: 48),
                     ],
