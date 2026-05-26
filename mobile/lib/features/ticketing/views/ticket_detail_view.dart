@@ -2,17 +2,95 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/async_state_widgets.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
+import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/ticketing/models/ticket_model.dart';
+import 'package:frontend/features/ticketing/providers/ticketing_providers.dart';
 import 'package:frontend/features/ticketing/views/ticket_qr_sheet.dart';
 import 'package:frontend/features/ticketing/widgets/ticket_info_row.dart';
 
+class EventTicketDetailView extends ConsumerWidget {
+  final EventModel event;
+  final VoidCallback? onBack;
+
+  const EventTicketDetailView({super.key, required this.event, this.onBack});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ticketState = ref.watch(eventTicketProvider(event.id));
+
+    return ticketState.when(
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              const Center(child: AppLoadingState(height: 220)),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: GlassTopBar(
+                  title: 'Vé của tôi',
+                  leadingIcon: Icons.arrow_back_ios_new,
+                  onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      error: (_, _) => Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: AppErrorState(
+                  title: 'Không tải được vé',
+                  description:
+                      'Bạn chưa có vé cho sự kiện này hoặc vé chưa được phát hành.',
+                  onRetry: () => ref.invalidate(eventTicketProvider(event.id)),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: GlassTopBar(
+                  title: 'Vé của tôi',
+                  leadingIcon: Icons.arrow_back_ios_new,
+                  onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (ticket) => TicketDetailView(
+        ticket: ticket.toTicketModel(
+          fallbackEventId: event.id,
+          eventName: event.title,
+          eventImageUrl: event.imageUrl,
+          date: _formatTicketDate(event.startDate),
+          timeRange: event.timeRange ?? _formatTicketTimeRange(event),
+          location: event.location,
+        ),
+        onBack: onBack,
+      ),
+    );
+  }
+}
+
 /// Pushed screen: Upcoming ticket detail view.
 /// Shows amber-glass hero, perforated ticket divider, info rows, and cancel button.
-class TicketDetailView extends StatelessWidget {
+class TicketDetailView extends ConsumerWidget {
   final TicketModel ticket;
   final VoidCallback? onBack;
   final VoidCallback? onCancelTap;
@@ -25,7 +103,7 @@ class TicketDetailView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -59,69 +137,34 @@ class TicketDetailView extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // ── Show QR Code button (primary) ──
-                        GestureDetector(
-                          onTap: () => TicketQrSheet.show(context, ticket),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(
-                                AppConstants.radiusMd,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.shadowPrimary,
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.qr_code_2_rounded,
-                                  color: AppColors.onPrimaryDark,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Hiển thị mã QR',
-                                  style: AppTextStyles.buttonLarge.copyWith(
-                                    color: AppColors.onPrimaryDark,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        PrimaryButton(
+                          label: ticket.isCheckedIn
+                              ? 'Đã check-in'
+                              : 'Hiển thị mã QR',
+                          icon: ticket.isCheckedIn
+                              ? Icons.check_circle_outline
+                              : Icons.qr_code_2_rounded,
+                          onPressed: ticket.isCheckedIn
+                              ? null
+                              : () {
+                                  TicketQrSheet.show(context, ticket).then((
+                                    result,
+                                  ) {
+                                    if (!context.mounted) return;
+                                    if (result ==
+                                        TicketQrSheetResult
+                                            .refreshTicketDetail) {
+                                      ref.invalidate(
+                                        eventTicketProvider(ticket.eventId),
+                                      );
+                                    }
+                                  });
+                                },
                         ),
                         const SizedBox(height: 12),
-                        // ── Cancel Registration (outlined, destructive) ──
-                        GestureDetector(
-                          onTap: onCancelTap,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(
-                                AppConstants.radiusMd,
-                              ),
-                              border: Border.all(
-                                color: AppColors.error.withValues(alpha: 0.5),
-                                width: 1.5,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Hủy đăng ký',
-                              style: AppTextStyles.buttonLarge.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ),
+                        SecondaryButton(
+                          label: 'Hủy đăng ký',
+                          onPressed: ticket.isCheckedIn ? null : onCancelTap,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -419,4 +462,24 @@ class TicketDetailView extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatTicketDate(DateTime date) {
+  final local = date.toLocal();
+  final day = local.day.toString().padLeft(2, '0');
+  final month = local.month.toString().padLeft(2, '0');
+  return '$day/$month/${local.year}';
+}
+
+String _formatTicketTimeRange(EventModel event) {
+  final start = _formatTime(event.startDate);
+  final end = event.endDate == null ? null : _formatTime(event.endDate!);
+  return end == null ? start : '$start - $end';
+}
+
+String _formatTime(DateTime date) {
+  final local = date.toLocal();
+  final hour = local.hour.toString().padLeft(2, '0');
+  final minute = local.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
 }

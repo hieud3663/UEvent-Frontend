@@ -22,19 +22,20 @@ class UserEventRegistrationController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
 
-    EventRegistrationModel? registration;
-    final result = await AsyncValue.guard(() async {
-      registration = await ref
+    try {
+      final registration = await ref
           .read(userEventRepositoryProvider)
           .registerEvent(eventId: eventId, answers: answers);
 
       await _refreshEventDetail(eventId);
       ref.invalidate(userMyEventsProvider);
       ref.invalidate(userRegisteredEventsProvider);
-    });
-
-    state = result;
-    return result.hasValue ? registration : null;
+      state = const AsyncData(null);
+      return registration;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
   }
 
   Future<bool> unregisterEvent({required String eventId}) async {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 
 /// Modal bottom sheet that shows either a scan SUCCESS or ERROR result.
 ///
@@ -21,6 +22,8 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 /// ```
 class QrScanResultSheet extends StatelessWidget {
   final bool isSuccess;
+  final String? title;
+  final String? description;
   final String? attendeeName;
   final String? attendeeId;
   final VoidCallback onScanNext;
@@ -30,6 +33,8 @@ class QrScanResultSheet extends StatelessWidget {
   const QrScanResultSheet({
     super.key,
     required this.isSuccess,
+    this.title,
+    this.description,
     this.attendeeName,
     this.attendeeId,
     required this.onScanNext,
@@ -40,6 +45,8 @@ class QrScanResultSheet extends StatelessWidget {
   static Future<void> show(
     BuildContext context, {
     required bool isSuccess,
+    String? title,
+    String? description,
     String? attendeeName,
     String? attendeeId,
     required VoidCallback onScanNext,
@@ -54,6 +61,8 @@ class QrScanResultSheet extends StatelessWidget {
       enableDrag: false,
       builder: (_) => QrScanResultSheet(
         isSuccess: isSuccess,
+        title: title,
+        description: description,
         attendeeName: attendeeName,
         attendeeId: attendeeId,
         onScanNext: onScanNext,
@@ -105,7 +114,7 @@ class QrScanResultSheet extends StatelessWidget {
 
         // Title
         Text(
-          'Check-in thành công',
+          title ?? 'Check-in thành công',
           style: AppTextStyles.titleMedium.copyWith(fontSize: 22),
           textAlign: TextAlign.center,
         ),
@@ -182,30 +191,7 @@ class QrScanResultSheet extends StatelessWidget {
         const SizedBox(height: 20),
 
         // Scan Next button
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-              ),
-              elevation: 0,
-            ),
-            onPressed: onScanNext,
-            child: const Text(
-              'Quét vé tiếp theo',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+        PrimaryButton(label: 'Quét vé tiếp theo', onPressed: onScanNext),
         const SizedBox(height: 8),
       ],
     );
@@ -231,7 +217,7 @@ class QrScanResultSheet extends StatelessWidget {
 
         // Title
         Text(
-          'Vé không hợp lệ',
+          title ?? 'Vé không hợp lệ',
           style: AppTextStyles.titleMedium.copyWith(fontSize: 22),
           textAlign: TextAlign.center,
         ),
@@ -239,8 +225,9 @@ class QrScanResultSheet extends StatelessWidget {
 
         // Description
         Text(
-          'Vé này đã được sử dụng hoặc không hợp lệ cho sự kiện này. '
-          'Vui lòng liên hệ ban tổ chức để được hỗ trợ.',
+          description ??
+              'Vé này đã được sử dụng hoặc không hợp lệ cho sự kiện này. '
+                  'Vui lòng liên hệ ban tổ chức để được hỗ trợ.',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.onSurfaceVariant,
             height: 1.5,
@@ -250,43 +237,10 @@ class QrScanResultSheet extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Try Again button
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusInput),
-              ),
-              elevation: 0,
-            ),
-            onPressed: onTryAgain,
-            child: const Text(
-              'Thử lại',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+        PrimaryButton(label: 'Thử lại', onPressed: onTryAgain),
         const SizedBox(height: 8),
 
-        // Cancel text button
-        TextButton(
-          onPressed: onCancel,
-          child: Text(
-            'Hủy',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        SecondaryButton(label: 'Hủy', onPressed: onCancel),
         const SizedBox(height: 4),
       ],
     );

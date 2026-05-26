@@ -9,6 +9,7 @@ import 'package:frontend/features/event_shared/models/event_organizer_member_mod
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
+import 'package:frontend/features/organizer_events/models/check_in_model.dart';
 
 class OrganizerEventService {
   final ApiClient _apiClient;
@@ -201,10 +202,16 @@ class OrganizerEventService {
 
   Future<List<EventRegistrationModel>> getEventRegistrations({
     required String eventId,
+    String? status,
+    String? search,
   }) async {
     try {
       final response = await _apiClient.dio.get(
-        '/events/$eventId/registrations/',
+        '/events/$eventId/attendees/',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          if (search != null && search.isNotEmpty) 'search': search,
+        },
       );
       final dataList = extractListData(response.data);
       return dataList.map(EventRegistrationModel.fromJson).toList();
@@ -229,14 +236,50 @@ class OrganizerEventService {
     }
   }
 
-  Future<void> checkInRegistration({
+  Future<CheckInResultModel> checkInRegistration({
     required String eventId,
-    required String registrationId,
+    String? qrPayload,
+    String? qrSignature,
+    String? email,
+    String? note,
   }) async {
     try {
-      await _apiClient.dio.post(
-        '/organizer/events/$eventId/registrations/$registrationId/check-in/',
+      final response = await _apiClient.dio.post(
+        '/events/$eventId/check-in/scan/',
+        data: {
+          if (qrPayload != null && qrPayload.isNotEmpty)
+            'qr_payload': qrPayload,
+          if (qrSignature != null && qrSignature.isNotEmpty)
+            'qr_signature': qrSignature,
+          if (email != null && email.isNotEmpty) 'email': email,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
       );
+      return CheckInResultModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<List<CheckInLogModel>> getCheckInLogs({
+    required String eventId,
+    String? result,
+    String? search,
+    String? userId,
+    String? ticketId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/check-ins/',
+        queryParameters: {
+          if (result != null && result.isNotEmpty) 'result': result,
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (userId != null && userId.isNotEmpty) 'user_id': userId,
+          if (ticketId != null && ticketId.isNotEmpty) 'ticket_id': ticketId,
+        },
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(CheckInLogModel.fromJson).toList();
     } on DioException {
       rethrow;
     }
