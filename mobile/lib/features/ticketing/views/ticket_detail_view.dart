@@ -90,7 +90,7 @@ class EventTicketDetailView extends ConsumerWidget {
 
 /// Pushed screen: Upcoming ticket detail view.
 /// Shows amber-glass hero, perforated ticket divider, info rows, and cancel button.
-class TicketDetailView extends StatelessWidget {
+class TicketDetailView extends ConsumerWidget {
   final TicketModel ticket;
   final VoidCallback? onBack;
   final VoidCallback? onCancelTap;
@@ -103,7 +103,7 @@ class TicketDetailView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -146,12 +146,25 @@ class TicketDetailView extends StatelessWidget {
                               : Icons.qr_code_2_rounded,
                           onPressed: ticket.isCheckedIn
                               ? null
-                              : () => TicketQrSheet.show(context, ticket),
+                              : () {
+                                  TicketQrSheet.show(context, ticket).then((
+                                    result,
+                                  ) {
+                                    if (!context.mounted) return;
+                                    if (result ==
+                                        TicketQrSheetResult
+                                            .refreshTicketDetail) {
+                                      ref.invalidate(
+                                        eventTicketProvider(ticket.eventId),
+                                      );
+                                    }
+                                  });
+                                },
                         ),
                         const SizedBox(height: 12),
                         SecondaryButton(
                           label: 'Hủy đăng ký',
-                          onPressed: onCancelTap,
+                          onPressed: ticket.isCheckedIn ? null : onCancelTap,
                         ),
                         const SizedBox(height: 12),
                         Text(

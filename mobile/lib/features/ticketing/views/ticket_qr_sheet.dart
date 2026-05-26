@@ -12,14 +12,19 @@ import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/ticketing/models/ticket_model.dart';
 
+enum TicketQrSheetResult { refreshTicketDetail }
+
 /// Bottom sheet displaying the QR code for a ticket.
 class TicketQrSheet extends ConsumerStatefulWidget {
   final TicketModel ticket;
 
   const TicketQrSheet({super.key, required this.ticket});
 
-  static Future<void> show(BuildContext context, TicketModel ticket) {
-    return showModalBottomSheet(
+  static Future<TicketQrSheetResult?> show(
+    BuildContext context,
+    TicketModel ticket,
+  ) {
+    return showModalBottomSheet<TicketQrSheetResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -99,10 +104,15 @@ class _TicketQrSheetState extends ConsumerState<TicketQrSheet> {
     } on DioException catch (error) {
       if (!mounted) return;
       _refreshTimer?.cancel();
+
+      if (_token != null) {
+        _isStopped = true;
+        Navigator.of(context).pop(TicketQrSheetResult.refreshTicketDetail);
+        return;
+      }
+
       setState(() {
-        _error = _token == null
-            ? error
-            : 'Vé không còn hợp lệ. Vui lòng tải lại chi tiết vé.';
+        _error = error;
         _isLoading = false;
         _isStopped = true;
       });
