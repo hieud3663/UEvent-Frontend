@@ -38,7 +38,6 @@ import 'package:frontend/features/profile/views/edit_profile_view.dart';
 import 'package:frontend/features/profile/views/help_center_view.dart';
 import 'package:frontend/features/profile/views/privacy_policy_view.dart';
 import 'package:frontend/features/profile/views/send_feedback_view.dart';
-import 'package:frontend/features/profile/views/sync_contacts_view.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
 import 'package:frontend/features/profile/views/user_profile_view.dart';
 import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart';
@@ -518,23 +517,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  Future<void> _pushSyncContacts() async {
-    final allowed = await _ensureDevicePermission(
-      permissionKey: AppPermissionKey.contacts,
-      settingKey: AppSettingKey.permissionContactsSyncEnabled,
-      deniedMessage:
-          'Cần quyền danh bạ để đồng bộ bạn bè. Vui lòng cấp quyền trong cài đặt hệ thống.',
-    );
-    if (!allowed || !mounted) return;
-
-    Navigator.of(context).push(
-      appRoute(
-        builder: (ctx) =>
-            SyncContactsView(onBack: () => Navigator.of(ctx).pop()),
-      ),
-    );
-  }
-
   Future<bool> _ensureDevicePermission({
     required AppPermissionKey permissionKey,
     required String deniedMessage,
@@ -649,7 +631,6 @@ class _AppShellState extends ConsumerState<AppShell> {
           onHelpCenter: _pushHelpCenter,
           onSendFeedback: _pushSendFeedback,
           onPrivacyPolicy: _pushPrivacyPolicy,
-          onSyncContacts: _pushSyncContacts,
           onSignOut: _signOut,
         ),
       ],

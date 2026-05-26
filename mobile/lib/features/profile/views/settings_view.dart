@@ -24,7 +24,6 @@ class SettingsView extends ConsumerStatefulWidget {
   final VoidCallback? onHelpCenter;
   final VoidCallback? onSendFeedback;
   final VoidCallback? onPrivacyPolicy;
-  final VoidCallback? onSyncContacts;
   final VoidCallback? onSignOut;
   final List<NavItemModel> navItems;
 
@@ -38,7 +37,6 @@ class SettingsView extends ConsumerStatefulWidget {
     this.onHelpCenter,
     this.onSendFeedback,
     this.onPrivacyPolicy,
-    this.onSyncContacts,
     this.onSignOut,
     this.navItems = GlassBottomNavBar.defaultItems,
   });
@@ -146,39 +144,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         ),
                         onPushNotificationsChanged: _setPushNotifications,
                       ),
-                      PermissionSettingsSection(
-                        settings: settings,
-                        settingsReady: settingsReady,
-                        locationPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.location,
-                        ),
-                        contactsPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.contacts,
-                        ),
-                        cameraPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.camera,
-                        ),
-                        photosPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.photos,
-                        ),
-                        showContactsSync: false,
-                        onLocationChanged: (value) =>
-                            _setPermissionBackedToggle(
-                              settingKey: AppSettingKey
-                                  .permissionLocationFeatureEnabled,
-                              permissionKey: AppPermissionKey.location,
-                              value: value,
-                            ),
-                        onContactsChanged: _setContactsSyncEnabled,
-                        onCameraTap: () =>
-                            _requestOrOpen(AppPermissionKey.camera),
-                        onPhotosTap: () =>
-                            _requestOrOpen(AppPermissionKey.photos),
-                      ),
                       AppearanceSettingsSection(
                         settings: settings,
                         settingsReady: settingsReady,
@@ -253,15 +218,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     if (enabled) widget.onPasskeyLogin?.call();
   }
 
-  Future<void> _setContactsSyncEnabled(bool value) async {
-    await _setPermissionBackedToggle(
-      settingKey: AppSettingKey.permissionContactsSyncEnabled,
-      permissionKey: AppPermissionKey.contacts,
-      value: value,
-    );
-    if (value) widget.onSyncContacts?.call();
-  }
-
   Future<void> _setPushNotifications(bool enabled) async {
     final settingsController = ref.read(appSettingControllerProvider.notifier);
 
@@ -306,47 +262,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         .read(pushNotificationControllerProvider.notifier)
         .registerCurrentDevice();
     if (mounted) showAppSnackBar(context, 'Đã bật thông báo đẩy.');
-  }
-
-  Future<void> _setPermissionBackedToggle({
-    required String settingKey,
-    required AppPermissionKey permissionKey,
-    required bool value,
-  }) async {
-    final settingsController = ref.read(appSettingControllerProvider.notifier);
-
-    if (!value) {
-      await settingsController.setBool(settingKey, false);
-      return;
-    }
-
-    final permission = await settingsController.requestPermission(
-      permissionKey,
-    );
-    final allowed =
-        permission?.status == AppPermissionStatus.granted ||
-        permission?.status == AppPermissionStatus.limited;
-
-    await settingsController.setBool(settingKey, allowed);
-    if (!allowed && mounted) {
-      showAppSnackBar(
-        context,
-        'Chưa được cấp quyền ${permissionKey.label.toLowerCase()}.',
-      );
-    }
-  }
-
-  Future<void> _requestOrOpen(AppPermissionKey key) async {
-    final controller = ref.read(appSettingControllerProvider.notifier);
-    final state = ref.read(appSettingControllerProvider).value;
-    final permission = state?.permissions[key];
-
-    if (permission?.status.canOpenSystemSettings == true) {
-      await controller.openSystemSettings(key);
-      return;
-    }
-
-    await controller.requestPermission(key);
   }
 
   Future<void> _clearTemporaryCache() async {
@@ -488,10 +403,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   String _permissionLabel(AppSettingState? settings, AppPermissionKey key) {
     final status = settings?.permissions[key]?.status;
     if (status == null) return 'Đang kiểm tra';
-    if (key == AppPermissionKey.location &&
-        status == AppPermissionStatus.granted) {
-      return 'Khi dùng ứng dụng';
-    }
     return status.label;
   }
 

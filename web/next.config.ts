@@ -15,12 +15,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.dicebear.com",
       },
+      
       {
         protocol: 'https',
-        hostname: 'example.com',
-        port: '',
-        pathname: '/images/**',
-      },
+        hostname: 'uevent-media-bucket.s3.ap-southeast-1.amazonaws.com'
+      }
     ],
   },
 };

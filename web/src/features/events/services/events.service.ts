@@ -146,7 +146,7 @@ function mapEvent(dto: AdminEventDto): Event {
     title: dto.title,
     organizer: dto.created_by.full_name || dto.created_by.username,
     date: formatEventDate(dto.start_at),
-    coverImageUrl: dto.cover_image_url ?? undefined,
+    coverImageUrl: normalizeCoverImageUrl(dto.cover_image_url),
     moderationNote: dto.latest_moderation_reason || dto.description,
     organizerTag: dto.created_by.email,
     status: dto.status,
@@ -161,6 +161,24 @@ function mapEvent(dto: AdminEventDto): Event {
     visibility: dto.visibility,
     moderationLogs: dto.moderation_logs?.map(mapModerationLog) ?? [],
   };
+}
+
+function normalizeCoverImageUrl(value: string | null): string | undefined {
+  if (!value) return undefined;
+
+  try {
+    const url = new URL(value);
+    const decodedPath = decodeURIComponent(url.pathname);
+    const hasNestedAbsoluteUrl = decodedPath.includes('://');
+
+    if (url.hostname.endsWith('amazonaws.com') && hasNestedAbsoluteUrl) {
+      return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return value;
 }
 
 function mapModerationLog(dto: AdminModerationLogDto): EventModerationLog {
