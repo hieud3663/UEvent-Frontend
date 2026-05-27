@@ -10,35 +10,42 @@ import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
 import 'package:frontend/features/auth/models/auth_session_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:passkeys/authenticator.dart';
+import 'package:passkeys/types.dart';
 
 /// Auth gateway for mobile sign-in flows.
 ///
 /// Google uses native Google Sign-In so users can pick an account already
-/// available on the device. Email and passkey still use Keycloak PKCE.
+/// available on the device. Email OTP and passkey use backend auth endpoints.
 class AuthService {
   final FlutterAppAuth _appAuth;
   final Dio _authDio;
+  final PasskeyAuthenticator _passkeyAuthenticator;
   static Future<void>? _googleInitialization;
 
-  AuthService({FlutterAppAuth? appAuth, Dio? authDio})
-    : _appAuth = appAuth ?? const FlutterAppAuth(),
-      _authDio =
-          authDio ??
-          Dio(
-            BaseOptions(
-              baseUrl: EnvConfig.baseUrl,
-              connectTimeout: const Duration(
-                milliseconds: EnvConfig.connectTimeoutMs,
-              ),
-              receiveTimeout: const Duration(
-                milliseconds: EnvConfig.receiveTimeoutMs,
-              ),
-              headers: const {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-            ),
-          );
+  AuthService({
+    FlutterAppAuth? appAuth,
+    Dio? authDio,
+    PasskeyAuthenticator? passkeyAuthenticator,
+  }) : _appAuth = appAuth ?? const FlutterAppAuth(),
+       _passkeyAuthenticator = passkeyAuthenticator ?? PasskeyAuthenticator(),
+       _authDio =
+           authDio ??
+           Dio(
+             BaseOptions(
+               baseUrl: EnvConfig.baseUrl,
+               connectTimeout: const Duration(
+                 milliseconds: EnvConfig.connectTimeoutMs,
+               ),
+               receiveTimeout: const Duration(
+                 milliseconds: EnvConfig.receiveTimeoutMs,
+               ),
+               headers: const {
+                 'Content-Type': 'application/json',
+                 'Accept': 'application/json',
+               },
+             ),
+           );
 
   Future<AuthSessionModel> signIn(
     AuthMethod method, {
@@ -46,6 +53,9 @@ class AuthService {
   }) async {
     if (method == AuthMethod.google) {
       return _signInWithNativeGoogle();
+    }
+    if (method == AuthMethod.passkey) {
+      return _signInWithPasskey(loginHint);
     }
 
     final params = switch (method) {
@@ -79,7 +89,9 @@ class AuthService {
     String refreshToken,
     AuthMethod method,
   ) async {
-    if (method == AuthMethod.email || method == AuthMethod.google) {
+    if (method == AuthMethod.email ||
+        method == AuthMethod.google ||
+        method == AuthMethod.passkey) {
       return _refreshBackendToken(refreshToken, method);
     }
 
@@ -116,6 +128,62 @@ class AuthService {
       throw const AuthFailureRefreshFailed();
     } catch (_) {
       throw const AuthFailureRefreshFailed();
+    }
+  }
+
+  Future<AuthSessionModel> _signInWithPasskey(String? loginHint) async {
+    final email = loginHint?.trim().toLowerCase() ?? '';
+    if (!_isValidEmail(email)) {
+      throw const AuthFailureUnknown(
+        'Vui lòng nhập email hợp lệ để đăng nhập bằng passkey.',
+      );
+    }
+
+    try {
+      final optionsResponse = await _authDio.post<Map<String, dynamic>>(
+        '/auth/passkeys/authentication/options/',
+        data: {'email': email},
+      );
+      final optionsPayload = extractObjectData(optionsResponse.data);
+      final challengeId = _requiredString(optionsPayload, 'challenge_id');
+      final request = AuthenticateRequestType.fromJson(
+        _requiredJsonObject(optionsPayload, 'options'),
+      );
+
+      final credential = await _passkeyAuthenticator.authenticate(request);
+      final verifyResponse = await _authDio.post<Map<String, dynamic>>(
+        '/auth/passkeys/authentication/verify/',
+        data: {
+          'email': email,
+          'challenge_id': challengeId,
+          'credential': credential.toJson(),
+        },
+      );
+
+      return _mapBackendTokenResponse(
+        extractObjectData(verifyResponse.data),
+        AuthMethod.passkey,
+      );
+    } on AuthFailure {
+      rethrow;
+    } on DioException catch (error, stackTrace) {
+      developer.log(
+        'Backend passkey authentication failed',
+        name: 'AuthService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      throw _mapAuthDioException(error);
+    } on AuthenticatorException catch (error) {
+      throw _mapPasskeyException(error);
+    } catch (error, stackTrace) {
+      developer.log(
+        'Unexpected passkey authentication failure',
+        name: 'AuthService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      throw AuthFailureUnknown(error.toString());
     }
   }
 
@@ -316,6 +384,40 @@ class AuthService {
     );
   }
 
+  AuthFailure _mapPasskeyException(AuthenticatorException error) {
+    if (error is PasskeyAuthCancelledException) {
+      return const AuthFailureCancelled();
+    }
+    if (error is NoCredentialsAvailableException) {
+      return const AuthFailureUnknown(
+        'Không tìm thấy passkey cho email này. Vui lòng dùng OTP hoặc tạo passkey trước.',
+      );
+    }
+    if (error is DeviceNotSupportedException ||
+        error is PasskeyUnsupportedException) {
+      return const AuthFailureUnknown(
+        'Thiết bị hiện tại chưa hỗ trợ passkey. Vui lòng dùng OTP.',
+      );
+    }
+    if (error is DomainNotAssociatedException) {
+      return const AuthFailureUnknown(
+        'Passkey chưa được cấu hình domain/app link đúng trên thiết bị này.',
+      );
+    }
+    if (error is MissingGoogleSignInException ||
+        error is SyncAccountNotAvailableException) {
+      return const AuthFailureUnknown(
+        'Vui lòng đăng nhập tài khoản Google trên thiết bị hoặc dùng OTP.',
+      );
+    }
+    if (error is TimeoutException) {
+      return const AuthFailureUnknown(
+        'Phiên xác thực passkey đã hết thời gian. Vui lòng thử lại.',
+      );
+    }
+    return AuthFailureUnknown(error.toString());
+  }
+
   AuthFailure _mapAuthDioException(DioException error) {
     if (error.type == DioExceptionType.connectionError ||
         error.type == DioExceptionType.connectionTimeout ||
@@ -330,12 +432,10 @@ class AuthService {
 
     if (error.response?.statusCode == 503) {
       return const AuthFailureUnknown(
-        'Máy chủ đăng nhập Google đang tạm thời không sẵn sàng.',
+        'Máy chủ đăng nhập đang tạm thời không sẵn sàng.',
       );
     }
-    return const AuthFailureUnknown(
-      'Không thể đăng nhập Google. Vui lòng thử lại.',
-    );
+    return const AuthFailureUnknown('Không thể đăng nhập. Vui lòng thử lại.');
   }
 
   AuthFailure _mapPlatformException(Object error) {
@@ -355,17 +455,54 @@ class AuthService {
   String _extractApiMessage(dynamic data) {
     if (data is Map<String, dynamic>) {
       final message = data['message'] ?? data['detail'];
+      final errors = data['errors'];
+      final details = _flattenErrorDetails(errors);
+      if (details.isNotEmpty) {
+        return {
+          if (message is String && message.trim().isNotEmpty) message.trim(),
+          ...details,
+        }.join('\n');
+      }
       if (message is String && message.trim().isNotEmpty) {
         return message.trim();
       }
-      final errors = data['errors'];
-      if (errors is Map<String, dynamic>) {
-        final detail = errors['detail'];
-        if (detail is String && detail.trim().isNotEmpty) {
-          return detail.trim();
-        }
-      }
     }
     return '';
+  }
+
+  List<String> _flattenErrorDetails(Object? errors) {
+    if (errors == null) return const [];
+    if (errors is String) {
+      final value = errors.trim();
+      return value.isEmpty ? const [] : [value];
+    }
+    if (errors is List) {
+      return errors.expand(_flattenErrorDetails).toList(growable: false);
+    }
+    if (errors is Map) {
+      return errors.values.expand(_flattenErrorDetails).toList(growable: false);
+    }
+    final value = errors.toString().trim();
+    return value.isEmpty ? const [] : [value];
+  }
+
+  bool _isValidEmail(String value) {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
+  }
+
+  String _requiredString(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is String && value.trim().isNotEmpty) return value;
+    throw FormatException('Missing passkey field: $key');
+  }
+
+  Map<String, dynamic> _requiredJsonObject(
+    Map<String, dynamic> data,
+    String key,
+  ) {
+    final value = data[key];
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    throw FormatException('Missing passkey object field: $key');
   }
 }

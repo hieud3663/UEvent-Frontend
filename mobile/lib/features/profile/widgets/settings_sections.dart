@@ -1,7 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
-import 'package:frontend/features/app_setting/data/app_setting_legal.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/models/app_setting_state.dart';
 import 'package:frontend/features/profile/widgets/settings_group.dart';
@@ -15,6 +16,7 @@ class SecuritySettingsSection extends StatelessWidget {
     required this.passkeyAvailable,
     required this.lockTimeoutLabel,
     required this.onPreferPasskeyChanged,
+    required this.onPasskeyTap,
     required this.onAppLockChanged,
     required this.onLockTimeoutTap,
     required this.onBiometricChanged,
@@ -25,6 +27,7 @@ class SecuritySettingsSection extends StatelessWidget {
   final bool passkeyAvailable;
   final String lockTimeoutLabel;
   final ValueChanged<bool> onPreferPasskeyChanged;
+  final VoidCallback? onPasskeyTap;
   final ValueChanged<bool> onAppLockChanged;
   final VoidCallback onLockTimeoutTap;
   final ValueChanged<bool> onBiometricChanged;
@@ -37,7 +40,7 @@ class SecuritySettingsSection extends StatelessWidget {
     return SettingsGroup(
       title: 'Bảo mật',
       children: [
-        SettingsToggleTile(
+        _PasskeyPreferenceTile(
           icon: Icons.vpn_key,
           title: 'Ưu tiên đăng nhập bằng passkey',
           subtitle: passkeyAvailable
@@ -48,6 +51,7 @@ class SecuritySettingsSection extends StatelessWidget {
               false,
           enabled: settingsReady && passkeyAvailable,
           onChanged: onPreferPasskeyChanged,
+          onTap: onPasskeyTap,
         ),
         SettingsToggleTile(
           icon: Icons.lock,
@@ -85,18 +89,143 @@ class SecuritySettingsSection extends StatelessWidget {
   }
 }
 
+class _PasskeyPreferenceTile extends StatelessWidget {
+  const _PasskeyPreferenceTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final contentEnabled = enabled && onTap != null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: contentEnabled ? onTap : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, color: AppColors.primary, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: contentEnabled
+                                  ? AppColors.onSurface
+                                  : AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 1,
+            height: 44,
+            child: CustomPaint(
+              painter: _DashedVerticalDividerPainter(
+                color: AppColors.outline.withValues(alpha: 0.9),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          CupertinoSwitch(
+            value: value,
+            activeTrackColor: AppColors.primary,
+            onChanged: enabled ? onChanged : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashedVerticalDividerPainter extends CustomPainter {
+  const _DashedVerticalDividerPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = size.width
+      ..strokeCap = StrokeCap.round;
+    const dashHeight = 4.0;
+    const dashGap = 4.0;
+    var y = 0.0;
+
+    while (y < size.height) {
+      canvas.drawLine(
+        Offset(size.width / 2, y),
+        Offset(size.width / 2, (y + dashHeight).clamp(0.0, size.height)),
+        paint,
+      );
+      y += dashHeight + dashGap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedVerticalDividerPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
 class NotificationSettingsSection extends StatelessWidget {
   const NotificationSettingsSection({
     super.key,
     required this.settings,
     required this.settingsReady,
-    required this.notificationPermissionLabel,
     required this.onPushNotificationsChanged,
   });
 
   final AppSettingState? settings;
   final bool settingsReady;
-  final String notificationPermissionLabel;
   final ValueChanged<bool> onPushNotificationsChanged;
 
   @override
@@ -107,7 +236,7 @@ class NotificationSettingsSection extends StatelessWidget {
         SettingsToggleTile(
           icon: Icons.notifications,
           title: 'Thông báo',
-          subtitle: notificationPermissionLabel,
+          subtitle: 'Nhận thông báo từ ứng dụng',
           value:
               settings?.boolValue(
                 AppSettingKey.notificationPushEnabled,
@@ -208,12 +337,14 @@ class SupportSettingsSection extends StatelessWidget {
   const SupportSettingsSection({
     super.key,
     required this.settings,
+    required this.privacyPolicyVersion,
     required this.onHelpCenter,
     required this.onRateOnPlayStore,
     required this.onPrivacyPolicy,
   });
 
   final AppSettingState? settings;
+  final String? privacyPolicyVersion;
   final VoidCallback? onHelpCenter;
   final VoidCallback? onRateOnPlayStore;
   final VoidCallback? onPrivacyPolicy;
@@ -242,8 +373,8 @@ class SupportSettingsSection extends StatelessWidget {
           icon: Icons.privacy_tip,
           title: 'Chính sách quyền riêng tư',
           valueText:
-              acceptedVersion?.contains(AppSettingLegal.privacyPolicyVersion) ==
-                  true
+              privacyPolicyVersion != null &&
+                  acceptedVersion == privacyPolicyVersion
               ? 'Đã chấp nhận'
               : null,
           onTap: onPrivacyPolicy ?? () {},

@@ -49,6 +49,17 @@ class AppSettingLocalDataSource {
     await batch.commit(noResult: true);
   }
 
+  Future<void> deleteKeys(Iterable<String> keys) async {
+    final db = await _database.database;
+    final batch = db.batch();
+
+    for (final key in keys) {
+      batch.delete('app_settings', where: 'key = ?', whereArgs: [key]);
+    }
+
+    await batch.commit(noResult: true);
+  }
+
   Future<void> replaceAll(List<AppSetting> settings) async {
     final db = await _database.database;
     await db.transaction((txn) async {

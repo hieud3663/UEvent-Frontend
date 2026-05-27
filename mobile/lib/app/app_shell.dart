@@ -7,7 +7,6 @@ import 'package:frontend/core/models/nav_item_model.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
-import 'package:frontend/features/app_setting/data/app_setting_legal.dart';
 import 'package:frontend/features/app_setting/models/app_permission.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
@@ -44,7 +43,6 @@ import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart
 import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
 import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 typedef SignedOutCallback = void Function(BuildContext context, WidgetRef ref);
@@ -73,15 +71,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_bootstrapAppPermissions());
+      unawaited(_registerPushDeviceIfEnabled());
     });
-  }
-
-  Future<void> _bootstrapAppPermissions() async {
-    await _requestInitialCameraPermission();
-    if (!mounted) return;
-
-    await _registerPushDeviceIfEnabled();
   }
 
   Future<void> _registerPushDeviceIfEnabled() async {
@@ -96,13 +87,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     await ref
         .read(pushNotificationControllerProvider.notifier)
         .registerCurrentDevice();
-  }
-
-  Future<void> _requestInitialCameraPermission() async {
-    final status = await Permission.camera.status;
-    if (status.isDenied) {
-      await Permission.camera.request();
-    }
   }
 
   void _onNavTap(int index) {
@@ -439,10 +423,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _pushPasskeyLogin() {
     Navigator.of(context).push(
       appRoute(
-        builder: (ctx) => PasskeySetupView(
-          onBack: () => Navigator.of(ctx).pop(),
-          onCreatePasskey: () => Navigator.of(ctx).pop(),
-        ),
+        builder: (ctx) =>
+            PasskeySetupView(onBack: () => Navigator.of(ctx).pop()),
       ),
     );
   }
@@ -501,12 +483,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       appRoute(
         builder: (ctx) => PrivacyPolicyView(
           onBack: () => Navigator.of(ctx).pop(),
-          onAccept: () async {
+          onAccept: (version) async {
             await ref
                 .read(appSettingControllerProvider.notifier)
                 .setString(
                   AppSettingKey.legalPrivacyPolicyAcceptedVersion,
-                  AppSettingLegal.privacyPolicyVersion,
+                  version,
                 );
             if (!ctx.mounted) return;
             _showSnackBar(ctx, 'Đã ghi nhận đồng ý chính sách quyền riêng tư.');
@@ -520,14 +502,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   Future<bool> _ensureDevicePermission({
     required AppPermissionKey permissionKey,
     required String deniedMessage,
-    String? settingKey,
   }) async {
     final controller = ref.read(appSettingControllerProvider.notifier);
-    final state = ref.read(appSettingControllerProvider).value;
-
-    if (settingKey != null && state?.boolValue(settingKey) == false) {
-      await controller.setBool(settingKey, true);
-    }
 
     final permission = await controller.requestPermission(permissionKey);
     final allowed =
@@ -540,10 +516,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (permission?.status.canOpenSystemSettings == true) {
         await controller.openSystemSettings(permissionKey);
       }
-    }
-
-    if (settingKey != null) {
-      await controller.setBool(settingKey, allowed);
     }
 
     return allowed;

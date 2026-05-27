@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,6 @@ import 'package:frontend/core/localization/app_localizations.dart';
 import 'package:frontend/features/app_setting/data/app_setting_defaults.dart';
 import 'package:frontend/features/app_setting/data/app_setting_database.dart';
 import 'package:frontend/features/app_setting/data/app_setting_local_data_source.dart';
-import 'package:frontend/features/app_setting/models/app_permission.dart';
 import 'package:frontend/features/app_setting/models/app_setting.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/models/app_setting_state.dart';
@@ -22,6 +22,7 @@ import 'package:frontend/features/app_setting/services/passkey_capability_servic
 import 'package:frontend/features/app_setting/services/permission_status_service.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
 import 'package:frontend/features/notifications/models/notification_category.dart';
+import 'package:frontend/features/profile/widgets/settings_sections.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -87,7 +88,6 @@ void main() {
           AppSettingKey.appearanceLocale:
               defaults[AppSettingKey.appearanceLocale]!.copyWith(value: 'vi'),
         },
-        permissions: const {},
       );
 
       expect(state.themeMode, ThemeMode.system);
@@ -110,7 +110,6 @@ void main() {
                 value: 'sai',
               ),
         },
-        permissions: const {},
       );
 
       expect(state.isQuietHoursActive, isFalse);
@@ -164,6 +163,31 @@ void main() {
 
       final reset = await repository.resetToDefaults();
       expect(reset[AppSettingKey.notificationPushEnabled]?.value, isTrue);
+    });
+
+    test('ensureDefaults xóa key permission cũ khỏi SQLite', () async {
+      final db = await settingDatabase.database;
+      await db.insert('app_settings', {
+        'key': 'permission.location_feature_enabled',
+        'value': 'true',
+        'value_type': AppSettingValueType.boolean.wireName,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      });
+      await db.insert('app_settings', {
+        'key': 'permission.contacts_sync_enabled',
+        'value': 'true',
+        'value_type': AppSettingValueType.boolean.wireName,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      await repository.ensureDefaults();
+
+      final settings = await repository.getAll();
+      expect(
+        settings.containsKey('permission.location_feature_enabled'),
+        isFalse,
+      );
+      expect(settings.containsKey('permission.contacts_sync_enabled'), isFalse);
     });
 
     test('đọc được setting JSON hỏng trong SQLite', () async {
@@ -327,6 +351,52 @@ void main() {
     });
   });
 
+  group('SecuritySettingsSection', () {
+    testWidgets('tách vùng mở passkey khỏi switch ưu tiên passkey', (
+      tester,
+    ) async {
+      var openedPasskeySetup = 0;
+      bool? preferPasskey;
+      final settings = AppSettingState(
+        settings: {
+          for (final setting in buildDefaultAppSettings()) setting.key: setting,
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SecuritySettingsSection(
+                settings: settings,
+                settingsReady: true,
+                passkeyAvailable: true,
+                lockTimeoutLabel: '1 phút',
+                onPreferPasskeyChanged: (value) => preferPasskey = value,
+                onPasskeyTap: () => openedPasskeySetup += 1,
+                onAppLockChanged: (_) {},
+                onLockTimeoutTap: () {},
+                onBiometricChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Ưu tiên đăng nhập bằng passkey'));
+      await tester.pump();
+
+      expect(openedPasskeySetup, 1);
+      expect(preferPasskey, isNull);
+
+      await tester.tap(find.byType(CupertinoSwitch).first);
+      await tester.pump();
+
+      expect(preferPasskey, isTrue);
+      expect(openedPasskeySetup, 1);
+    });
+  });
+
   group('AppLocalizations', () {
     test('trả text theo locale được chọn', () {
       expect(
@@ -472,14 +542,6 @@ class _FakeAppSettingRepository implements AppSettingRepository {
 
 class _FakePermissionStatusService extends PermissionStatusService {
   const _FakePermissionStatusService();
-
-  @override
-  Future<Map<AppPermissionKey, AppPermissionInfo>> getAllStatuses() async {
-    return {
-      for (final key in AppPermissionKey.values)
-        key: AppPermissionInfo(key: key, status: AppPermissionStatus.denied),
-    };
-  }
 }
 
 class _FakeAppVersionService extends AppVersionService {

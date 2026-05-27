@@ -1,12 +1,8 @@
 // File: lib/features/auth/models/auth_method.dart
 
-/// The three authentication methods supported by the Keycloak realm.
+/// The three authentication methods supported by the mobile app.
 ///
-/// Each method maps to specific `additionalParameters` passed to
-/// `flutter_appauth`'s authorization request:
-/// - [google]  → `kc_idp_hint=google`
-/// - [email]   → `kc_idp_hint=` (empty) + `acr_values=otp`
-/// - [passkey] → `acr_values=passkey`
+/// Google, email OTP and passkey all end with a backend-issued Keycloak token.
 enum AuthMethod {
   google,
   email,

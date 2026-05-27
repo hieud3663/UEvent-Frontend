@@ -13,6 +13,20 @@ export interface User {
   phoneNumber?: string;
   username?: string;
   createdAt: string;
+  passkeys: PasskeyCredential[];
+}
+
+export interface PasskeyCredential {
+  id: string;
+  deviceName: string;
+  deviceType: string;
+  backedUp: boolean;
+  transports: string[];
+  signCount: number;
+  isActive: boolean;
+  createdAt: string;
+  lastUsedAt?: string | null;
+  revokedAt?: string | null;
 }
 
 export type UserRole = User['role'];
@@ -45,6 +59,20 @@ export interface AdminUserDto {
   created_at: string;
   updated_at: string;
   user_roles: AdminUserRoleDto[];
+  passkey_credentials?: AdminPasskeyCredentialDto[];
+}
+
+export interface AdminPasskeyCredentialDto {
+  id: string;
+  device_name: string;
+  device_type: string;
+  backed_up: boolean;
+  transports: string[];
+  sign_count: number;
+  is_active: boolean;
+  created_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
 }
 
 export interface UserStats {

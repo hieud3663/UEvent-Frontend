@@ -5,11 +5,17 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, KeyRound, ShieldOff } from 'lucide-react';
 import { AdminSelect, ErrorState, ListSkeleton } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
-import { getUserById, unbanUserById, updateUserById } from '@/features/users/services/users.service';
-import type { User, UserRole } from '@/features/users/types';
+import {
+  getUserById,
+  getUserPasskeys,
+  revokeUserPasskey,
+  unbanUserById,
+  updateUserById,
+} from '@/features/users/services/users.service';
+import type { PasskeyCredential, User, UserRole } from '@/features/users/types';
 
 const statusDisplay = {
   active: { dot: 'bg-emerald-500', label: 'Đang hoạt động', text: 'text-emerald-600' },
@@ -22,8 +28,10 @@ export default function EditUserPage() {
   const router = useRouter();
   const userId = params.id as string;
   const [user, setUser] = useState<User | null>(null);
+  const [passkeys, setPasskeys] = useState<PasskeyCredential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [revokingPasskeyId, setRevokingPasskeyId] = useState<string | null>(null);
   const roleOptions = [
     { value: 'student', label: 'Sinh viên' },
     { value: 'organizer', label: 'Nhà tổ chức' },
@@ -36,8 +44,10 @@ export default function EditUserPage() {
     async function loadUser() {
       setIsLoading(true);
       const currentUser = await getUserById(userId);
+      const currentPasskeys = currentUser ? await getUserPasskeys(userId) : [];
       if (isMounted) {
         setUser(currentUser);
+        setPasskeys(currentPasskeys);
         setIsLoading(false);
       }
     }
@@ -93,6 +103,23 @@ export default function EditUserPage() {
       router.refresh();
     } catch {
       setUser(previousUser);
+    }
+  };
+
+  const handleRevokePasskey = async (credential: PasskeyCredential) => {
+    if (!credential.isActive) return;
+
+    setRevokingPasskeyId(credential.id);
+    try {
+      await runActionWithToast(() => revokeUserPasskey(userId, credential.id), {
+        loading: `Đang thu hồi ${credential.deviceName}...`,
+        success: 'Passkey đã được thu hồi.',
+        error: 'Không thể thu hồi passkey.',
+      });
+      setPasskeys(await getUserPasskeys(userId));
+      router.refresh();
+    } finally {
+      setRevokingPasskeyId(null);
     }
   };
 
@@ -199,6 +226,66 @@ export default function EditUserPage() {
           </div>
 
           {/* Quick actions reset password/send notice tạm ẩn vì API admin users chưa có endpoint tương ứng. */}
+          <div className="glass-panel rounded-[28px] border border-white/40 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] lg:rounded-[32px]">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  Passkey
+                </p>
+                <h2 className="mt-1 text-lg font-bold text-slate-900">
+                  {passkeys.filter((item) => item.isActive).length} credential đang hoạt động
+                </h2>
+              </div>
+              <span className="rounded-2xl bg-amber-100 p-3 text-amber-600">
+                <KeyRound className="h-5 w-5" />
+              </span>
+            </div>
+
+            {passkeys.length === 0 ? (
+              <p className="rounded-2xl bg-white/60 p-4 text-sm font-medium text-slate-500">
+                Người dùng chưa đăng ký passkey.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {passkeys.map((credential) => (
+                  <div
+                    key={credential.id}
+                    className="rounded-2xl border border-white/50 bg-white/70 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {credential.deviceName}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          {credential.deviceType} · {credential.transports.join(', ') || 'không rõ transport'}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${credential.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {credential.isActive ? 'Active' : 'Revoked'}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-xs font-medium text-slate-500">
+                      Lần dùng gần nhất: {credential.lastUsedAt ? formatDateTime(credential.lastUsedAt) : 'Chưa ghi nhận'}
+                    </p>
+                    {credential.isActive ? (
+                      <button
+                        type="button"
+                        disabled={revokingPasskeyId === credential.id}
+                        onClick={() => {
+                          void handleRevokePasskey(credential);
+                        }}
+                        className="mt-3 inline-flex h-9 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                      >
+                        <ShieldOff className="h-4 w-4" />
+                        {revokingPasskeyId === credential.id ? 'Đang thu hồi...' : 'Thu hồi'}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Detailed Info Form (Large Card) */}
@@ -337,4 +424,11 @@ export default function EditUserPage() {
       </div>
     </div>
   );
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
 }

@@ -2,8 +2,10 @@ import { apiExport, apiRequest, apiRequestEnvelope } from '@/core/lib/api';
 import type { ExportFileResult } from '@/core/types/api';
 import type {
   AdminUserDto,
+  AdminPasskeyCredentialDto,
   AdminUserStatsDto,
   CreateUserPayload,
+  PasskeyCredential,
   UpdateUserPayload,
   User,
   UserRole,
@@ -60,6 +62,22 @@ function mapUser(dto: AdminUserDto): User {
     phoneNumber: dto.phone_number ?? undefined,
     username: dto.username,
     createdAt: dto.created_at,
+    passkeys: dto.passkey_credentials?.map(mapPasskeyCredential) ?? [],
+  };
+}
+
+function mapPasskeyCredential(dto: AdminPasskeyCredentialDto): PasskeyCredential {
+  return {
+    id: dto.id,
+    deviceName: dto.device_name || 'Thiết bị chưa đặt tên',
+    deviceType: dto.device_type || 'unknown',
+    backedUp: dto.backed_up,
+    transports: dto.transports ?? [],
+    signCount: dto.sign_count,
+    isActive: dto.is_active,
+    createdAt: dto.created_at,
+    lastUsedAt: dto.last_used_at,
+    revokedAt: dto.revoked_at,
   };
 }
 
@@ -121,6 +139,17 @@ export async function getUserById(userId: string): Promise<User | null> {
   } catch {
     return null;
   }
+}
+
+export async function getUserPasskeys(userId: string): Promise<PasskeyCredential[]> {
+  const response = await apiRequest<AdminPasskeyCredentialDto[]>(`/admin/users/${userId}/passkeys/`);
+  return response.map(mapPasskeyCredential);
+}
+
+export async function revokeUserPasskey(userId: string, credentialId: string): Promise<void> {
+  await apiRequest<void>(`/admin/users/${userId}/passkeys/${credentialId}/`, {
+    method: 'DELETE',
+  });
 }
 
 export async function createUser(payload: CreateUserPayload): Promise<User> {

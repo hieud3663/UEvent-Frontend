@@ -273,8 +273,12 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
                 _handleEmailOtpStart(ctx, loginRef, email),
             onLoginWithGoogle: () =>
                 _handleSignIn(ctx, loginRef, AuthMethod.google),
-            onLoginWithPasskey: () =>
-                _handleSignIn(ctx, loginRef, AuthMethod.passkey),
+            onLoginWithPasskey: (email) => _handleSignIn(
+              ctx,
+              loginRef,
+              AuthMethod.passkey,
+              loginHint: email,
+            ),
           );
         },
       ),
@@ -390,7 +394,7 @@ void _navigateToPasskeySetup(BuildContext context) {
     appRoute(
       builder: (ctx) => PasskeySetupView(
         onBack: () => Navigator.of(ctx).pop(),
-        onCreatePasskey: () => _navigateToAppShell(ctx),
+        onPasskeyCreated: () => _navigateToAppShell(ctx),
       ),
     ),
   );

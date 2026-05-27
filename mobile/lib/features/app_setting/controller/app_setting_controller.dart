@@ -12,23 +12,14 @@ class AppSettingController extends AsyncNotifier<AppSettingState> {
   @override
   Future<AppSettingState> build() async {
     final repository = ref.read(appSettingRepositoryProvider);
-    final permissionService = ref.read(permissionStatusServiceProvider);
     final versionService = ref.read(appVersionServiceProvider);
 
     await repository.ensureDefaults();
     final settings = await repository.getAll();
     await _runStartupCacheMaintenance(settings);
+    final versionInfo = await versionService.getVersionInfo();
 
-    final results = await Future.wait<Object>([
-      permissionService.getAllStatuses(),
-      versionService.getVersionInfo(),
-    ]);
-
-    return AppSettingState(
-      settings: settings,
-      permissions: results[0] as Map<AppPermissionKey, AppPermissionInfo>,
-      versionInfo: results[1] as AppVersionInfo,
-    );
+    return AppSettingState(settings: settings, versionInfo: versionInfo);
   }
 
   Future<void> setValue(String key, Object? value) async {
@@ -133,22 +124,6 @@ class AppSettingController extends AsyncNotifier<AppSettingState> {
     await setBool(AppSettingKey.securityBiometricUnlockEnabled, enabled);
   }
 
-  Future<void> refreshPermissions() async {
-    final current = state.value;
-    if (current == null) return;
-
-    try {
-      final permissions = await ref
-          .read(permissionStatusServiceProvider)
-          .getAllStatuses();
-      state = AsyncData(
-        current.copyWith(permissions: permissions, clearError: true),
-      );
-    } catch (error) {
-      state = AsyncData(current.copyWith(error: error));
-    }
-  }
-
   Future<AppPermissionInfo?> requestPermission(AppPermissionKey key) async {
     final current = state.value;
     if (current == null) return null;
@@ -157,12 +132,7 @@ class AppSettingController extends AsyncNotifier<AppSettingState> {
       final permission = await ref
           .read(permissionStatusServiceProvider)
           .request(key);
-      state = AsyncData(
-        current.copyWith(
-          permissions: {...current.permissions, key: permission},
-          clearError: true,
-        ),
-      );
+      state = AsyncData(current.copyWith(clearError: true));
       return permission;
     } catch (error) {
       state = AsyncData(current.copyWith(error: error));
@@ -183,12 +153,8 @@ class AppSettingController extends AsyncNotifier<AppSettingState> {
       final settings = await ref
           .read(appSettingRepositoryProvider)
           .resetToDefaults();
-      final permissions = await ref
-          .read(permissionStatusServiceProvider)
-          .getAllStatuses();
       return current.copyWith(
         settings: settings,
-        permissions: permissions,
         busyKeys: {},
         clearError: true,
       );

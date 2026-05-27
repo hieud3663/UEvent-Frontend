@@ -47,14 +47,6 @@ class SettingsView extends ConsumerStatefulWidget {
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(appSettingControllerProvider.notifier).refreshPermissions();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<AppSettingState>>(appSettingControllerProvider, (
       previous,
@@ -72,6 +64,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final settings = settingsAsync.value;
     final cacheSize = ref.watch(cacheSizeProvider);
     final passkeyAvailable = ref.watch(passkeyCapabilityProvider).value ?? true;
+    final privacyPolicyVersion = ref
+        .watch(privacyPolicyProvider('vi'))
+        .value
+        ?.version;
     final settingsReady = settings != null;
 
     return Scaffold(
@@ -129,6 +125,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         passkeyAvailable: passkeyAvailable,
                         lockTimeoutLabel: _lockTimeoutLabel(settings),
                         onPreferPasskeyChanged: _setPreferPasskeyLogin,
+                        onPasskeyTap: widget.onPasskeyLogin,
                         onAppLockChanged: _setAppLockEnabled,
                         onLockTimeoutTap: () => _selectLockTimeout(settings),
                         onBiometricChanged: (value) => ref
@@ -138,10 +135,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       NotificationSettingsSection(
                         settings: settings,
                         settingsReady: settingsReady,
-                        notificationPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.notification,
-                        ),
                         onPushNotificationsChanged: _setPushNotifications,
                       ),
                       AppearanceSettingsSection(
@@ -165,6 +158,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       SupportSettingsSection(
                         settings: settings,
+                        privacyPolicyVersion: privacyPolicyVersion,
                         onHelpCenter: widget.onHelpCenter,
                         onRateOnPlayStore: widget.onSendFeedback,
                         onPrivacyPolicy: widget.onPrivacyPolicy,
@@ -209,13 +203,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     await ref
         .read(appSettingControllerProvider.notifier)
         .setPreferPasskeyLogin(value);
-    final enabled =
-        ref
-            .read(appSettingControllerProvider)
-            .value
-            ?.boolValue(AppSettingKey.securityPreferPasskeyLogin) ??
-        false;
-    if (enabled) widget.onPasskeyLogin?.call();
   }
 
   Future<void> _setPushNotifications(bool enabled) async {
@@ -398,12 +385,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
       ),
     );
-  }
-
-  String _permissionLabel(AppSettingState? settings, AppPermissionKey key) {
-    final status = settings?.permissions[key]?.status;
-    if (status == null) return 'Đang kiểm tra';
-    return status.label;
   }
 
   String _lockTimeoutLabel(AppSettingState? settings) {

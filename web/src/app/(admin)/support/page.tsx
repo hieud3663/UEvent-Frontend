@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Clock3, Filter, MessageSquareReply, RotateCcw, Search, ShieldAlert } from 'lucide-react';
+import { BookOpenText, ChevronLeft, ChevronRight, Clock3, FileText, Filter, MessageSquareReply, RotateCcw, Search, ShieldAlert } from 'lucide-react';
 import { AdminSelect, Card, EmptyState, ErrorState } from '@/core/components';
 import {
   getSupportStats,
@@ -140,6 +140,22 @@ export default function SupportPage() {
           <p className="mt-1 max-w-2xl text-sm font-medium text-on-surface-variant">
             Theo dõi, phân loại và xử lý ticket hỗ trợ bằng dữ liệu thật từ hệ thống.
           </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/support/help-center"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+          >
+            <BookOpenText className="h-4 w-4" />
+            Quản lý Help Center
+          </Link>
+          <Link
+            href="/support/legal-documents"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+          >
+            <FileText className="h-4 w-4" />
+            Tài liệu pháp lý
+          </Link>
         </div>
       </div>
 
