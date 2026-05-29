@@ -4,6 +4,7 @@ import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/passkey_credential_model.dart';
+import 'package:frontend/features/auth/services/passkey_options_normalizer.dart';
 import 'package:passkeys/authenticator.dart';
 import 'package:passkeys/types.dart';
 
@@ -35,7 +36,9 @@ class PasskeyAuthService {
       final optionsPayload = extractObjectData(optionsResponse.data);
       final challengeId = _requiredString(optionsPayload, 'challenge_id');
       final request = RegisterRequestType.fromJson(
-        _requiredJsonObject(optionsPayload, 'options'),
+        PasskeyOptionsNormalizer.normalize(
+          _requiredJsonObject(optionsPayload, 'options'),
+        ),
       );
 
       final credential = await _authenticator.register(request);

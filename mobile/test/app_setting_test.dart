@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +19,11 @@ import 'package:frontend/features/app_setting/services/cache_service.dart';
 import 'package:frontend/features/app_setting/services/local_authentication_service.dart';
 import 'package:frontend/features/app_setting/services/passkey_capability_service.dart';
 import 'package:frontend/features/app_setting/services/permission_status_service.dart';
+import 'package:frontend/features/auth/models/passkey_credential_model.dart';
+import 'package:frontend/features/auth/providers/passkey_providers.dart';
+import 'package:frontend/features/auth/services/passkey_options_normalizer.dart';
 import 'package:frontend/features/auth/views/login_view.dart';
+import 'package:frontend/features/auth/views/passkey_setup_view.dart';
 import 'package:frontend/features/notifications/models/notification_category.dart';
 import 'package:frontend/features/profile/widgets/settings_sections.dart';
 import 'package:path/path.dart' as p;
@@ -70,6 +73,28 @@ void main() {
 
     test('JSON hỏng không làm crash app_setting', () {
       expect(AppSettingValueType.json.decode('{bad json'), isA<Map>());
+    });
+  });
+
+  group('PasskeyOptionsNormalizer', () {
+    test('thêm transports rỗng cho credential descriptor bị thiếu field', () {
+      final normalized = PasskeyOptionsNormalizer.normalize({
+        'challenge': 'abc',
+        'rpId': 'example.com',
+        'allowCredentials': [
+          {'type': 'public-key', 'id': 'credential-id'},
+          {'type': 'public-key', 'id': 'credential-id-2', 'transports': null},
+        ],
+      });
+
+      expect(normalized['allowCredentials'], [
+        {'type': 'public-key', 'id': 'credential-id', 'transports': <String>[]},
+        {
+          'type': 'public-key',
+          'id': 'credential-id-2',
+          'transports': <String>[],
+        },
+      ]);
     });
   });
 
@@ -352,49 +377,44 @@ void main() {
   });
 
   group('SecuritySettingsSection', () {
-    testWidgets('tách vùng mở passkey khỏi switch ưu tiên passkey', (
-      tester,
-    ) async {
-      var openedPasskeySetup = 0;
-      bool? preferPasskey;
-      final settings = AppSettingState(
-        settings: {
-          for (final setting in buildDefaultAppSettings()) setting.key: setting,
-        },
-      );
+    testWidgets(
+      'mở quản lý passkey bằng action tile và không còn switch ưu tiên',
+      (tester) async {
+        var openedPasskeySetup = 0;
+        final settings = AppSettingState(
+          settings: {
+            for (final setting in buildDefaultAppSettings())
+              setting.key: setting,
+          },
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: SecuritySettingsSection(
-                settings: settings,
-                settingsReady: true,
-                passkeyAvailable: true,
-                lockTimeoutLabel: '1 phút',
-                onPreferPasskeyChanged: (value) => preferPasskey = value,
-                onPasskeyTap: () => openedPasskeySetup += 1,
-                onAppLockChanged: (_) {},
-                onLockTimeoutTap: () {},
-                onBiometricChanged: (_) {},
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: SecuritySettingsSection(
+                  settings: settings,
+                  settingsReady: true,
+                  passkeyAvailable: true,
+                  lockTimeoutLabel: '1 phút',
+                  onPasskeyTap: () => openedPasskeySetup += 1,
+                  onAppLockChanged: (_) {},
+                  onLockTimeoutTap: () {},
+                  onBiometricChanged: (_) {},
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Ưu tiên đăng nhập bằng passkey'));
-      await tester.pump();
+        await tester.tap(find.text('Đăng nhập bằng passkey'));
+        await tester.pump();
 
-      expect(openedPasskeySetup, 1);
-      expect(preferPasskey, isNull);
-
-      await tester.tap(find.byType(CupertinoSwitch).first);
-      await tester.pump();
-
-      expect(preferPasskey, isTrue);
-      expect(openedPasskeySetup, 1);
-    });
+        expect(openedPasskeySetup, 1);
+        expect(find.text('Ưu tiên đăng nhập bằng passkey'), findsNothing);
+        expect(find.text('Khóa ứng dụng'), findsOneWidget);
+      },
+    );
   });
 
   group('AppLocalizations', () {
@@ -430,6 +450,43 @@ void main() {
         expect(find.text('Sign in with Passkey'), findsNothing);
       },
     );
+
+    testWidgets('LoginView tự điền email đã nhớ', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: LoginView(initialEmail: 'student@utc2.edu.vn')),
+      );
+
+      final emailField = tester.widget<TextField>(find.byType(TextField));
+      expect(emailField.controller?.text, 'student@utc2.edu.vn');
+    });
+  });
+
+  group('PasskeySetupView', () {
+    testWidgets('ẩn nút tạo khi tài khoản đã có passkey', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            passkeyCredentialsProvider.overrideWith(
+              (ref) async => const [
+                PasskeyCredentialModel(
+                  id: 'passkey-id',
+                  deviceName: 'Pixel',
+                  deviceType: 'singleDevice',
+                  backedUp: false,
+                  transports: ['internal'],
+                ),
+              ],
+            ),
+          ],
+          child: const MaterialApp(home: PasskeySetupView()),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pixel'), findsOneWidget);
+      expect(find.text('Tạo passkey'), findsNothing);
+    });
   });
 
   group('CacheService', () {

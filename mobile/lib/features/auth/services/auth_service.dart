@@ -9,6 +9,7 @@ import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/auth/models/auth_failure.dart';
 import 'package:frontend/features/auth/models/auth_method.dart';
 import 'package:frontend/features/auth/models/auth_session_model.dart';
+import 'package:frontend/features/auth/services/passkey_options_normalizer.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:passkeys/authenticator.dart';
 import 'package:passkeys/types.dart';
@@ -133,28 +134,26 @@ class AuthService {
 
   Future<AuthSessionModel> _signInWithPasskey(String? loginHint) async {
     final email = loginHint?.trim().toLowerCase() ?? '';
-    if (!_isValidEmail(email)) {
-      throw const AuthFailureUnknown(
-        'Vui lòng nhập email hợp lệ để đăng nhập bằng passkey.',
-      );
-    }
+    final usesEmailHint = _isValidEmail(email);
 
     try {
       final optionsResponse = await _authDio.post<Map<String, dynamic>>(
         '/auth/passkeys/authentication/options/',
-        data: {'email': email},
+        data: usesEmailHint ? {'email': email} : <String, dynamic>{},
       );
       final optionsPayload = extractObjectData(optionsResponse.data);
       final challengeId = _requiredString(optionsPayload, 'challenge_id');
       final request = AuthenticateRequestType.fromJson(
-        _requiredJsonObject(optionsPayload, 'options'),
+        PasskeyOptionsNormalizer.normalize(
+          _requiredJsonObject(optionsPayload, 'options'),
+        ),
       );
 
       final credential = await _passkeyAuthenticator.authenticate(request);
       final verifyResponse = await _authDio.post<Map<String, dynamic>>(
         '/auth/passkeys/authentication/verify/',
         data: {
-          'email': email,
+          if (usesEmailHint) 'email': email,
           'challenge_id': challengeId,
           'credential': credential.toJson(),
         },
@@ -390,7 +389,7 @@ class AuthService {
     }
     if (error is NoCredentialsAvailableException) {
       return const AuthFailureUnknown(
-        'Không tìm thấy passkey cho email này. Vui lòng dùng OTP hoặc tạo passkey trước.',
+        'Không tìm thấy passkey phù hợp. Vui lòng dùng OTP hoặc tạo passkey trước.',
       );
     }
     if (error is DeviceNotSupportedException ||

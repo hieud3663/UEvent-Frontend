@@ -97,6 +97,10 @@ class _PasskeySetupViewState extends ConsumerState<PasskeySetupView> {
   Widget build(BuildContext context) {
     final credentialsAsync = ref.watch(passkeyCredentialsProvider);
     final credentials = credentialsAsync.value ?? const [];
+    final canCreatePasskey = credentialsAsync.maybeWhen(
+      data: (items) => items.isEmpty,
+      orElse: () => false,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -175,24 +179,26 @@ class _PasskeySetupViewState extends ConsumerState<PasskeySetupView> {
                           onRevoke: _revokePasskey,
                         ),
                         const SizedBox(height: 32),
-                        PrimaryButton(
-                          label: _isCreating
-                              ? 'Đang tạo passkey'
-                              : 'Tạo passkey',
-                          icon: Icons.add_circle,
-                          isLoading: _isCreating,
-                          onPressed: _isCreating ? null : _createPasskey,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Credential được lưu trong trình quản lý passkey của hệ điều hành.',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.onSurfaceVariant.withValues(
-                              alpha: 0.5,
-                            ),
+                        if (canCreatePasskey) ...[
+                          PrimaryButton(
+                            label: _isCreating
+                                ? 'Đang tạo passkey'
+                                : 'Tạo passkey',
+                            icon: Icons.add_circle,
+                            isLoading: _isCreating,
+                            onPressed: _isCreating ? null : _createPasskey,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Credential được lưu trong trình quản lý passkey của hệ điều hành.',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                         const SizedBox(height: 48),
                       ],
                     ),

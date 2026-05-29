@@ -5,9 +5,11 @@ import Link from 'next/link';
 import {
   Archive,
   ArrowLeft,
+  BookOpen,
   Eye,
   FileText,
   FolderPlus,
+  Layers,
   Pencil,
   Plus,
   RotateCcw,
@@ -15,6 +17,7 @@ import {
   Search,
   Send,
   Trash2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminSelect, Button, Card, EmptyState, ErrorState } from '@/core/components';
@@ -44,6 +47,7 @@ import type {
 
 type StatusFilter = 'all' | HelpCenterArticleStatus;
 type LocaleFilter = 'all' | HelpCenterLocale;
+type ActiveSection = 'articles' | 'categories';
 
 interface CategoryFormState {
   id?: string;
@@ -85,11 +89,6 @@ const localeFilterOptions = [
   { value: 'en', label: 'English' },
 ] as const;
 
-const articleLocaleOptions = [
-  { value: 'vi', label: 'Tiếng Việt' },
-  { value: 'en', label: 'English' },
-] as const;
-
 const emptyCategoryForm: CategoryFormState = {
   name: '',
   slug: '',
@@ -113,6 +112,8 @@ export default function HelpCenterAdminPage() {
   const [categories, setCategories] = useState<HelpCenterCategory[]>([]);
   const [articles, setArticles] = useState<HelpCenterArticle[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<HelpCenterArticle | null>(null);
+  const [activeSection, setActiveSection] = useState<ActiveSection>('articles');
+  const [isArticleEditorOpen, setIsArticleEditorOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [locale, setLocale] = useState<LocaleFilter>('all');
@@ -206,10 +207,22 @@ export default function HelpCenterAdminPage() {
   }, [loadData]);
 
   const resetCategoryForm = () => {
+    setActiveSection('categories');
     setCategoryForm(emptyCategoryForm);
   };
 
   const resetArticleForm = () => {
+    setActiveSection('articles');
+    setIsArticleEditorOpen(true);
+    setSelectedArticle(null);
+    setArticleForm({
+      ...emptyArticleForm,
+      categoryId: categories[0]?.id || '',
+    });
+  };
+
+  const closeArticleEditor = () => {
+    setIsArticleEditorOpen(false);
     setSelectedArticle(null);
     setArticleForm({
       ...emptyArticleForm,
@@ -218,6 +231,7 @@ export default function HelpCenterAdminPage() {
   };
 
   const handleEditCategory = (category: HelpCenterCategory) => {
+    setActiveSection('categories');
     setCategoryForm({
       id: category.id,
       name: category.name,
@@ -229,6 +243,8 @@ export default function HelpCenterAdminPage() {
   };
 
   const handleEditArticle = (article: HelpCenterArticle) => {
+    setActiveSection('articles');
+    setIsArticleEditorOpen(true);
     setSelectedArticle(article);
     setArticleForm({
       id: article.id,
@@ -237,7 +253,7 @@ export default function HelpCenterAdminPage() {
       slug: article.slug,
       summary: article.summary,
       body: article.body,
-      locale: article.locale,
+      locale: 'vi',
       status: article.status,
       sortOrder: String(article.sortOrder),
     });
@@ -357,26 +373,28 @@ export default function HelpCenterAdminPage() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-on-surface">Help Center</h1>
           <p className="mt-1 max-w-2xl text-sm font-medium text-on-surface-variant">
-            Quản lý danh mục và bài viết được publish cho Help Center trên mobile.
+            Tách luồng bài viết và danh mục để quản trị nội dung mobile rõ ràng hơn.
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          leftIcon={<RotateCcw className="h-4 w-4" />}
-          onClick={() => {
-            void loadData();
-          }}
-        >
-          Làm mới
-        </Button>
-        <Link
-          href="/support/legal-documents"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
-        >
-          <FileText className="h-4 w-4" />
-          Tài liệu pháp lý
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            leftIcon={<RotateCcw className="h-4 w-4" />}
+            onClick={() => {
+              void loadData();
+            }}
+          >
+            Làm mới
+          </Button>
+          <Link
+            href="/support/legal-documents"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-transparent px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            <FileText className="h-4 w-4" />
+            Tài liệu pháp lý
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -385,6 +403,25 @@ export default function HelpCenterAdminPage() {
         <Metric label="Bản nháp" value={stats.drafts} />
         <Metric label="Lưu trữ" value={stats.archived} />
       </div>
+
+      <Card className="grid gap-3 border border-white/70 bg-white/80 p-2 shadow-sm backdrop-blur-xl md:grid-cols-2">
+        <SectionTab
+          active={activeSection === 'articles'}
+          icon={<BookOpen className="h-5 w-5" />}
+          title="Bài viết"
+          description="Soạn, lọc, publish và lưu trữ nội dung FAQ."
+          count={articles.length}
+          onClick={() => setActiveSection('articles')}
+        />
+        <SectionTab
+          active={activeSection === 'categories'}
+          icon={<Layers className="h-5 w-5" />}
+          title="Danh mục"
+          description="Quản lý taxonomy trước khi gắn bài viết."
+          count={categories.length}
+          onClick={() => setActiveSection('categories')}
+        />
+      </Card>
 
       {error ? (
         <ErrorState
@@ -397,201 +434,113 @@ export default function HelpCenterAdminPage() {
         />
       ) : null}
 
-      {!error ? (
-        <div className="grid gap-5 xl:grid-cols-[24rem_minmax(0,1fr)]">
-          <section className="space-y-5">
-            <Card className="border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-              <div className="mb-4 flex items-center justify-between gap-3">
+      {!error && activeSection === 'articles' ? (
+        <section className="space-y-5">
+          <Card className="relative z-40 border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
+            <div className="grid gap-3 lg:grid-cols-[minmax(12rem,1fr)_10rem_10rem_13rem]">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={keyword}
+                  onChange={(event) => setKeyword(event.target.value)}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                  placeholder="Tìm bài viết, slug, nội dung"
+                />
+              </label>
+              <AdminSelect
+                value={status}
+                onChange={setStatus}
+                options={articleStatusOptions}
+                ariaLabel="Lọc trạng thái"
+              />
+              {/* <AdminSelect
+                value={locale}
+                onChange={setLocale}
+                options={localeFilterOptions}
+                ariaLabel="Lọc ngôn ngữ"
+              /> */}
+              <AdminSelect
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                options={categoryOptions}
+                ariaLabel="Lọc danh mục"
+              />
+            </div>
+          </Card>
+
+          <div className={cn('grid gap-5', isArticleEditorOpen && '2xl:grid-cols-[minmax(0,1fr)_30rem]')}>
+            <Card className="overflow-hidden border border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Danh mục</p>
-                  <p className="mt-1 text-sm text-slate-600">Taxonomy riêng cho Help Center.</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Bài viết</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {filteredArticles.length.toLocaleString('vi-VN')} bài phù hợp
+                  </p>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={resetCategoryForm}>
-                  Mới
+                <Button type="button" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={resetArticleForm}>
+                  Bài mới
                 </Button>
               </div>
 
-              <form className="space-y-3" onSubmit={handleSaveCategory}>
-                <Field
-                  label="Tên danh mục"
-                  value={categoryForm.name}
-                  onChange={(value) =>
-                    setCategoryForm((current) => ({
-                      ...current,
-                      name: value,
-                      slug: current.slug || toSlug(value),
-                    }))
-                  }
-                />
-                <Field
-                  label="Slug"
-                  value={categoryForm.slug}
-                  onChange={(value) => setCategoryForm((current) => ({ ...current, slug: toSlug(value) }))}
-                />
-                <TextArea
-                  label="Mô tả"
-                  value={categoryForm.description}
-                  rows={3}
-                  onChange={(value) => setCategoryForm((current) => ({ ...current, description: value }))}
-                />
-                <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-                  <Field
-                    label="Thứ tự"
-                    type="number"
-                    value={categoryForm.sortOrder}
-                    onChange={(value) => setCategoryForm((current) => ({ ...current, sortOrder: value }))}
-                  />
-                  <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={categoryForm.isActive}
-                      onChange={(event) =>
-                        setCategoryForm((current) => ({ ...current, isActive: event.target.checked }))
-                      }
-                      className="h-4 w-4 accent-amber-500"
-                    />
-                    Bật
-                  </label>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  isLoading={isSavingCategory}
-                  leftIcon={categoryForm.id ? <Save className="h-4 w-4" /> : <FolderPlus className="h-4 w-4" />}
-                >
-                  {categoryForm.id ? 'Lưu danh mục' : 'Tạo danh mục'}
-                </Button>
-              </form>
-            </Card>
-
-            <Card className="border border-white/70 bg-white/80 p-2 shadow-sm backdrop-blur-xl">
               {isLoading ? (
-                <div className="space-y-2 p-3">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+                <div className="space-y-3 p-5">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="h-24 animate-pulse rounded-xl bg-slate-100" />
                   ))}
                 </div>
-              ) : categories.length === 0 ? (
+              ) : filteredArticles.length === 0 ? (
                 <EmptyState
-                  title="Chưa có danh mục"
-                  description="Tạo danh mục đầu tiên trước khi viết bài Help Center."
-                  className="bg-transparent"
+                  title="Chưa có bài viết phù hợp"
+                  description="Tạo bài viết mới hoặc thay đổi bộ lọc để xem thêm nội dung."
+                  className="m-5 bg-white/60"
                 />
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-start justify-between gap-3 p-3">
-                      <button
-                        type="button"
-                        onClick={() => handleEditCategory(category)}
-                        className="min-w-0 text-left"
-                      >
-                        <span className="block truncate text-sm font-bold text-slate-900">{category.name}</span>
-                        <span className="mt-1 block truncate text-xs font-medium text-slate-500">{category.slug}</span>
-                        <span className={cn('mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold', category.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600')}>
-                          {category.isActive ? 'Đang bật' : 'Đang tắt'}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleDeleteCategory(category);
-                        }}
-                        className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                        title="Xóa danh mục"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                  {filteredArticles.map((article) => (
+                    <ArticleRow
+                      key={article.id}
+                      article={article}
+                      selected={selectedArticle?.id === article.id}
+                      onEdit={() => handleEditArticle(article)}
+                      onDelete={() => {
+                        void handleDeleteArticle(article);
+                      }}
+                      onPublish={() => {
+                        void handlePublishArticle(article);
+                      }}
+                      onArchive={() => {
+                        void handleArchiveArticle(article);
+                      }}
+                    />
                   ))}
                 </div>
               )}
             </Card>
-          </section>
 
-          <section className="space-y-5">
-            <Card className="relative z-40 border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
-              <div className="grid gap-3 lg:grid-cols-[minmax(12rem,1fr)_10rem_10rem_13rem]">
-                <label className="relative block">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    value={keyword}
-                    onChange={(event) => setKeyword(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
-                    placeholder="Tìm bài viết, slug, nội dung"
-                  />
-                </label>
-                <AdminSelect value={status} onChange={setStatus} options={articleStatusOptions} ariaLabel="Lọc trạng thái" />
-                <AdminSelect value={locale} onChange={setLocale} options={localeFilterOptions} ariaLabel="Lọc ngôn ngữ" />
-                <AdminSelect
-                  value={categoryFilter}
-                  onChange={setCategoryFilter}
-                  options={categoryOptions}
-                  ariaLabel="Lọc danh mục"
-                />
-              </div>
-            </Card>
-
-            <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_27rem]">
-              <Card className="overflow-hidden border border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Bài viết</p>
-                    <p className="mt-1 text-sm text-slate-600">{filteredArticles.length.toLocaleString('vi-VN')} bài phù hợp</p>
-                  </div>
-                  <Button type="button" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={resetArticleForm}>
-                    Bài mới
-                  </Button>
-                </div>
-
-                {isLoading ? (
-                  <div className="space-y-3 p-5">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div key={index} className="h-24 animate-pulse rounded-xl bg-slate-100" />
-                    ))}
-                  </div>
-                ) : filteredArticles.length === 0 ? (
-                  <EmptyState
-                    title="Chưa có bài viết phù hợp"
-                    description="Tạo bài viết mới hoặc thay đổi bộ lọc để xem thêm nội dung."
-                    className="m-5 bg-white/60"
-                  />
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {filteredArticles.map((article) => (
-                      <ArticleRow
-                        key={article.id}
-                        article={article}
-                        selected={selectedArticle?.id === article.id}
-                        onEdit={() => handleEditArticle(article)}
-                        onDelete={() => {
-                          void handleDeleteArticle(article);
-                        }}
-                        onPublish={() => {
-                          void handlePublishArticle(article);
-                        }}
-                        onArchive={() => {
-                          void handleArchiveArticle(article);
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </Card>
-
+            {isArticleEditorOpen ? (
               <Card className="border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-                <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Editor</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Editor bài viết</p>
                     <p className="mt-1 text-sm text-slate-600">
                       {articleForm.id ? 'Cập nhật bài viết hiện có.' : 'Tạo bài viết Help Center mới.'}
                     </p>
                   </div>
-                  {selectedArticle ? (
-                    <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold', statusClass(selectedArticle.status))}>
-                      {statusLabel(selectedArticle.status)}
-                    </span>
-                  ) : null}
+                  <div className="flex items-center gap-2">
+                    {selectedArticle ? (
+                      <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold', statusClass(selectedArticle.status))}>
+                        {statusLabel(selectedArticle.status)}
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={closeArticleEditor}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                      title="Đóng editor"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <form className="space-y-3" onSubmit={handleSaveArticle}>
@@ -631,19 +580,15 @@ export default function HelpCenterAdminPage() {
                     rows={9}
                     onChange={(value) => setArticleForm((current) => ({ ...current, body: value }))}
                   />
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <AdminSelect
-                      value={articleForm.locale}
-                      onChange={(value) => setArticleForm((current) => ({ ...current, locale: value }))}
-                      options={articleLocaleOptions}
-                      ariaLabel="Ngôn ngữ bài viết"
-                    />
-                    <AdminSelect
-                      value={articleForm.status}
-                      onChange={(value) => setArticleForm((current) => ({ ...current, status: value }))}
-                      options={articleFormStatusOptions}
-                      ariaLabel="Trạng thái bài viết"
-                    />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SelectField label="Trạng thái">
+                      <AdminSelect
+                        value={articleForm.status}
+                        onChange={(value) => setArticleForm((current) => ({ ...current, status: value }))}
+                        options={articleFormStatusOptions}
+                        ariaLabel="Trạng thái bài viết"
+                      />
+                    </SelectField>
                     <Field
                       label="Thứ tự"
                       type="number"
@@ -669,7 +614,8 @@ export default function HelpCenterAdminPage() {
                   </p>
                   <article className="rounded-2xl border border-slate-100 bg-white/70 p-4">
                     <p className="text-xs font-bold uppercase tracking-widest text-amber-600">
-                      {articleCategoryOptions.find((option) => option.value === articleForm.categoryId)?.label || 'Chưa chọn danh mục'}
+                      {articleCategoryOptions.find((option) => option.value === articleForm.categoryId)?.label ||
+                        'Chưa chọn danh mục'}
                     </p>
                     <h2 className="mt-2 text-lg font-black text-slate-950">
                       {articleForm.title || 'Tiêu đề bài viết'}
@@ -683,9 +629,141 @@ export default function HelpCenterAdminPage() {
                   </article>
                 </div>
               </Card>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {!error && activeSection === 'categories' ? (
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_25rem]">
+          <Card className="overflow-hidden border border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Danh mục</p>
+                <p className="mt-1 text-sm text-slate-600">Taxonomy riêng cho Help Center.</p>
+              </div>
+              <Button type="button" size="sm" variant="outline" leftIcon={<FolderPlus className="h-4 w-4" />} onClick={resetCategoryForm}>
+                Danh mục mới
+              </Button>
             </div>
-          </section>
-        </div>
+
+            {isLoading ? (
+              <div className="space-y-2 p-5">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+                ))}
+              </div>
+            ) : categories.length === 0 ? (
+              <EmptyState
+                title="Chưa có danh mục"
+                description="Tạo danh mục đầu tiên trước khi viết bài Help Center."
+                className="m-5 bg-white/60"
+              />
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {categories.map((category) => (
+                  <div key={category.id} className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
+                    <button type="button" onClick={() => handleEditCategory(category)} className="min-w-0 text-left">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="truncate text-base font-bold text-slate-900">{category.name}</span>
+                        <span
+                          className={cn(
+                            'rounded-full px-2 py-0.5 text-[11px] font-bold',
+                            category.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                          )}
+                        >
+                          {category.isActive ? 'Đang bật' : 'Đang tắt'}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-sm font-medium text-slate-500">{category.slug}</p>
+                      {category.description ? (
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">{category.description}</p>
+                      ) : null}
+                    </button>
+                    <p className="text-sm font-medium text-slate-600">
+                      Thứ tự <span className="font-bold text-slate-900">{category.sortOrder}</span>
+                    </p>
+                    <div className="flex items-center gap-2 lg:justify-end">
+                      <IconButton title="Sửa" onClick={() => handleEditCategory(category)}>
+                        <Pencil className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton
+                        title="Xóa"
+                        danger
+                        onClick={() => {
+                          void handleDeleteCategory(category);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                {categoryForm.id ? 'Sửa danh mục' : 'Tạo danh mục'}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">Danh mục giúp nhóm các câu hỏi thường gặp trên mobile.</p>
+            </div>
+
+            <form className="space-y-3" onSubmit={handleSaveCategory}>
+              <Field
+                label="Tên danh mục"
+                value={categoryForm.name}
+                onChange={(value) =>
+                  setCategoryForm((current) => ({
+                    ...current,
+                    name: value,
+                    slug: current.slug || toSlug(value),
+                  }))
+                }
+              />
+              <Field
+                label="Slug"
+                value={categoryForm.slug}
+                onChange={(value) => setCategoryForm((current) => ({ ...current, slug: toSlug(value) }))}
+              />
+              <TextArea
+                label="Mô tả"
+                value={categoryForm.description}
+                rows={4}
+                onChange={(value) => setCategoryForm((current) => ({ ...current, description: value }))}
+              />
+              <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+                <Field
+                  label="Thứ tự"
+                  type="number"
+                  value={categoryForm.sortOrder}
+                  onChange={(value) => setCategoryForm((current) => ({ ...current, sortOrder: value }))}
+                />
+                <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.isActive}
+                    onChange={(event) =>
+                      setCategoryForm((current) => ({ ...current, isActive: event.target.checked }))
+                    }
+                    className="h-4 w-4 accent-amber-500"
+                  />
+                  Bật
+                </label>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                isLoading={isSavingCategory}
+                leftIcon={categoryForm.id ? <Save className="h-4 w-4" /> : <FolderPlus className="h-4 w-4" />}
+              >
+                {categoryForm.id ? 'Lưu danh mục' : 'Tạo danh mục'}
+              </Button>
+            </form>
+          </Card>
+        </section>
       ) : null}
     </div>
   );
@@ -697,6 +775,53 @@ function Metric({ label, value }: { label: string; value: number }) {
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
       <p className="mt-3 text-2xl font-black text-slate-950">{value.toLocaleString('vi-VN')}</p>
     </Card>
+  );
+}
+
+function SectionTab({
+  active,
+  icon,
+  title,
+  description,
+  count,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  title: string;
+  description: string;
+  count: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-start gap-3 rounded-2xl border p-4 text-left transition',
+        active
+          ? 'border-amber-200 bg-amber-50 text-amber-950 shadow-sm'
+          : 'border-transparent text-slate-700 hover:border-slate-200 hover:bg-white'
+      )}
+    >
+      <span
+        className={cn(
+          'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+          active ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-sm font-black">{title}</span>
+          <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold text-slate-600">
+            {count.toLocaleString('vi-VN')}
+          </span>
+        </span>
+        <span className="mt-1 block text-sm font-medium text-slate-600">{description}</span>
+      </span>
+    </button>
   );
 }
 
@@ -804,6 +929,15 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
       />
+    </label>
+  );
+}
+
+function SelectField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-2">
+      <span className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-500">{label}</span>
+      {children}
     </label>
   );
 }

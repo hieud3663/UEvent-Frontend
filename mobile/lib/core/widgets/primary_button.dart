@@ -25,7 +25,7 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onPressed != null && !isLoading;
-    final borderRadius = BorderRadius.circular(AppConstants.radiusMd);
+    final borderRadius = BorderRadius.circular(AppConstants.radiusFull);
 
     final child = SizedBox(
       width: isFullWidth ? double.infinity : null,
@@ -37,7 +37,7 @@ class PrimaryButton extends StatelessWidget {
           elevation: const WidgetStatePropertyAll(0),
           shadowColor: const WidgetStatePropertyAll(Colors.transparent),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           ),
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
@@ -89,18 +89,30 @@ class PrimaryButton extends StatelessWidget {
 /// Secondary outlined/ghost button.
 class SecondaryButton extends StatelessWidget {
   final String label;
+  final IconData? icon;
   final VoidCallback? onPressed;
   final bool isFullWidth;
+  final Color? foregroundColor;
+  final Color? borderColor;
+  final Color? backgroundColor;
+  final EdgeInsetsGeometry? padding;
 
   const SecondaryButton({
     super.key,
     required this.label,
+    this.icon,
     this.onPressed,
     this.isFullWidth = true,
+    this.foregroundColor,
+    this.borderColor,
+    this.backgroundColor,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveForegroundColor = foregroundColor ?? AppColors.onSurface;
+
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       child: OutlinedButton(
@@ -108,28 +120,44 @@ class SecondaryButton extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(Size.zero),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: WidgetStatePropertyAll(
+            padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           ),
           backgroundColor: WidgetStatePropertyAll(
-            Colors.white.withValues(alpha: 0.7),
+            backgroundColor ?? Colors.white.withValues(alpha: 0.7),
           ),
-          foregroundColor: const WidgetStatePropertyAll(AppColors.onSurface),
+          foregroundColor: WidgetStatePropertyAll(effectiveForegroundColor),
           overlayColor: WidgetStatePropertyAll(
-            AppColors.onSurface.withValues(alpha: 0.06),
+            effectiveForegroundColor.withValues(alpha: 0.06),
           ),
           side: WidgetStatePropertyAll(
-            BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 1),
+            BorderSide(
+              color: borderColor ?? Colors.white.withValues(alpha: 0.3),
+              width: 1,
+            ),
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+              borderRadius: BorderRadius.circular(AppConstants.radiusFull),
             ),
           ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.titleSmall.copyWith(fontWeight: FontWeight.w600),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 20, color: effectiveForegroundColor),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: AppTextStyles.titleSmall.copyWith(
+                color: effectiveForegroundColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

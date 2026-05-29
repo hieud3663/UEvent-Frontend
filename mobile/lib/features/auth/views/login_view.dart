@@ -14,6 +14,7 @@ class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
   final FutureOr<void> Function()? onLoginWithGoogle;
   final FutureOr<void> Function(String email)? onLoginWithPasskey;
+  final String initialEmail;
   final bool preferPasskey;
   final bool passkeyAvailable;
 
@@ -22,6 +23,7 @@ class LoginView extends StatefulWidget {
     this.onLoginWithEmail,
     this.onLoginWithGoogle,
     this.onLoginWithPasskey,
+    this.initialEmail = '',
     this.preferPasskey = false,
     this.passkeyAvailable = true,
   });
@@ -31,13 +33,28 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final _emailController = TextEditingController();
+  late final TextEditingController _emailController;
   bool _isSubmittingEmail = false;
   bool _isSubmittingGoogle = false;
   bool _isSubmittingPasskey = false;
 
   bool get _isBusy =>
       _isSubmittingEmail || _isSubmittingGoogle || _isSubmittingPasskey;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_emailController.text.trim().isEmpty &&
+        widget.initialEmail != oldWidget.initialEmail) {
+      _emailController.text = widget.initialEmail;
+    }
+  }
 
   @override
   void dispose() {

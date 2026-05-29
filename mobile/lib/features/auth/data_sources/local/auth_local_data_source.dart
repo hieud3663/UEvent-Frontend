@@ -10,6 +10,7 @@ const _kRefreshToken = 'auth_refresh_token';
 const _kIdToken = 'auth_id_token';
 const _kExpiresAt = 'auth_expires_at'; // epoch milliseconds
 const _kMethod = 'auth_method';
+const _kLastLoginEmail = 'auth_last_login_email';
 
 // ── Platform-specific options ──
 // first_unlock (NOT whenUnlocked): tokens readable while screen is locked,
@@ -31,6 +32,12 @@ abstract interface class AuthLocalDataSource {
 
   /// Overwrites all stored fields atomically.
   Future<void> writeSession(AuthSessionModel session);
+
+  /// Returns the email used most recently for email OTP or passkey sign-in.
+  Future<String?> readLastLoginEmail();
+
+  /// Stores the email used most recently for email OTP or passkey sign-in.
+  Future<void> writeLastLoginEmail(String email);
 
   /// Deletes all auth-related keys (sign-out / force-sign-out).
   Future<void> clearSession();
@@ -84,6 +91,20 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       ),
       _storage.write(key: _kMethod, value: session.method.storageValue),
     ]);
+  }
+
+  @override
+  Future<String?> readLastLoginEmail() async {
+    final value = await _storage.read(key: _kLastLoginEmail);
+    final email = value?.trim().toLowerCase();
+    return email == null || email.isEmpty ? null : email;
+  }
+
+  @override
+  Future<void> writeLastLoginEmail(String email) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty) return;
+    await _storage.write(key: _kLastLoginEmail, value: normalizedEmail);
   }
 
   @override
