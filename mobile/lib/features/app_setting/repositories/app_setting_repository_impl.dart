@@ -8,9 +8,15 @@ class AppSettingRepositoryImpl implements AppSettingRepository {
 
   const AppSettingRepositoryImpl(this._localDataSource);
 
+  static const _obsoleteKeys = {
+    'permission.location_feature_enabled',
+    'permission.contacts_sync_enabled',
+  };
+
   @override
-  Future<void> ensureDefaults() {
-    return _localDataSource.insertMissingDefaults(buildDefaultAppSettings());
+  Future<void> ensureDefaults() async {
+    await _localDataSource.deleteKeys(_obsoleteKeys);
+    await _localDataSource.insertMissingDefaults(buildDefaultAppSettings());
   }
 
   @override

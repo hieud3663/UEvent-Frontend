@@ -128,7 +128,7 @@ export default function SettingsPage() {
   }));
 
   const lastAuditAt = auditSummary?.lastEventAt
-    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(auditSummary.lastEventAt))
+    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(auditSummary.lastEventAt))
     : 'Chưa có dữ liệu';
 
   return (
@@ -188,7 +188,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Cấu hình hệ thống</p>
-            <h2 className="mt-1 text-xl font-black text-slate-900">Thiết lập đang đọc từ API admin</h2>
+            <h2 className="mt-1 text-xl font-black text-slate-900"></h2>
           </div>
           <Button
             onClick={() => {
@@ -331,7 +331,7 @@ export default function SettingsPage() {
           <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Nhật ký kiểm toán</p>
-              <p className="mt-1 text-sm text-slate-600">Dữ liệu được truy vấn từ OpenSearch theo bộ lọc hiện tại.</p>
+              <p className="mt-1 text-sm text-slate-600">Dữ liệu được truy vấn từ OpenObserve theo bộ lọc hiện tại.</p>
             </div>
             <p className="text-sm font-bold text-slate-600">{totalLogs.toLocaleString('vi-VN')} bản ghi</p>
           </div>

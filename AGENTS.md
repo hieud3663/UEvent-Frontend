@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **UEvent-Frontend** (1623 symbols, 3232 relationships, 120 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **UEvent-Frontend** (1856 symbols, 3739 relationships, 138 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -44,6 +44,12 @@ This project is indexed by GitNexus as **UEvent-Frontend** (1623 symbols, 3232 r
 
 ## Mobile Shared Widget Rules
 
+- Before editing any file under `mobile/lib/features`, run this Flutter refactor gate:
+  1. Check whether the UI role already exists in `mobile/lib/core/widgets`.
+  2. Use the core/shared widget directly when it fits the behavior.
+  3. Put screens/pages in `views/`; put reusable feature UI in `widgets/`.
+  4. Do not keep a page-local wrapper around a core widget unless the final response explains why the core widget cannot be used directly.
+  5. Before the final response, report whether shared widgets were reused and whether any local wrapper was intentionally kept.
 - Before implementing or modifying any Flutter page, screen, feature widget, or dialog under `mobile/lib/features`, audit the existing controls in that file for direct uses of `ElevatedButton`, `OutlinedButton`, `TextButton`, `IconButton`, `GestureDetector`, `InkWell`, and locally declared private button widgets such as `_PrimaryActionButton`, `_SecondaryActionButton`, or `_CircleIconButton`.
 - Prefer shared widgets from `mobile/lib/core/widgets` for app-standard controls: `PrimaryButton`, `SecondaryButton`, `GlassTopBar`, `GlassBottomNavBar`, `GlassSearchBar`, `GlassFilterChip`, `SegmentedToggle`, `GlassCheckboxTile`, `GlassRadioCard`, `GlassDropdownField`, `GlassActionTile`, `GlassInputField`, `GlassContainer`, and `SectionHeader`.
 - Prefer Flutter's built-in controls and APIs for standard behavior before adding custom state or controller logic. Examples: use `TextInputFormatter`, `Form`/validators, `ValueListenableBuilder`, `ListView`, `Animated*` widgets, and platform plugins' documented setup when they already solve the problem.
@@ -52,3 +58,15 @@ This project is indexed by GitNexus as **UEvent-Frontend** (1623 symbols, 3232 r
 - Do not add new page-local custom buttons or tappable controls when an equivalent shared widget exists. Page-local `GestureDetector`/`InkWell` controls are acceptable only for layout-specific interactions that are not reusable app controls.
 - When touching an existing page that already has page-local custom buttons or duplicated control styling, include migration to the closest shared widget in the same change unless it would materially expand the task scope; if deferred, call it out explicitly.
 - After refactoring shared widget usage, run `rg` on the touched files to confirm no avoidable page-local button/control implementations remain, then run the relevant Flutter analyze command.
+
+## Final Response Gate For Flutter Feature Changes
+
+- Before sending the final response after editing any file under `mobile/lib/features`, include a short `Gate check` section.
+- The `Gate check` section must report:
+  1. Core widgets: list the shared/core widgets reused, or state `none`.
+  2. Local wrappers: list any local wrapper kept around a core widget, or state `none`.
+  3. Feature structure: confirm pages are in `views/` and reusable feature UI is in `widgets/`.
+  4. Control audit: confirm `rg` was run for avoidable local controls such as `ElevatedButton`, `TextButton`, `GestureDetector`, and local custom buttons.
+  5. Verification: list `flutter analyze` and relevant tests, or explicitly state why they were not run.
+- Do not send the final response for Flutter feature changes without this `Gate check` section.
+- If any item cannot be satisfied, the final response must say why.

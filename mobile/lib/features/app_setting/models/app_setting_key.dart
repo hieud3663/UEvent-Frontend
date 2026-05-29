@@ -20,11 +20,6 @@ class AppSettingKey {
       'security.biometric_unlock_enabled';
   static const securityLockAfterSeconds = 'security.lock_after_seconds';
 
-  static const permissionLocationFeatureEnabled =
-      'permission.location_feature_enabled';
-  static const permissionContactsSyncEnabled =
-      'permission.contacts_sync_enabled';
-
   static const appearanceThemeMode = 'appearance.theme_mode';
   static const appearanceLocale = 'appearance.locale';
   static const appearanceReduceMotionEnabled =

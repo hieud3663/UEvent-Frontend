@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/widgets/glass_container.dart';
-import 'package:frontend/features/app_setting/data/app_setting_legal.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/models/app_setting_state.dart';
 import 'package:frontend/features/profile/widgets/settings_group.dart';
@@ -14,7 +13,7 @@ class SecuritySettingsSection extends StatelessWidget {
     required this.settingsReady,
     required this.passkeyAvailable,
     required this.lockTimeoutLabel,
-    required this.onPreferPasskeyChanged,
+    required this.onPasskeyTap,
     required this.onAppLockChanged,
     required this.onLockTimeoutTap,
     required this.onBiometricChanged,
@@ -24,7 +23,7 @@ class SecuritySettingsSection extends StatelessWidget {
   final bool settingsReady;
   final bool passkeyAvailable;
   final String lockTimeoutLabel;
-  final ValueChanged<bool> onPreferPasskeyChanged;
+  final VoidCallback? onPasskeyTap;
   final ValueChanged<bool> onAppLockChanged;
   final VoidCallback onLockTimeoutTap;
   final ValueChanged<bool> onBiometricChanged;
@@ -37,17 +36,14 @@ class SecuritySettingsSection extends StatelessWidget {
     return SettingsGroup(
       title: 'Bảo mật',
       children: [
-        SettingsToggleTile(
+        SettingsActionTile(
           icon: Icons.vpn_key,
-          title: 'Ưu tiên đăng nhập bằng passkey',
+          title: 'Đăng nhập bằng passkey',
           subtitle: passkeyAvailable
-              ? 'Chỉ lưu lựa chọn trên thiết bị này'
+              ? 'Tạo hoặc quản lý passkey của tài khoản'
               : 'Passkey chưa khả dụng trên thiết bị này',
-          value:
-              settings?.boolValue(AppSettingKey.securityPreferPasskeyLogin) ??
-              false,
           enabled: settingsReady && passkeyAvailable,
-          onChanged: onPreferPasskeyChanged,
+          onTap: onPasskeyTap ?? () {},
         ),
         SettingsToggleTile(
           icon: Icons.lock,
@@ -90,13 +86,11 @@ class NotificationSettingsSection extends StatelessWidget {
     super.key,
     required this.settings,
     required this.settingsReady,
-    required this.notificationPermissionLabel,
     required this.onPushNotificationsChanged,
   });
 
   final AppSettingState? settings;
   final bool settingsReady;
-  final String notificationPermissionLabel;
   final ValueChanged<bool> onPushNotificationsChanged;
 
   @override
@@ -107,7 +101,7 @@ class NotificationSettingsSection extends StatelessWidget {
         SettingsToggleTile(
           icon: Icons.notifications,
           title: 'Thông báo',
-          subtitle: notificationPermissionLabel,
+          subtitle: 'Nhận thông báo từ ứng dụng',
           value:
               settings?.boolValue(
                 AppSettingKey.notificationPushEnabled,
@@ -208,12 +202,14 @@ class SupportSettingsSection extends StatelessWidget {
   const SupportSettingsSection({
     super.key,
     required this.settings,
+    required this.privacyPolicyVersion,
     required this.onHelpCenter,
     required this.onRateOnPlayStore,
     required this.onPrivacyPolicy,
   });
 
   final AppSettingState? settings;
+  final String? privacyPolicyVersion;
   final VoidCallback? onHelpCenter;
   final VoidCallback? onRateOnPlayStore;
   final VoidCallback? onPrivacyPolicy;
@@ -242,8 +238,8 @@ class SupportSettingsSection extends StatelessWidget {
           icon: Icons.privacy_tip,
           title: 'Chính sách quyền riêng tư',
           valueText:
-              acceptedVersion?.contains(AppSettingLegal.privacyPolicyVersion) ==
-                  true
+              privacyPolicyVersion != null &&
+                  acceptedVersion == privacyPolicyVersion
               ? 'Đã chấp nhận'
               : null,
           onTap: onPrivacyPolicy ?? () {},
@@ -260,26 +256,12 @@ class SignOutSettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onSignOut,
-      child: GlassContainer(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.logout, color: Colors.red),
-            const SizedBox(width: 8),
-            Text(
-              'Đăng xuất',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.red,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SecondaryButton(
+      label: 'Đăng xuất',
+      icon: Icons.logout,
+      onPressed: onSignOut,
+      foregroundColor: AppColors.error,
+      borderColor: AppColors.error.withValues(alpha: 0.3),
     );
   }
 }

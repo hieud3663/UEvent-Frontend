@@ -10,7 +10,6 @@ import 'package:frontend/core/localization/app_localizations.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
-import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/providers/app_setting_providers.dart';
 import 'package:frontend/features/app_setting/widgets/app_lock_gate.dart';
 import 'package:frontend/features/auth/controller/otp_controller.dart';
@@ -80,12 +79,22 @@ Future<void> _handleSignIn(
     return;
   }
 
+  final effectiveLoginHint = method == AuthMethod.passkey ? null : loginHint;
+
   final session = await ref
       .read(authControllerProvider.notifier)
-      .signIn(method, loginHint: loginHint);
+      .signIn(method, loginHint: effectiveLoginHint);
   if (!context.mounted) return;
 
   if (session != null) {
+    final normalizedEmail = effectiveLoginHint?.trim().toLowerCase() ?? '';
+    if (_isValidEmail(normalizedEmail)) {
+      await ref
+          .read(authLocalDataSourceProvider)
+          .writeLastLoginEmail(normalizedEmail);
+      ref.invalidate(lastLoginEmailProvider);
+    }
+    if (!context.mounted) return;
     await _bootstrapProfileAndNavigate(context, ref, fromSplash: false);
   } else {
     final state = ref.read(authControllerProvider);
@@ -126,6 +135,11 @@ Future<void> _handleEmailOtpStart(
   final otpState = ref.read(otpControllerProvider);
   switch (otpState) {
     case OtpSent():
+      await ref
+          .read(authLocalDataSourceProvider)
+          .writeLastLoginEmail(normalizedEmail);
+      ref.invalidate(lastLoginEmailProvider);
+      if (!context.mounted) return;
       _navigateToOtp(context, ref, email: normalizedEmail, shouldReset: false);
     case OtpError(message: final message):
       _showSnackBar(context, message);
@@ -159,6 +173,7 @@ Future<void> _bootstrapProfileAndNavigate(
     final user = await ref.read(profileServiceProvider).getMyProfile();
     if (!context.mounted) return;
 
+    unawaited(_rememberUserEmail(ref, user.email));
     ref.invalidate(userProfileProvider);
     ref.invalidate(profileOverviewProvider);
 
@@ -181,6 +196,15 @@ Future<void> _bootstrapProfileAndNavigate(
       _navigateToLogin(context, ref);
     }
   }
+}
+
+Future<void> _rememberUserEmail(WidgetRef ref, String email) async {
+  final normalizedEmail = email.trim().toLowerCase();
+  if (!_isValidEmail(normalizedEmail)) return;
+  await ref
+      .read(authLocalDataSourceProvider)
+      .writeLastLoginEmail(normalizedEmail);
+  ref.invalidate(lastLoginEmailProvider);
 }
 
 Future<void> _handleProfileBootstrapFailure(
@@ -257,24 +281,24 @@ void _navigateToLogin(BuildContext context, WidgetRef ref) {
     appRoute(
       builder: (ctx) => Consumer(
         builder: (ctx, loginRef, _) {
-          final preferPasskey =
-              loginRef
-                  .watch(appSettingControllerProvider)
-                  .value
-                  ?.boolValue(AppSettingKey.securityPreferPasskeyLogin) ??
-              false;
           final passkeyAvailable =
               loginRef.watch(passkeyCapabilityProvider).value ?? false;
+          final lastLoginEmail =
+              loginRef.watch(lastLoginEmailProvider).value ?? '';
 
           return LoginView(
-            preferPasskey: preferPasskey,
+            initialEmail: lastLoginEmail,
             passkeyAvailable: passkeyAvailable,
             onLoginWithEmail: (email) =>
                 _handleEmailOtpStart(ctx, loginRef, email),
             onLoginWithGoogle: () =>
                 _handleSignIn(ctx, loginRef, AuthMethod.google),
-            onLoginWithPasskey: () =>
-                _handleSignIn(ctx, loginRef, AuthMethod.passkey),
+            onLoginWithPasskey: (email) => _handleSignIn(
+              ctx,
+              loginRef,
+              AuthMethod.passkey,
+              loginHint: email,
+            ),
           );
         },
       ),
@@ -390,7 +414,7 @@ void _navigateToPasskeySetup(BuildContext context) {
     appRoute(
       builder: (ctx) => PasskeySetupView(
         onBack: () => Navigator.of(ctx).pop(),
-        onCreatePasskey: () => _navigateToAppShell(ctx),
+        onPasskeyCreated: () => _navigateToAppShell(ctx),
       ),
     ),
   );

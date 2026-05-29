@@ -14,6 +14,10 @@ final authLocalDataSourceProvider = Provider<AuthLocalDataSource>(
   (ref) => AuthLocalDataSourceImpl(),
 );
 
+final lastLoginEmailProvider = FutureProvider<String?>(
+  (ref) => ref.read(authLocalDataSourceProvider).readLastLoginEmail(),
+);
+
 // ── Services ──
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());

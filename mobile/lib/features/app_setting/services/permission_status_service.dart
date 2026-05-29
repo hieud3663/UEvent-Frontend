@@ -5,24 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 class PermissionStatusService {
   const PermissionStatusService();
 
-  Future<Map<AppPermissionKey, AppPermissionInfo>> getAllStatuses() async {
-    final entries = await Future.wait(
-      AppPermissionKey.values.map((key) async {
-        return MapEntry(key, await getStatus(key));
-      }),
-    );
-    return Map.fromEntries(entries);
-  }
-
-  Future<AppPermissionInfo> getStatus(AppPermissionKey key) async {
-    try {
-      final status = await _permissionFor(key).status;
-      return AppPermissionInfo(key: key, status: _mapStatus(status));
-    } catch (_) {
-      return AppPermissionInfo(key: key, status: AppPermissionStatus.denied);
-    }
-  }
-
   Future<AppPermissionInfo> request(AppPermissionKey key) async {
     try {
       final status = await _permissionFor(key).request();

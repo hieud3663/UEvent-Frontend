@@ -96,3 +96,88 @@ export interface AdminSupportStatsDto {
   resolved_today: number;
   avg_response_minutes: number;
 }
+
+export type HelpCenterArticleStatus = 'draft' | 'published' | 'archived';
+export type HelpCenterLocale = 'vi' | 'en';
+export type LegalDocumentStatus = 'draft' | 'published' | 'archived';
+export type LegalDocumentType = 'privacy_policy' | 'terms_of_service';
+
+export interface HelpCenterCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HelpCenterArticle {
+  id: string;
+  category: HelpCenterCategory;
+  title: string;
+  slug: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: HelpCenterArticleStatus;
+  sortOrder: number;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminSupportCategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminSupportArticleDto {
+  id: string;
+  category: AdminSupportCategoryDto;
+  title: string;
+  slug: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: HelpCenterArticleStatus;
+  sort_order: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LegalDocument {
+  id: string;
+  documentType: LegalDocumentType;
+  title: string;
+  version: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: LegalDocumentStatus;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminLegalDocumentDto {
+  id: string;
+  document_type: LegalDocumentType;
+  title: string;
+  version: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: LegalDocumentStatus;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

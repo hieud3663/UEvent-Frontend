@@ -116,7 +116,10 @@ class OtpController extends Notifier<OtpState> {
     state = OtpVerifying(email: email, canResendAt: canResendAt);
     try {
       final session = await _service.verifyOtp(email, code);
-      await ref.read(authLocalDataSourceProvider).writeSession(session);
+      final local = ref.read(authLocalDataSourceProvider);
+      await local.writeSession(session);
+      await local.writeLastLoginEmail(email);
+      ref.invalidate(lastLoginEmailProvider);
       state = OtpVerified(session);
     } on OtpMaxAttemptsException catch (error) {
       state = OtpError(

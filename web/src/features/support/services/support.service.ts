@@ -1,8 +1,18 @@
 import { apiRequest, apiRequestEnvelope } from '@/core/lib/api';
 import type {
+  AdminLegalDocumentDto,
+  AdminSupportArticleDto,
+  AdminSupportCategoryDto,
   AdminSupportMessageDto,
   AdminSupportStatsDto,
   AdminSupportTicketDto,
+  HelpCenterArticle,
+  HelpCenterArticleStatus,
+  HelpCenterCategory,
+  HelpCenterLocale,
+  LegalDocument,
+  LegalDocumentStatus,
+  LegalDocumentType,
   SupportStats,
   Ticket,
   TicketCategory,
@@ -26,6 +36,47 @@ export interface UpdateSupportTicketPayload {
   status?: TicketStatus;
   priority?: TicketPriority;
   assignedTo?: string | null;
+}
+
+export interface HelpCenterArticleFilters {
+  status?: HelpCenterArticleStatus;
+  locale?: HelpCenterLocale;
+  categoryId?: string;
+}
+
+export interface SaveHelpCenterCategoryPayload {
+  name: string;
+  slug: string;
+  description: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface SaveHelpCenterArticlePayload {
+  categoryId: string;
+  title: string;
+  slug: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: HelpCenterArticleStatus;
+  sortOrder: number;
+}
+
+export interface LegalDocumentFilters {
+  documentType?: LegalDocumentType;
+  status?: LegalDocumentStatus;
+  locale?: HelpCenterLocale;
+}
+
+export interface SaveLegalDocumentPayload {
+  documentType: LegalDocumentType;
+  title: string;
+  version: string;
+  summary: string;
+  body: string;
+  locale: HelpCenterLocale;
+  status: LegalDocumentStatus;
 }
 
 export async function getTicketsPage(filters: TicketFilters = {}): Promise<TicketListResult> {
@@ -122,6 +173,160 @@ export async function updateSupportTicket(ticketId: string, payload: UpdateSuppo
   return mapTicket(response);
 }
 
+export async function getHelpCenterCategories(): Promise<HelpCenterCategory[]> {
+  const response = await apiRequest<AdminSupportCategoryDto[]>('/admin/support/help-center/categories/');
+  return response.map(mapHelpCenterCategory);
+}
+
+export async function createHelpCenterCategory(payload: SaveHelpCenterCategoryPayload): Promise<HelpCenterCategory> {
+  const response = await apiRequest<AdminSupportCategoryDto>('/admin/support/help-center/categories/', {
+    method: 'POST',
+    body: mapCategoryPayload(payload),
+  });
+  return mapHelpCenterCategory(response);
+}
+
+export async function updateHelpCenterCategory(
+  categoryId: string,
+  payload: SaveHelpCenterCategoryPayload
+): Promise<HelpCenterCategory> {
+  const response = await apiRequest<AdminSupportCategoryDto>(`/admin/support/help-center/categories/${categoryId}/`, {
+    method: 'PATCH',
+    body: mapCategoryPayload(payload),
+  });
+  return mapHelpCenterCategory(response);
+}
+
+export async function deleteHelpCenterCategory(categoryId: string): Promise<void> {
+  await apiRequest<void>(`/admin/support/help-center/categories/${categoryId}/`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getHelpCenterArticles(filters: HelpCenterArticleFilters = {}): Promise<HelpCenterArticle[]> {
+  const params = new URLSearchParams();
+
+  if (filters.status) {
+    params.set('status', filters.status);
+  }
+
+  if (filters.locale) {
+    params.set('locale', filters.locale);
+  }
+
+  if (filters.categoryId) {
+    params.set('category', filters.categoryId);
+  }
+
+  const query = params.toString();
+  const response = await apiRequest<AdminSupportArticleDto[]>(
+    `/admin/support/help-center/articles/${query ? `?${query}` : ''}`
+  );
+  return response.map(mapHelpCenterArticle);
+}
+
+export async function createHelpCenterArticle(payload: SaveHelpCenterArticlePayload): Promise<HelpCenterArticle> {
+  const response = await apiRequest<AdminSupportArticleDto>('/admin/support/help-center/articles/', {
+    method: 'POST',
+    body: mapArticlePayload(payload),
+  });
+  return mapHelpCenterArticle(response);
+}
+
+export async function updateHelpCenterArticle(
+  articleId: string,
+  payload: SaveHelpCenterArticlePayload
+): Promise<HelpCenterArticle> {
+  const response = await apiRequest<AdminSupportArticleDto>(`/admin/support/help-center/articles/${articleId}/`, {
+    method: 'PATCH',
+    body: mapArticlePayload(payload),
+  });
+  return mapHelpCenterArticle(response);
+}
+
+export async function deleteHelpCenterArticle(articleId: string): Promise<void> {
+  await apiRequest<void>(`/admin/support/help-center/articles/${articleId}/`, {
+    method: 'DELETE',
+  });
+}
+
+export async function publishHelpCenterArticle(articleId: string): Promise<HelpCenterArticle> {
+  const response = await apiRequest<AdminSupportArticleDto>(
+    `/admin/support/help-center/articles/${articleId}/publish/`,
+    { method: 'POST' }
+  );
+  return mapHelpCenterArticle(response);
+}
+
+export async function archiveHelpCenterArticle(articleId: string): Promise<HelpCenterArticle> {
+  const response = await apiRequest<AdminSupportArticleDto>(
+    `/admin/support/help-center/articles/${articleId}/archive/`,
+    { method: 'POST' }
+  );
+  return mapHelpCenterArticle(response);
+}
+
+export async function getLegalDocuments(filters: LegalDocumentFilters = {}): Promise<LegalDocument[]> {
+  const params = new URLSearchParams();
+
+  if (filters.documentType) {
+    params.set('document_type', filters.documentType);
+  }
+
+  if (filters.status) {
+    params.set('status', filters.status);
+  }
+
+  if (filters.locale) {
+    params.set('locale', filters.locale);
+  }
+
+  const query = params.toString();
+  const response = await apiRequest<AdminLegalDocumentDto[]>(
+    `/admin/support/legal-documents/${query ? `?${query}` : ''}`
+  );
+  return response.map(mapLegalDocument);
+}
+
+export async function createLegalDocument(payload: SaveLegalDocumentPayload): Promise<LegalDocument> {
+  const response = await apiRequest<AdminLegalDocumentDto>('/admin/support/legal-documents/', {
+    method: 'POST',
+    body: mapLegalDocumentPayload(payload),
+  });
+  return mapLegalDocument(response);
+}
+
+export async function updateLegalDocument(
+  documentId: string,
+  payload: SaveLegalDocumentPayload
+): Promise<LegalDocument> {
+  const response = await apiRequest<AdminLegalDocumentDto>(`/admin/support/legal-documents/${documentId}/`, {
+    method: 'PATCH',
+    body: mapLegalDocumentPayload(payload),
+  });
+  return mapLegalDocument(response);
+}
+
+export async function deleteLegalDocument(documentId: string): Promise<void> {
+  await apiRequest<void>(`/admin/support/legal-documents/${documentId}/`, {
+    method: 'DELETE',
+  });
+}
+
+export async function publishLegalDocument(documentId: string): Promise<LegalDocument> {
+  const response = await apiRequest<AdminLegalDocumentDto>(`/admin/support/legal-documents/${documentId}/publish/`, {
+    method: 'POST',
+  });
+  return mapLegalDocument(response);
+}
+
+export async function archiveLegalDocument(documentId: string): Promise<LegalDocument> {
+  const response = await apiRequest<AdminLegalDocumentDto>(`/admin/support/legal-documents/${documentId}/archive/`, {
+    method: 'POST',
+  });
+  return mapLegalDocument(response);
+}
+
 function mapTicket(dto: AdminSupportTicketDto): Ticket {
   const messages = dto.messages?.map(mapMessage) ?? (dto.latest_message ? [mapMessage(dto.latest_message)] : []);
   const userName = dto.user.full_name || dto.user.username;
@@ -157,6 +362,87 @@ function mapMessage(dto: AdminSupportMessageDto): TicketMessage {
     isStaff: dto.is_staff,
     authorName: dto.author?.full_name || dto.author?.username || 'Hệ thống',
     createdAt: dto.created_at,
+  };
+}
+
+function mapHelpCenterCategory(dto: AdminSupportCategoryDto): HelpCenterCategory {
+  return {
+    id: dto.id,
+    name: dto.name,
+    slug: dto.slug,
+    description: dto.description,
+    sortOrder: dto.sort_order,
+    isActive: dto.is_active,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+function mapHelpCenterArticle(dto: AdminSupportArticleDto): HelpCenterArticle {
+  return {
+    id: dto.id,
+    category: mapHelpCenterCategory(dto.category),
+    title: dto.title,
+    slug: dto.slug,
+    summary: dto.summary,
+    body: dto.body,
+    locale: dto.locale,
+    status: dto.status,
+    sortOrder: dto.sort_order,
+    publishedAt: dto.published_at,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+function mapLegalDocument(dto: AdminLegalDocumentDto): LegalDocument {
+  return {
+    id: dto.id,
+    documentType: dto.document_type,
+    title: dto.title,
+    version: dto.version,
+    summary: dto.summary,
+    body: dto.body,
+    locale: dto.locale,
+    status: dto.status,
+    publishedAt: dto.published_at,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+function mapCategoryPayload(payload: SaveHelpCenterCategoryPayload) {
+  return {
+    name: payload.name,
+    slug: payload.slug,
+    description: payload.description,
+    sort_order: payload.sortOrder,
+    is_active: payload.isActive,
+  };
+}
+
+function mapArticlePayload(payload: SaveHelpCenterArticlePayload) {
+  return {
+    category_id: payload.categoryId,
+    title: payload.title,
+    slug: payload.slug,
+    summary: payload.summary,
+    body: payload.body,
+    locale: payload.locale,
+    status: payload.status,
+    sort_order: payload.sortOrder,
+  };
+}
+
+function mapLegalDocumentPayload(payload: SaveLegalDocumentPayload) {
+  return {
+    document_type: payload.documentType,
+    title: payload.title,
+    version: payload.version,
+    summary: payload.summary,
+    body: payload.body,
+    locale: payload.locale,
+    status: payload.status,
   };
 }
 

@@ -79,18 +79,6 @@ List<AppSetting> buildDefaultAppSettings({DateTime? updatedAt}) {
       updatedAt: now,
     ),
     AppSetting(
-      key: AppSettingKey.permissionLocationFeatureEnabled,
-      valueType: AppSettingValueType.boolean,
-      value: false,
-      updatedAt: now,
-    ),
-    AppSetting(
-      key: AppSettingKey.permissionContactsSyncEnabled,
-      valueType: AppSettingValueType.boolean,
-      value: false,
-      updatedAt: now,
-    ),
-    AppSetting(
       key: AppSettingKey.appearanceThemeMode,
       valueType: AppSettingValueType.string,
       value: 'system',

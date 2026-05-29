@@ -1,202 +1,119 @@
-import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
+import 'package:frontend/core/widgets/glass_search_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
-import 'package:frontend/core/widgets/glass_container.dart';
+import 'package:frontend/features/profile/models/help_center_models.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
+import 'package:frontend/features/profile/views/help_center_article_detail_view.dart';
+import 'package:frontend/features/profile/views/support_ticket_create_view.dart';
+import 'package:frontend/features/profile/views/support_ticket_detail_view.dart';
+import 'package:frontend/features/profile/widgets/help_center_widgets.dart';
 
-class HelpCenterView extends StatefulWidget {
+class HelpCenterView extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
 
   const HelpCenterView({super.key, this.onBack});
 
   @override
-  State<HelpCenterView> createState() => _HelpCenterViewState();
+  ConsumerState<HelpCenterView> createState() => _HelpCenterViewState();
 }
 
-class _HelpCenterViewState extends State<HelpCenterView> {
-  static const _faqItems = [
-    'Làm sao để đăng ký sự kiện?',
-    'Làm sao để hủy đăng ký?',
-    'Sự kiện có danh sách chờ không?',
-    'Làm sao để nhận vé?',
-  ];
-
+class _HelpCenterViewState extends ConsumerState<HelpCenterView> {
   String _query = '';
 
   @override
   Widget build(BuildContext context) {
-    final normalizedQuery = _query.trim().toLowerCase();
-    final visibleFaqItems = normalizedQuery.isEmpty
-        ? _faqItems
-        : _faqItems
-              .where((item) => item.toLowerCase().contains(normalizedQuery))
-              .toList(growable: false);
+    final locale = Localizations.localeOf(context).languageCode;
+    final helpCenterAsync = ref.watch(helpCenterProvider(locale));
+    final supportTicketsAsync = ref.watch(supportTicketsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
-                      Text(
-                        'Chúng tôi có thể giúp gì?',
-                        style: AppTextStyles.headlineLarge,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Search Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: Colors.white, width: 1),
+          RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(helpCenterProvider(locale));
+              ref.invalidate(supportTicketsProvider);
+              await ref.read(helpCenterProvider(locale).future);
+              await ref.read(supportTicketsProvider.future);
+            },
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        Text(
+                          'Chúng tôi có thể giúp gì?',
+                          style: AppTextStyles.headlineLarge,
+                        ),
+                        const SizedBox(height: 24),
+                        GlassSearchBar(
+                          placeholder: 'Tìm câu trả lời...',
+                          onChanged: (value) => setState(() => _query = value),
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          'CÂU HỎI THƯỜNG GẶP',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.onSurfaceVariant.withValues(
+                              alpha: 0.6,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.search,
-                                  color: AppColors.outline,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    onChanged: (value) =>
-                                        setState(() => _query = value),
-                                    decoration: InputDecoration(
-                                      hintText: 'Tìm câu trả lời...',
-                                      hintStyle: AppTextStyles.bodyMedium
-                                          .copyWith(color: AppColors.outline),
-                                      border: InputBorder.none,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            letterSpacing: 1.5,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // FAQ Section
-                      Text(
-                        'CÂU HỎI THƯỜNG GẶP',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.onSurfaceVariant.withValues(
-                            alpha: 0.6,
+                        const SizedBox(height: 16),
+                        helpCenterAsync.when(
+                          loading: () => const HelpCenterLoading(),
+                          error: (error, _) => HelpCenterError(
+                            message: _errorMessage(error),
+                            onRetry: () =>
+                                ref.invalidate(helpCenterProvider(locale)),
                           ),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      GlassContainer(
-                        padding: EdgeInsets.zero,
-                        child: visibleFaqItems.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  'Không tìm thấy câu hỏi phù hợp.',
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
-                                ),
-                              )
-                            : Column(
-                                children: [
-                                  for (
-                                    var index = 0;
-                                    index < visibleFaqItems.length;
-                                    index++
-                                  ) ...[
-                                    _buildFaqItem(visibleFaqItems[index]),
-                                    if (index < visibleFaqItems.length - 1)
-                                      Divider(
-                                        height: 1,
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                      ),
-                                  ],
-                                ],
-                              ),
-                      ),
-                      const SizedBox(height: 48),
-
-                      // Contact Support Option
-                      Text(
-                        'VẪN CẦN HỖ TRỢ?',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.onSurfaceVariant.withValues(
-                            alpha: 0.6,
+                          data: (categories) => HelpCenterContent(
+                            categories: _filterCategories(categories),
+                            onArticleTap: (article) =>
+                                _openArticle(context, locale, article),
                           ),
-                          letterSpacing: 1.5,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      GlassContainer(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.support_agent,
-                                color: AppColors.primary,
-                              ),
+                        const SizedBox(height: 48),
+                        Text(
+                          'VẪN CẦN HỖ TRỢ?',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.onSurfaceVariant.withValues(
+                              alpha: 0.6,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Liên hệ hỗ trợ',
-                                    style: AppTextStyles.bodyMedium.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Chúng tôi thường phản hồi trong 24 giờ',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: AppColors.outline,
-                            ),
-                          ],
+                            letterSpacing: 1.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
+                        const SizedBox(height: 16),
+                        SupportContactTile(
+                          onTap: () => _openSupportTicketCreateView(context),
+                        ),
+                        const SizedBox(height: 24),
+                        SupportTicketList(
+                          ticketsAsync: supportTicketsAsync,
+                          onTicketTap: (ticket) =>
+                              _openSupportTicketDetail(context, ticket),
+                          onRetry: () => ref.invalidate(supportTicketsProvider),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-
           Positioned(
             top: 0,
             left: 0,
@@ -212,16 +129,80 @@ class _HelpCenterViewState extends State<HelpCenterView> {
     );
   }
 
-  Widget _buildFaqItem(String title) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(child: Text(title, style: AppTextStyles.bodyMedium)),
-          const Icon(Icons.expand_more, color: AppColors.outline),
-        ],
+  List<HelpCenterCategoryModel> _filterCategories(
+    List<HelpCenterCategoryModel> categories,
+  ) {
+    final normalizedQuery = _query.trim();
+    if (normalizedQuery.isEmpty) return categories;
+
+    return categories
+        .map((category) => category.filter(normalizedQuery))
+        .where((category) => category.articles.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> _openArticle(
+    BuildContext context,
+    String locale,
+    HelpCenterArticleModel article,
+  ) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => HelpCenterArticleDetailView(
+          initialArticle: article,
+          loadArticle: () => ref
+              .read(helpCenterServiceProvider)
+              .getArticle(slug: article.slug, locale: locale),
+        ),
       ),
     );
+  }
+
+  Future<void> _openSupportTicketCreateView(BuildContext context) async {
+    final ticket = await Navigator.of(context).push<SupportTicketModel>(
+      MaterialPageRoute(
+        builder: (context) => SupportTicketCreateView(
+          onSubmit: (subject, description) => ref
+              .read(helpCenterServiceProvider)
+              .createSupportTicket(subject: subject, description: description),
+        ),
+      ),
+    );
+
+    if (!context.mounted || ticket == null) return;
+    ref.invalidate(supportTicketsProvider);
+    showAppSnackBar(context, 'Đã gửi yêu cầu hỗ trợ.');
+  }
+
+  Future<void> _openSupportTicketDetail(
+    BuildContext context,
+    SupportTicketModel ticket,
+  ) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => SupportTicketDetailView(
+          initialTicket: ticket,
+          loadTicket: () =>
+              ref.read(helpCenterServiceProvider).getSupportTicket(ticket.id),
+          onReply: (content) => ref
+              .read(helpCenterServiceProvider)
+              .addSupportTicketMessage(ticketId: ticket.id, content: content),
+        ),
+      ),
+    );
+    ref.invalidate(supportTicketsProvider);
+  }
+
+  String _errorMessage(Object error) {
+    if (error is DioException) {
+      final message = error.message?.trim();
+      if (message != null && message.isNotEmpty) return message;
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng và thử lại.';
+      }
+    }
+    return 'Không thể tải Trung tâm hỗ trợ. Vui lòng thử lại.';
   }
 }

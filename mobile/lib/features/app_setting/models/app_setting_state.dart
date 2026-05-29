@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/app_setting/models/app_permission.dart';
 import 'package:frontend/features/app_setting/models/app_setting.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 
@@ -14,14 +13,12 @@ class AppVersionInfo {
 
 class AppSettingState {
   final Map<String, AppSetting> settings;
-  final Map<AppPermissionKey, AppPermissionInfo> permissions;
   final AppVersionInfo? versionInfo;
   final Set<String> busyKeys;
   final Object? error;
 
   const AppSettingState({
     required this.settings,
-    required this.permissions,
     this.versionInfo,
     this.busyKeys = const {},
     this.error,
@@ -89,7 +86,6 @@ class AppSettingState {
 
   AppSettingState copyWith({
     Map<String, AppSetting>? settings,
-    Map<AppPermissionKey, AppPermissionInfo>? permissions,
     AppVersionInfo? versionInfo,
     Set<String>? busyKeys,
     Object? error,
@@ -97,7 +93,6 @@ class AppSettingState {
   }) {
     return AppSettingState(
       settings: settings ?? this.settings,
-      permissions: permissions ?? this.permissions,
       versionInfo: versionInfo ?? this.versionInfo,
       busyKeys: busyKeys ?? this.busyKeys,
       error: clearError ? null : error ?? this.error,

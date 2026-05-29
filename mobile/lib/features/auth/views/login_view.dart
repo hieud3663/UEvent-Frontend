@@ -13,7 +13,8 @@ import 'package:frontend/core/widgets/text_action_button.dart';
 class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
   final FutureOr<void> Function()? onLoginWithGoogle;
-  final VoidCallback? onLoginWithPasskey;
+  final FutureOr<void> Function(String email)? onLoginWithPasskey;
+  final String initialEmail;
   final bool preferPasskey;
   final bool passkeyAvailable;
 
@@ -22,6 +23,7 @@ class LoginView extends StatefulWidget {
     this.onLoginWithEmail,
     this.onLoginWithGoogle,
     this.onLoginWithPasskey,
+    this.initialEmail = '',
     this.preferPasskey = false,
     this.passkeyAvailable = true,
   });
@@ -31,11 +33,28 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final _emailController = TextEditingController();
+  late final TextEditingController _emailController;
   bool _isSubmittingEmail = false;
   bool _isSubmittingGoogle = false;
+  bool _isSubmittingPasskey = false;
 
-  bool get _isBusy => _isSubmittingEmail || _isSubmittingGoogle;
+  bool get _isBusy =>
+      _isSubmittingEmail || _isSubmittingGoogle || _isSubmittingPasskey;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_emailController.text.trim().isEmpty &&
+        widget.initialEmail != oldWidget.initialEmail) {
+      _emailController.text = widget.initialEmail;
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +86,21 @@ class _LoginViewState extends State<LoginView> {
     } finally {
       if (mounted) {
         setState(() => _isSubmittingGoogle = false);
+      }
+    }
+  }
+
+  Future<void> _submitPasskey() async {
+    if (_isBusy || widget.onLoginWithPasskey == null) return;
+
+    setState(() => _isSubmittingPasskey = true);
+    try {
+      await Future.sync(
+        () => widget.onLoginWithPasskey!(_emailController.text.trim()),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingPasskey = false);
       }
     }
   }
@@ -159,9 +193,8 @@ class _LoginViewState extends State<LoginView> {
                                 PrimaryButton(
                                   label: strings.passkeyLogin,
                                   icon: Icons.fingerprint,
-                                  onPressed: _isBusy
-                                      ? null
-                                      : widget.onLoginWithPasskey,
+                                  isLoading: _isSubmittingPasskey,
+                                  onPressed: _isBusy ? null : _submitPasskey,
                                 ),
                                 const SizedBox(height: 24),
                                 Text(
@@ -251,9 +284,7 @@ class _LoginViewState extends State<LoginView> {
                                 TextActionButton(
                                   label: strings.passkeyLogin,
                                   height: 48,
-                                  onPressed: _isBusy
-                                      ? null
-                                      : widget.onLoginWithPasskey,
+                                  onPressed: _isBusy ? null : _submitPasskey,
                                   foregroundColor: AppColors.onSurfaceVariant,
                                   icon: const Icon(Icons.fingerprint, size: 20),
                                   textStyle: AppTextStyles.titleSmall.copyWith(

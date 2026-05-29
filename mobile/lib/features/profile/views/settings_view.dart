@@ -7,6 +7,7 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/app_setting/models/app_permission.dart';
 import 'package:frontend/features/app_setting/models/app_setting_key.dart';
 import 'package:frontend/features/app_setting/models/app_setting_state.dart';
@@ -47,14 +48,6 @@ class SettingsView extends ConsumerStatefulWidget {
 
 class _SettingsViewState extends ConsumerState<SettingsView> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(appSettingControllerProvider.notifier).refreshPermissions();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<AppSettingState>>(appSettingControllerProvider, (
       previous,
@@ -72,6 +65,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final settings = settingsAsync.value;
     final cacheSize = ref.watch(cacheSizeProvider);
     final passkeyAvailable = ref.watch(passkeyCapabilityProvider).value ?? true;
+    final privacyPolicyVersion = ref
+        .watch(privacyPolicyProvider('vi'))
+        .value
+        ?.version;
     final settingsReady = settings != null;
 
     return Scaffold(
@@ -128,7 +125,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         settingsReady: settingsReady,
                         passkeyAvailable: passkeyAvailable,
                         lockTimeoutLabel: _lockTimeoutLabel(settings),
-                        onPreferPasskeyChanged: _setPreferPasskeyLogin,
+                        onPasskeyTap: widget.onPasskeyLogin,
                         onAppLockChanged: _setAppLockEnabled,
                         onLockTimeoutTap: () => _selectLockTimeout(settings),
                         onBiometricChanged: (value) => ref
@@ -138,10 +135,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       NotificationSettingsSection(
                         settings: settings,
                         settingsReady: settingsReady,
-                        notificationPermissionLabel: _permissionLabel(
-                          settings,
-                          AppPermissionKey.notification,
-                        ),
                         onPushNotificationsChanged: _setPushNotifications,
                       ),
                       AppearanceSettingsSection(
@@ -165,6 +158,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       SupportSettingsSection(
                         settings: settings,
+                        privacyPolicyVersion: privacyPolicyVersion,
                         onHelpCenter: widget.onHelpCenter,
                         onRateOnPlayStore: widget.onSendFeedback,
                         onPrivacyPolicy: widget.onPrivacyPolicy,
@@ -203,19 +197,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ],
       ),
     );
-  }
-
-  Future<void> _setPreferPasskeyLogin(bool value) async {
-    await ref
-        .read(appSettingControllerProvider.notifier)
-        .setPreferPasskeyLogin(value);
-    final enabled =
-        ref
-            .read(appSettingControllerProvider)
-            .value
-            ?.boolValue(AppSettingKey.securityPreferPasskeyLogin) ??
-        false;
-    if (enabled) widget.onPasskeyLogin?.call();
   }
 
   Future<void> _setPushNotifications(bool enabled) async {
@@ -400,12 +381,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  String _permissionLabel(AppSettingState? settings, AppPermissionKey key) {
-    final status = settings?.permissions[key]?.status;
-    if (status == null) return 'Đang kiểm tra';
-    return status.label;
-  }
-
   String _lockTimeoutLabel(AppSettingState? settings) {
     final seconds =
         settings?.intValue(
@@ -546,25 +521,10 @@ class _ProfileHeader extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(user.email, style: AppTextStyles.bodyMedium),
               const SizedBox(height: 16),
-              ElevatedButton(
+              PrimaryButton(
+                label: 'Chỉnh sửa hồ sơ',
+                isFullWidth: false,
                 onPressed: onEditProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 0,
-                  ),
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                ),
-                child: const Text(
-                  'Chỉnh sửa hồ sơ',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
               ),
               const SizedBox(height: 32),
             ],
