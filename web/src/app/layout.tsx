@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'UEvent Admin',
-  description: 'UEvent Admin Dashboard - Manage events, users, and tickets',
+  title: 'UEvent',
+  description: 'UEvent - Khám phá sự kiện, quản lý vé và tải ứng dụng di động.',
 };
 
 export default function RootLayout({
