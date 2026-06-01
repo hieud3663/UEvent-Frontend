@@ -1,6 +1,7 @@
 // File: src/app/(public)/PublicShell.tsx
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { PublicPageTransition } from './PublicPageTransition';
 import { publicNavItems } from './public-data';
 
 interface PublicShellProps {
@@ -9,7 +10,7 @@ interface PublicShellProps {
 
 export function PublicShell({ children }: PublicShellProps) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-ethereal text-on-surface">
+    <PublicPageTransition className="relative min-h-screen overflow-hidden bg-ethereal text-on-surface">
       <div className="pointer-events-none absolute left-[-12%] top-[-18%] h-[40rem] w-[40rem] rounded-full bg-primary-container/20 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-18%] right-[-12%] h-[34rem] w-[34rem] rounded-full bg-secondary-container/30 blur-[120px]" />
 
@@ -25,12 +26,12 @@ export function PublicShell({ children }: PublicShellProps) {
               </Link>
             ))}
           </nav>
-          <Link
+          {/* <Link
             href="/admin"
             className="inline-flex h-10 items-center justify-center rounded-xl border border-black/5 bg-white/70 px-4 text-sm font-bold text-on-surface shadow-sm transition hover:bg-white"
           >
             Quản trị
-          </Link>
+          </Link> ẩn vì không được public ra ngoài */}
         </div>
       </header>
       <div className="relative z-10">{children}</div>
@@ -47,6 +48,6 @@ export function PublicShell({ children }: PublicShellProps) {
           </div>
         </div>
       </footer>
-    </main>
+    </PublicPageTransition>
   );
 }

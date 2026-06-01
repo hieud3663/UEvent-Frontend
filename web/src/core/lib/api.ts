@@ -4,7 +4,7 @@ import { isApiEnvelope, unwrapApiEnvelope } from '@/core/lib/apiEnvelope';
 import type { ApiEnvelope } from '@/core/types/apiEnvelope';
 import type { ApiErrorResponse, ApiRequestOptions, ExportFileResult } from '@/core/types/api';
 
-const DEFAULT_API_BASE_URL = 'https://uevent.u-code.dev/api/v1';
+const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1';
 const ACCESS_TOKEN_KEY = 'uevent_admin_access_token';
 const REFRESH_TOKEN_KEY = 'uevent_admin_refresh_token';
 
