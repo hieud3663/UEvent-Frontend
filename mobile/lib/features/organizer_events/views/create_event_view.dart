@@ -79,10 +79,7 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   void _setDefaultSchedule() {
     final start = DateTime.now().add(const Duration(days: 1));
     final end = start.add(const Duration(hours: 2));
-    _startDateController.text = DateFormat('yyyy-MM-dd').format(start);
-    _startTimeController.text = DateFormat('HH:mm').format(start);
-    _endDateController.text = DateFormat('yyyy-MM-dd').format(end);
-    _endTimeController.text = DateFormat('HH:mm').format(end);
+    _setScheduleControllers(startAt: start, endAt: end);
   }
 
   @override
@@ -231,44 +228,22 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           maxLines: 4,
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: GlassInputField(
-                label: 'Ngày bắt đầu',
-                leadingIcon: Icons.calendar_today,
-                controller: _startDateController,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: GlassInputField(
-                label: 'Giờ bắt đầu',
-                leadingIcon: Icons.schedule,
-                controller: _startTimeController,
-              ),
-            ),
-          ],
+        GlassInputField(
+          label: 'Thời gian bắt đầu',
+          child: _DateTimePickerButton(
+            icon: Icons.event,
+            value: _formatPickerDateTime(_currentStartAt),
+            onTap: () => _pickDateTime(isStart: true),
+          ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: GlassInputField(
-                label: 'Ngày kết thúc',
-                leadingIcon: Icons.event_available,
-                controller: _endDateController,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: GlassInputField(
-                label: 'Giờ kết thúc',
-                leadingIcon: Icons.schedule,
-                controller: _endTimeController,
-              ),
-            ),
-          ],
+        GlassInputField(
+          label: 'Thời gian kết thúc',
+          child: _DateTimePickerButton(
+            icon: Icons.event_available,
+            value: _formatPickerDateTime(_currentEndAt),
+            onTap: () => _pickDateTime(isStart: false),
+          ),
         ),
         const SizedBox(height: 16),
         _buildRoomDropdown(roomsAsync),
@@ -648,6 +623,82 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     return null;
   }
 
+  DateTime? get _currentStartAt =>
+      _parseDateTime(_startDateController.text, _startTimeController.text);
+
+  DateTime? get _currentEndAt =>
+      _parseDateTime(_endDateController.text, _endTimeController.text);
+
+  String _formatPickerDateTime(DateTime? value) {
+    if (value == null) return 'Chọn ngày và giờ';
+    return DateFormat('dd/MM/yyyy HH:mm').format(value);
+  }
+
+  void _setScheduleControllers({
+    required DateTime startAt,
+    required DateTime endAt,
+  }) {
+    _startDateController.text = DateFormat('yyyy-MM-dd').format(startAt);
+    _startTimeController.text = DateFormat('HH:mm').format(startAt);
+    _endDateController.text = DateFormat('yyyy-MM-dd').format(endAt);
+    _endTimeController.text = DateFormat('HH:mm').format(endAt);
+  }
+
+  void _setStartControllers(DateTime value) {
+    _startDateController.text = DateFormat('yyyy-MM-dd').format(value);
+    _startTimeController.text = DateFormat('HH:mm').format(value);
+  }
+
+  void _setEndControllers(DateTime value) {
+    _endDateController.text = DateFormat('yyyy-MM-dd').format(value);
+    _endTimeController.text = DateFormat('HH:mm').format(value);
+  }
+
+  Future<void> _pickDateTime({required bool isStart}) async {
+    final now = DateTime.now();
+    final current = isStart
+        ? _currentStartAt ?? now.add(const Duration(days: 1))
+        : _currentEndAt ??
+              (_currentStartAt ?? now.add(const Duration(days: 1))).add(
+                const Duration(hours: 2),
+              );
+    final initialDate = DateTime(current.year, current.month, current.day);
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final pickedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      if (isStart) {
+        _setStartControllers(pickedDateTime);
+        final currentEnd = _currentEndAt;
+        if (currentEnd == null || !currentEnd.isAfter(pickedDateTime)) {
+          _setEndControllers(pickedDateTime.add(const Duration(hours: 2)));
+        }
+      } else {
+        _setEndControllers(pickedDateTime);
+      }
+    });
+  }
+
   String _fileNameFromPath(String path) {
     final normalized = path.replaceAll(r'\', '/');
     final slashIndex = normalized.lastIndexOf('/');
@@ -662,13 +713,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _activeEvent = event;
     _titleController.text = event.title;
     _descriptionController.text = event.description ?? '';
-    _startDateController.text = DateFormat(
-      'yyyy-MM-dd',
-    ).format(event.startDate);
-    _startTimeController.text = DateFormat('HH:mm').format(event.startDate);
     final end = event.endDate ?? event.startDate.add(const Duration(hours: 2));
-    _endDateController.text = DateFormat('yyyy-MM-dd').format(end);
-    _endTimeController.text = DateFormat('HH:mm').format(end);
+    _setScheduleControllers(startAt: event.startDate, endAt: end);
     _capacityController.text = event.guestCount?.toString() ?? '';
     _isPublic = event.visibility != EventVisibility.private;
     _activateImmediately = event.status != EventStatus.draft;
@@ -839,6 +885,54 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DateTimePickerButton extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final VoidCallback onTap;
+
+  const _DateTimePickerButton({
+    required this.icon,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.onSurfaceVariant,
+                size: 22,
+              ),
+            ],
+          ),
         ),
       ),
     );
