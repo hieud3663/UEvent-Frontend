@@ -5,7 +5,6 @@ import 'package:frontend/features/event_shared/models/event_feedback_model.dart'
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
-import 'package:frontend/features/event_shared/models/event_share_link_model.dart';
 import 'package:frontend/features/user_events/services/user_event_service.dart';
 
 abstract interface class UserEventRepository {
@@ -22,10 +21,6 @@ abstract interface class UserEventRepository {
 
   Future<List<EventCategoryModel>> getEventCategories();
   Future<EventModel> getEventDetail(String eventId);
-
-  Future<EventModel> getEventBySlug(String slug);
-
-  Future<EventShareLinkModel> getEventShareLink(String eventId);
 
   Future<EventRegistrationModel> registerEvent({
     required String eventId,
@@ -130,35 +125,6 @@ class UserEventRepositoryImpl implements UserEventRepository {
     }
 
     return _service.getEventDetail(eventId);
-  }
-
-  @override
-  Future<EventModel> getEventBySlug(String slug) async {
-    if (EnvConfig.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return MockEventData.list.firstWhere(
-        (event) => (event.slug ?? event.id) == slug,
-      );
-    }
-
-    return _service.getEventBySlug(slug);
-  }
-
-  @override
-  Future<EventShareLinkModel> getEventShareLink(String eventId) async {
-    if (EnvConfig.useMockData) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      final event = MockEventData.list.firstWhere((item) => item.id == eventId);
-      final slug = event.slug ?? event.id;
-      return EventShareLinkModel(
-        eventId: eventId,
-        slug: slug,
-        shareUrl: 'https://uevent.u-code.dev/events/share/$slug',
-        visibility: event.visibility.name,
-      );
-    }
-
-    return _service.getEventShareLink(eventId);
   }
 
   @override
