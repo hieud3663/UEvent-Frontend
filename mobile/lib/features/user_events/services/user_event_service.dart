@@ -6,6 +6,7 @@ import 'package:frontend/features/event_shared/models/event_feedback_model.dart'
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+import 'package:frontend/features/event_shared/models/event_share_link_model.dart';
 
 class UserEventService {
   final ApiClient _apiClient;
@@ -74,6 +75,25 @@ class UserEventService {
     try {
       final response = await _apiClient.dio.get('/events/$eventId/');
       return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventModel> getEventBySlug(String slug) async {
+    try {
+      final encodedSlug = Uri.encodeComponent(slug);
+      final response = await _apiClient.dio.get('/events/slug/$encodedSlug/');
+      return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventShareLinkModel> getEventShareLink(String eventId) async {
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/share-link/');
+      return EventShareLinkModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

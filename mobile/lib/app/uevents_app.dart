@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -23,13 +24,52 @@ import 'package:frontend/features/auth/views/otp_verification_view.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
 import 'package:frontend/features/auth/views/profile_setup_view.dart';
 import 'package:frontend/features/auth/views/splash_view.dart';
+import 'package:frontend/features/event_shared/providers/shared_event_link_provider.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
 
-class UEventsApp extends ConsumerWidget {
+class UEventsApp extends ConsumerStatefulWidget {
   const UEventsApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UEventsApp> createState() => _UEventsAppState();
+}
+
+class _UEventsAppState extends ConsumerState<UEventsApp> {
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadInitialDeepLink());
+    _linkSubscription = _appLinks.uriLinkStream.listen(_handleDeepLink);
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadInitialDeepLink() async {
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    } catch (_) {
+      // Deep links are optional; startup should continue if the OS plugin fails.
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    final slug = _extractSharedEventSlug(uri);
+    if (slug == null) return;
+    ref.read(sharedEventSlugProvider.notifier).setSlug(slug);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final appSettings = ref.watch(appSettingControllerProvider).value;
 
     return MaterialApp(
@@ -66,6 +106,27 @@ class UEventsApp extends ConsumerWidget {
       ),
     );
   }
+}
+
+String? _extractSharedEventSlug(Uri uri) {
+  final segments = uri.pathSegments
+      .map((segment) => segment.trim())
+      .where((segment) => segment.isNotEmpty)
+      .toList(growable: false);
+
+  if (uri.scheme == 'uevent' && uri.host == 'events') {
+    if (segments.length >= 2 && segments.first == 'share') return segments[1];
+    if (segments.isNotEmpty) return segments.first;
+  }
+
+  if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+      segments.length >= 3 &&
+      segments[0] == 'events' &&
+      segments[1] == 'share') {
+    return segments[2];
+  }
+
+  return null;
 }
 
 Future<void> _handleSignIn(
