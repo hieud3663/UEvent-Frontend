@@ -6,6 +6,7 @@ class EnvConfig {
   static const String baseUrl =
       // 'http://10.0.2.2:8000/api/v1';
       // 'http://192.168.43.220:8000/api/v1';
+      // 'http://192.168.1.7:8000/api/v1';
       'https://uevent.u-code.dev/api/v1'; // Update to your API domain
 
   /// Additional global constants can go here
