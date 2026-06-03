@@ -7,6 +7,7 @@ import 'package:frontend/features/event_shared/models/event_category_model.dart'
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
 import 'package:frontend/features/organizer_events/models/check_in_model.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 
 final organizerEventMutationControllerProvider =
@@ -102,6 +103,7 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
 
       ref.invalidate(organizerEventsProvider);
       ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;
@@ -184,6 +186,7 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
       ref.invalidate(organizerEventsPagerProvider);
       ref.invalidate(userDiscoveryEventsProvider);
       ref.invalidate(userDiscoverySearchEventsProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;
@@ -207,6 +210,7 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
       ref.invalidate(organizerEventsPagerProvider);
       ref.invalidate(userDiscoveryEventsProvider);
       ref.invalidate(userDiscoverySearchEventsProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;
@@ -268,6 +272,7 @@ class OrganizerEventRegistrationController extends AsyncNotifier<void> {
       ref.invalidate(organizerEventRegistrationsProvider(eventId));
       ref.invalidate(organizerEventsProvider);
       ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;
@@ -300,6 +305,7 @@ class OrganizerEventRegistrationController extends AsyncNotifier<void> {
       ref.invalidate(organizerCheckInLogsProvider(eventId));
       ref.invalidate(organizerEventsProvider);
       ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;

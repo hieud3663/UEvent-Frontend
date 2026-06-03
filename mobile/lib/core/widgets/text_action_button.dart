@@ -8,6 +8,7 @@ class TextActionButton extends StatelessWidget {
   final Widget? icon;
   final double iconGap;
   final double? height;
+  final bool isLoading;
 
   const TextActionButton({
     super.key,
@@ -18,14 +19,17 @@ class TextActionButton extends StatelessWidget {
     this.icon,
     this.iconGap = 8,
     this.height,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveForegroundColor =
+        foregroundColor ?? Theme.of(context).colorScheme.primary;
     final child = TextButton(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: foregroundColor,
+        foregroundColor: effectiveForegroundColor,
         minimumSize: Size.zero,
         padding: EdgeInsets.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -35,7 +39,22 @@ class TextActionButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null) ...[icon!, SizedBox(width: iconGap)],
+          if (isLoading) ...[
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  effectiveForegroundColor,
+                ),
+              ),
+            ),
+            SizedBox(width: iconGap),
+          ] else if (icon != null) ...[
+            icon!,
+            SizedBox(width: iconGap),
+          ],
           Text(label, style: textStyle),
         ],
       ),

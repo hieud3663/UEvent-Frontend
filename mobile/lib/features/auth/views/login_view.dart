@@ -284,6 +284,7 @@ class _LoginViewState extends State<LoginView> {
                                 TextActionButton(
                                   label: strings.passkeyLogin,
                                   height: 48,
+                                  isLoading: _isSubmittingPasskey,
                                   onPressed: _isBusy ? null : _submitPasskey,
                                   foregroundColor: AppColors.onSurfaceVariant,
                                   icon: const Icon(Icons.fingerprint, size: 20),
