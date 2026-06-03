@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/app/app_routes.dart';
@@ -15,7 +16,9 @@ import 'package:frontend/features/auth/providers/auth_providers.dart';
 import 'package:frontend/features/auth/views/passkey_setup_view.dart';
 import 'package:frontend/features/user_events/controller/user_event_controller.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/event_shared/providers/shared_event_link_provider.dart';
 import 'package:frontend/features/user_events/views/ask_question_screen.dart';
+import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 import 'package:frontend/features/organizer_events/views/attendee_list_view.dart';
 import 'package:frontend/features/organizer_events/views/create_event_view.dart';
 import 'package:frontend/features/user_events/views/discovery_view.dart';
@@ -28,7 +31,6 @@ import 'package:frontend/features/organizer_events/views/organizer_engagement_vi
 import 'package:frontend/features/user_events/views/registration_confirmation_screen.dart';
 import 'package:frontend/features/user_events/views/student_events_view.dart';
 import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
-import 'package:frontend/features/event_shared/views/share_event_sheet.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
@@ -43,6 +45,7 @@ import 'package:frontend/features/ticketing/views/cancel_confirmation_sheet.dart
 import 'package:frontend/features/ticketing/views/ticket_detail_view.dart';
 import 'package:frontend/features/ticketing/views/qr_scanner_view.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 typedef SignedOutCallback = void Function(BuildContext context, WidgetRef ref);
@@ -72,6 +75,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_registerPushDeviceIfEnabled());
+      unawaited(_openPendingSharedEvent());
     });
   }
 
@@ -151,7 +155,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             onCheckIn: () => _pushQrScanner(event),
             onNotify: () => _pushSendNotification(event),
             onManage: () => _pushManageEventHub(event),
-            onShare: () => ShareEventSheet.show(ctx),
+            onShare: event.visibility == EventVisibility.public
+                ? () => _shareEvent(ctx, event)
+                : null,
           ),
         ),
       );
@@ -162,7 +168,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             eventId: event.id,
             initialEvent: event,
             onBack: () => Navigator.of(ctx).pop(),
-            onShare: () => ShareEventSheet.show(ctx),
+            onShare: event.visibility == EventVisibility.public
+                ? () => _shareEvent(ctx, event)
+                : null,
             onRegister: () => _pushRegistrationConfirmation(ctx, event),
             onManage: () => _pushManageEventHub(event),
             onMyTicket: () => _pushMyTicket(ctx, event),
@@ -171,6 +179,59 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _openPendingSharedEvent() async {
+    final slug = ref.read(sharedEventSlugProvider);
+    if (slug == null) return;
+
+    ref.read(sharedEventSlugProvider.notifier).clear();
+    await _openSharedEventBySlug(slug);
+  }
+
+  Future<void> _openSharedEventBySlug(String slug) async {
+    try {
+      final event = await ref
+          .read(userEventRepositoryProvider)
+          .getEventBySlug(slug);
+      if (!mounted) return;
+      _pushEventDetail(event);
+    } on DioException catch (error) {
+      if (!mounted) return;
+      final message = error.response?.statusCode == 404
+          ? 'Sự kiện được chia sẻ không còn khả dụng.'
+          : 'Không thể mở sự kiện được chia sẻ.';
+      _showSnackBar(context, message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(context, 'Không thể mở sự kiện được chia sẻ.');
+    }
+  }
+
+  Future<void> _shareEvent(BuildContext ctx, EventModel event) async {
+    try {
+      final shareLink = await ref
+          .read(userEventRepositoryProvider)
+          .getEventShareLink(event.id);
+      if (!ctx.mounted) return;
+
+      await SharePlus.instance.share(
+        ShareParams(
+          text: '${event.title}\n${shareLink.shareUrl}',
+          subject: event.title,
+        ),
+      );
+    } on DioException catch (error) {
+      if (!ctx.mounted) return;
+
+      final message = error.response?.statusCode == 403
+          ? 'Sự kiện riêng tư không hỗ trợ chia sẻ công khai.'
+          : 'Không thể tạo liên kết chia sẻ lúc này.';
+      _showSnackBar(ctx, message);
+    } catch (_) {
+      if (!ctx.mounted) return;
+      _showSnackBar(ctx, 'Không thể tạo liên kết chia sẻ lúc này.');
     }
   }
 
@@ -553,6 +614,17 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(sharedEventSlugProvider, (previous, next) {
+      if (next == null || next == previous) return;
+
+      ref.read(sharedEventSlugProvider.notifier).clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_openSharedEventBySlug(next));
+        }
+      });
+    });
+
     final profile = ref.watch(userProfileProvider).value;
     final isStudent = profile?.primaryRole.trim().toLowerCase() == 'student';
     final navItems = GlassBottomNavBar.itemsForRole(isStudent: isStudent);

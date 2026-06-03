@@ -76,8 +76,10 @@ class EventHeroHeader extends StatelessWidget {
                       onTap: onBack ?? () => Navigator.of(context).pop(),
                     ),
                     const Spacer(),
-                    _GlassCircleButton(icon: Icons.share, onTap: onShare),
-                    const SizedBox(width: 8),
+                    if (onShare != null) ...[
+                      _GlassCircleButton(icon: Icons.share, onTap: onShare),
+                      const SizedBox(width: 8),
+                    ],
                     _GlassCircleButton(
                       icon: isFavourited
                           ? Icons.favorite
