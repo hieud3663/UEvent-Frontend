@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, ChevronDown, HelpCircle, LogOut, Search, Settings } from 'lucide-react';
+import { AdminSelect } from '@/core/components/AdminSelect';
 import { cn } from '@/core/lib/utils';
 import { getCurrentAdmin, logoutAdmin } from '@/features/auth/services/auth.service';
 import type { AdminUserInfo } from '@/features/auth/types';
@@ -16,18 +17,21 @@ interface HeaderProps {
 const SEARCH_SCOPES = [
   { value: 'users', label: 'Người dùng', href: '/users' },
   { value: 'events', label: 'Sự kiện', href: '/events' },
+  { value: 'locations', label: 'Địa điểm', href: '/locations' },
   { value: 'tickets', label: 'Vé', href: '/tickets' },
   { value: 'categories', label: 'Danh mục', href: '/categories' },
   { value: 'notifications', label: 'Thông báo', href: '/notifications' },
   { value: 'support', label: 'Hỗ trợ', href: '/support' },
 ] as const;
 
+type SearchScope = (typeof SEARCH_SCOPES)[number]['value'];
+
 export function Header({ className }: HeaderProps) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [admin, setAdmin] = useState<AdminUserInfo | null>(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const [searchScope, setSearchScope] = useState<(typeof SEARCH_SCOPES)[number]['value']>('users');
+  const [searchScope, setSearchScope] = useState<SearchScope>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -103,18 +107,15 @@ export function Header({ className }: HeaderProps) {
           placeholder="Tìm trong admin..."
           className="min-w-0 flex-1 border-none bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-500"
         />
-        <select
+        <AdminSelect<SearchScope>
           value={searchScope}
-          onChange={(event) => setSearchScope(event.target.value as typeof searchScope)}
-          className="h-8 rounded-full border border-white/70 bg-white/70 px-3 text-xs font-bold text-slate-600 outline-none transition focus:border-amber-500"
-          aria-label="Phạm vi tìm kiếm"
-        >
-          {SEARCH_SCOPES.map((scope) => (
-            <option key={scope.value} value={scope.value}>
-              {scope.label}
-            </option>
-          ))}
-        </select>
+          onChange={setSearchScope}
+          options={SEARCH_SCOPES}
+          ariaLabel="Phạm vi tìm kiếm"
+          className="w-36 shrink-0"
+          triggerClassName="h-8 rounded-full border-white/70 bg-white/70 px-3 text-xs font-bold text-slate-600 hover:border-amber-300"
+          menuClassName="right-0 left-auto w-44 rounded-2xl"
+        />
       </form>
 
       <div className="flex min-w-0 items-center gap-3 sm:gap-6">

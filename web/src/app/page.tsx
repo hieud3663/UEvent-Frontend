@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Apple,
-  ArrowRight,
   CalendarDays,
   Download,
   MapPin,
@@ -12,6 +11,7 @@ import {
   Ticket,
   Users,
 } from 'lucide-react';
+import { PublicPageTransition } from './(public)/PublicPageTransition';
 
 const highlights = [
   {
@@ -39,7 +39,7 @@ const stats = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-ethereal text-on-surface">
+    <PublicPageTransition className="min-h-screen bg-ethereal text-on-surface">
       <section className="relative isolate h-[82svh] min-h-[520px] max-h-[680px] overflow-hidden">
         <Image
           src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1800&q=80"
@@ -70,12 +70,12 @@ export default function HomePage() {
               Chính sách
             </Link>
           </nav>
-          <Link
+          {/* <Link
             href="/admin"
             className="inline-flex h-10 items-center justify-center rounded-xl border border-white/40 bg-white/10 px-4 text-sm font-bold text-white backdrop-blur transition hover:bg-white hover:text-on-surface"
           >
             Quản trị
-          </Link>
+          </Link> ẩn vì không được hiển thị cho người dùng */}
         </header>
 
         <div className="relative z-10 mx-auto flex h-[calc(100%-80px)] w-full max-w-7xl items-center px-5 pb-12 sm:px-8">
@@ -98,13 +98,13 @@ export default function HomePage() {
                 <Download className="h-4 w-4" />
                 Tải ứng dụng
               </Link>
-              <Link
+              {/* <Link
                 href="#features"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
               >
                 Xem trải nghiệm
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -203,6 +203,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </main>
+    </PublicPageTransition>
   );
 }

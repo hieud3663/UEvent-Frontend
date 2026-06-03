@@ -36,7 +36,7 @@ export async function LegalDocumentPage({ documentType, eyebrow }: LegalDocument
           </div>
 
           {document ? (
-            <dl className="mt-8 grid gap-3 border-y border-black/5 py-5 text-sm sm:grid-cols-3">
+            <dl className="mt-8 grid gap-3 border-y border-black/5 py-5 text-sm sm:grid-cols-2">
               <div className="rounded-2xl bg-white/55 p-4">
                 <dt className="font-bold text-on-surface-variant">Phiên bản</dt>
                 <dd className="mt-1 font-black text-on-surface">{document.version || 'Chưa công bố'}</dd>
@@ -47,10 +47,7 @@ export async function LegalDocumentPage({ documentType, eyebrow }: LegalDocument
                   {document.updatedAt ? formatLegalDate(document.updatedAt) : 'Chưa công bố'}
                 </dd>
               </div>
-              <div className="rounded-2xl bg-white/55 p-4">
-                <dt className="font-bold text-on-surface-variant">Nguồn</dt>
-                <dd className="mt-1 font-black text-on-surface">API ứng dụng</dd>
-              </div>
+              
             </dl>
           ) : null}
 
