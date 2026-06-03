@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:frontend/features/profile/models/help_center_models.dart';
 import 'package:frontend/features/profile/services/help_center_service.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
@@ -43,14 +44,45 @@ final profileOverviewProvider = FutureProvider<ProfileOverviewModel>((
 ) async {
   final profileService = ref.read(profileServiceProvider);
   final eventRepository = ref.read(userEventRepositoryProvider);
+  final organizerRepository = ref.read(organizerEventRepositoryProvider);
 
   final results = await Future.wait<dynamic>([
     profileService.getMyProfile(),
-    eventRepository.getEvents(queryParams: {'scope': 'mine'}),
+    eventRepository.getMyRegisteredEvents(),
+    organizerRepository.getOrganizerEvents(pageSize: 100),
   ]);
 
   return ProfileOverviewModel(
     user: results[0] as UserModel,
-    events: results[1] as List<EventModel>,
+    events: _mergeProfileEvents(
+      registeredEvents: results[1] as List<EventModel>,
+      organizerEvents: results[2] as List<EventModel>,
+    ),
   );
 });
+
+List<EventModel> _mergeProfileEvents({
+  required List<EventModel> registeredEvents,
+  required List<EventModel> organizerEvents,
+}) {
+  final eventsById = <String, EventModel>{};
+
+  for (final event in registeredEvents) {
+    eventsById[event.id] = event.copyWith(
+      userEventRelation: EventUserRelation.registered,
+    );
+  }
+
+  for (final event in organizerEvents) {
+    eventsById[event.id] = event.copyWith(
+      isOrganizer: true,
+      userEventRelation: event.userEventRelation == EventUserRelation.registered
+          ? EventUserRelation.registered
+          : EventUserRelation.owner,
+    );
+  }
+
+  final events = eventsById.values.toList();
+  events.sort((a, b) => a.startDate.compareTo(b.startDate));
+  return events;
+}

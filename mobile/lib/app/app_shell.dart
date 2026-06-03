@@ -21,7 +21,9 @@ import 'package:frontend/features/organizer_events/views/create_event_view.dart'
 import 'package:frontend/features/user_events/views/discovery_view.dart';
 import 'package:frontend/features/user_events/views/empty_search_view.dart';
 import 'package:frontend/features/organizer_events/views/event_detail_organizer_view.dart';
+import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:frontend/features/user_events/views/event_detail_screen.dart';
+import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 import 'package:frontend/features/organizer_events/views/manage_event_hub_view.dart';
 import 'package:frontend/features/organizer_events/views/manage_events_view.dart';
 import 'package:frontend/features/organizer_events/views/organizer_engagement_view.dart';
@@ -29,7 +31,9 @@ import 'package:frontend/features/user_events/views/registration_confirmation_sc
 import 'package:frontend/features/user_events/views/student_events_view.dart';
 import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
 import 'package:frontend/features/event_shared/views/share_event_sheet.dart';
+import 'package:frontend/features/notifications/models/notification_model.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
+import 'package:frontend/features/notifications/views/notification_detail_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/profile/views/change_email_view.dart';
@@ -106,16 +110,91 @@ class _AppShellState extends ConsumerState<AppShell> {
             _onNavTap(i);
           },
           onBack: () => Navigator.of(context).pop(),
+          onNotificationTap: _handleNotificationTap,
         ),
       ),
     );
   }
 
+  void _handleNotificationTap(NotificationModel notification) {
+    final eventId = _notificationEventId(notification);
+    if (eventId != null) {
+      if (_isStudent) {
+        _pushStudentEventDetailById(eventId);
+      } else {
+        _pushOrganizerEventDetailById(eventId);
+      }
+      return;
+    }
+
+    final actionRoute = notification.actionRoute?.trim().toLowerCase();
+    if (actionRoute == null || actionRoute.isEmpty) {
+      _pushNotificationDetail(notification);
+      return;
+    }
+
+    if (actionRoute.contains('settings') || actionRoute.contains('profile')) {
+      Navigator.of(context).pop();
+      _onNavTap(2);
+      return;
+    }
+
+    _pushNotificationDetail(notification);
+  }
+
+  String? _notificationEventId(NotificationModel notification) {
+    final relatedEventId = notification.relatedEventId?.trim();
+    if (relatedEventId != null && relatedEventId.isNotEmpty) {
+      return relatedEventId;
+    }
+
+    final actionRoute = notification.actionRoute?.trim();
+    if (actionRoute == null || actionRoute.isEmpty) return null;
+
+    final uri = Uri.tryParse(actionRoute);
+    final queryEventId =
+        uri?.queryParameters['event_id'] ?? uri?.queryParameters['eventId'];
+    if (queryEventId != null && queryEventId.trim().isNotEmpty) {
+      return queryEventId.trim();
+    }
+
+    final segments = uri?.pathSegments.isNotEmpty == true
+        ? uri!.pathSegments
+        : actionRoute
+              .split('/')
+              .where((segment) => segment.trim().isNotEmpty)
+              .toList(growable: false);
+
+    final eventSegmentIndex = segments.indexWhere(
+      (segment) => segment == 'events' || segment == 'event',
+    );
+    if (eventSegmentIndex >= 0 && eventSegmentIndex + 1 < segments.length) {
+      final eventId = segments[eventSegmentIndex + 1].trim();
+      if (eventId.isNotEmpty) return eventId;
+    }
+
+    return null;
+  }
+
   void _pushProfile() {
     Navigator.of(context).push(
       appRoute(
-        builder: (_) =>
-            UserProfileView(onBack: () => Navigator.of(context).pop()),
+        builder: (_) => UserProfileView(
+          onBack: () => Navigator.of(context).pop(),
+          onEditProfile: _pushEditProfile,
+          onEventTap: _pushEventDetail,
+        ),
+      ),
+    );
+  }
+
+  void _pushNotificationDetail(NotificationModel notification) {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => NotificationDetailView(
+          notification: notification,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
       ),
     );
   }
@@ -172,6 +251,64 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       );
     }
+  }
+
+  void _pushStudentEventDetailById(String eventId) {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => Consumer(
+          builder: (ctx, ref, _) {
+            final event = ref.watch(userEventDetailProvider(eventId)).value;
+
+            return EventDetailScreen(
+              eventId: eventId,
+              initialEvent: event,
+              onBack: () => Navigator.of(ctx).pop(),
+              onShare: () => ShareEventSheet.show(ctx),
+              onRegister: event == null
+                  ? null
+                  : () => _pushRegistrationConfirmation(ctx, event),
+              onManage: event == null ? null : () => _pushManageEventHub(event),
+              onMyTicket: event == null
+                  ? null
+                  : () => _pushMyTicket(ctx, event),
+              onUnregister: event == null
+                  ? null
+                  : () => _showUnregisterConfirmation(ctx, event),
+              onAskQuestion: event == null
+                  ? null
+                  : () => _pushAskQuestion(ctx, event),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _pushOrganizerEventDetailById(String eventId) {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => Consumer(
+          builder: (ctx, ref, _) {
+            final event = ref
+                .watch(organizerEventDetailProvider(eventId))
+                .value;
+
+            return EventDetailOrganizerView(
+              eventId: eventId,
+              initialEvent: event,
+              onBack: () => Navigator.of(ctx).pop(),
+              onCheckIn: event == null ? null : () => _pushQrScanner(event),
+              onNotify: event == null
+                  ? null
+                  : () => _pushSendNotification(event),
+              onManage: event == null ? null : () => _pushManageEventHub(event),
+              onShare: () => ShareEventSheet.show(ctx),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   void _pushRegistrationConfirmation(BuildContext ctx, EventModel event) {
