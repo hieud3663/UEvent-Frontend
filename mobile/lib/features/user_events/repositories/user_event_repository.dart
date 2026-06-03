@@ -5,6 +5,7 @@ import 'package:frontend/features/event_shared/models/event_feedback_model.dart'
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+import 'package:frontend/features/event_shared/models/event_share_link_model.dart';
 import 'package:frontend/features/user_events/services/user_event_service.dart';
 
 abstract interface class UserEventRepository {
@@ -22,6 +23,10 @@ abstract interface class UserEventRepository {
   Future<List<EventCategoryModel>> getEventCategories();
   Future<EventModel> getEventDetail(String eventId);
 
+  Future<EventModel> getEventBySlug(String slug);
+
+  Future<EventShareLinkModel> getEventShareLink(String eventId);
+
   Future<EventRegistrationModel> registerEvent({
     required String eventId,
     List<EventRegistrationAnswerModel> answers = const [],
@@ -37,6 +42,11 @@ abstract interface class UserEventRepository {
     required String eventId,
     required String questionText,
     required bool isAnonymous,
+  });
+
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
   });
 
   Future<List<EventFeedbackModel>> getEventFeedbacks({required String eventId});
@@ -128,6 +138,35 @@ class UserEventRepositoryImpl implements UserEventRepository {
   }
 
   @override
+  Future<EventModel> getEventBySlug(String slug) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return MockEventData.list.firstWhere(
+        (event) => (event.slug ?? event.id) == slug,
+      );
+    }
+
+    return _service.getEventBySlug(slug);
+  }
+
+  @override
+  Future<EventShareLinkModel> getEventShareLink(String eventId) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      final event = MockEventData.list.firstWhere((item) => item.id == eventId);
+      final slug = event.slug ?? event.id;
+      return EventShareLinkModel(
+        eventId: eventId,
+        slug: slug,
+        shareUrl: 'https://uevent.u-code.dev/events/share/$slug',
+        visibility: event.visibility.name,
+      );
+    }
+
+    return _service.getEventShareLink(eventId);
+  }
+
+  @override
   Future<EventRegistrationModel> registerEvent({
     required String eventId,
     List<EventRegistrationAnswerModel> answers = const [],
@@ -206,6 +245,27 @@ class UserEventRepositoryImpl implements UserEventRepository {
       eventId: eventId,
       questionText: questionText,
       isAnonymous: isAnonymous,
+    );
+  }
+
+  @override
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return EventQuestionReplyModel(
+        id: 'mock-reply-${DateTime.now().millisecondsSinceEpoch}',
+        content: content,
+        createdAt: DateTime.now(),
+        timeAgo: 'just now',
+      );
+    }
+
+    return _service.createQuestionReply(
+      questionId: questionId,
+      content: content,
     );
   }
 

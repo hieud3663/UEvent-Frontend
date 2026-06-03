@@ -16,6 +16,7 @@ import 'package:frontend/features/event_shared/widgets/event_hero_header.dart';
 import 'package:frontend/features/event_shared/widgets/event_info_row.dart';
 import 'package:frontend/features/event_shared/widgets/event_organizer_card.dart';
 import 'package:frontend/features/event_shared/widgets/event_qa_section.dart';
+import 'package:frontend/features/user_events/controller/user_event_controller.dart';
 
 class EventDetailScreen extends ConsumerStatefulWidget {
   final String eventId;
@@ -316,10 +317,26 @@ class _QuestionsSection extends ConsumerWidget {
           questions: visibleQuestions.take(3).toList(),
           totalCount: visibleQuestions.length,
           onAskQuestion: onAskQuestion,
-          onViewAll: () => _showAllQuestions(context, visibleQuestions),
+          onReplyQuestion: (question, content) =>
+              _replyToQuestion(ref, question, content),
+          onViewAll: () => _showAllQuestions(context, ref, visibleQuestions),
         );
       },
     );
+  }
+
+  Future<bool> _replyToQuestion(
+    WidgetRef ref,
+    EventQuestionModel question,
+    String content,
+  ) {
+    return ref
+        .read(userEventEngagementControllerProvider.notifier)
+        .replyToQuestion(
+          eventId: eventId,
+          questionId: question.id,
+          content: content,
+        );
   }
 
   List<EventQuestionModel> _sortedQuestions(
@@ -337,6 +354,7 @@ class _QuestionsSection extends ConsumerWidget {
 
   void _showAllQuestions(
     BuildContext context,
+    WidgetRef ref,
     List<EventQuestionModel> questions,
   ) {
     showModalBottomSheet(
@@ -376,6 +394,8 @@ class _QuestionsSection extends ConsumerWidget {
                     questions: questions,
                     totalCount: questions.length,
                     onAskQuestion: onAskQuestion,
+                    onReplyQuestion: (question, content) =>
+                        _replyToQuestion(ref, question, content),
                   ),
                 ),
               ),

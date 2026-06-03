@@ -10,7 +10,7 @@ class ManageEventHubView extends StatelessWidget {
   final VoidCallback? onEditDetailsTap;
   final VoidCallback? onAttendeeListTap;
   final VoidCallback? onParticipantCheckInTap;
-  final VoidCallback? onQuestionsFeedbackTap;
+  final VoidCallback? onQuestionsTap;
 
   const ManageEventHubView({
     super.key,
@@ -19,7 +19,7 @@ class ManageEventHubView extends StatelessWidget {
     this.onEditDetailsTap,
     this.onAttendeeListTap,
     this.onParticipantCheckInTap,
-    this.onQuestionsFeedbackTap,
+    this.onQuestionsTap,
   });
 
   @override
@@ -30,7 +30,7 @@ class ManageEventHubView extends StatelessWidget {
       onEditDetailsTap: onEditDetailsTap,
       onAttendeeListTap: onAttendeeListTap,
       onParticipantCheckInTap: onParticipantCheckInTap,
-      onQuestionsFeedbackTap: onQuestionsFeedbackTap,
+      onQuestionsTap: onQuestionsTap,
     );
   }
 }

@@ -20,6 +20,11 @@ final organizerEventRegistrationControllerProvider =
       OrganizerEventRegistrationController.new,
     );
 
+final organizerEventQuestionControllerProvider =
+    AsyncNotifierProvider<OrganizerEventQuestionController, void>(
+      OrganizerEventQuestionController.new,
+    );
+
 class OrganizerEventMutationController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
@@ -238,6 +243,51 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
       'image/heif' => 'heif',
       _ => 'jpg',
     };
+  }
+}
+
+class OrganizerEventQuestionController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> answerQuestion({
+    required String eventId,
+    required String questionId,
+    required String answerText,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .answerEventQuestion(questionId: questionId, answerText: answerText);
+
+      ref.invalidate(organizerEventQuestionsProvider(eventId));
+      ref.invalidate(userPublicEventQuestionsProvider(eventId));
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> replyToQuestion({
+    required String eventId,
+    required String questionId,
+    required String content,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .createQuestionReply(questionId: questionId, content: content);
+
+      ref.invalidate(organizerEventQuestionsProvider(eventId));
+      ref.invalidate(userPublicEventQuestionsProvider(eventId));
+    });
+
+    state = result;
+    return result.hasValue;
   }
 }
 

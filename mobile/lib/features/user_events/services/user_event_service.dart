@@ -6,6 +6,7 @@ import 'package:frontend/features/event_shared/models/event_feedback_model.dart'
 import 'package:frontend/features/event_shared/models/event_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+import 'package:frontend/features/event_shared/models/event_share_link_model.dart';
 
 class UserEventService {
   final ApiClient _apiClient;
@@ -79,6 +80,25 @@ class UserEventService {
     }
   }
 
+  Future<EventModel> getEventBySlug(String slug) async {
+    try {
+      final encodedSlug = Uri.encodeComponent(slug);
+      final response = await _apiClient.dio.get('/events/slug/$encodedSlug/');
+      return EventModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventShareLinkModel> getEventShareLink(String eventId) async {
+    try {
+      final response = await _apiClient.dio.get('/events/$eventId/share-link/');
+      return EventShareLinkModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<EventRegistrationModel> registerEvent({
     required String eventId,
     List<EventRegistrationAnswerModel> answers = const [],
@@ -127,6 +147,21 @@ class UserEventService {
         data: {'question_text': questionText, 'is_anonymous': isAnonymous},
       );
       return EventQuestionModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/questions/$questionId/replies/',
+        data: {'content': content},
+      );
+      return EventQuestionReplyModel.fromJson(extractObjectData(response.data));
     } on DioException {
       rethrow;
     }

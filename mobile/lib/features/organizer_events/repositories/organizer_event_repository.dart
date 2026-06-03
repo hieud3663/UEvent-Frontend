@@ -73,6 +73,16 @@ abstract interface class OrganizerEventRepository {
   Future<List<EventQuestionModel>> getOrganizerEventQuestions({
     required String eventId,
   });
+
+  Future<EventQuestionModel> answerEventQuestion({
+    required String questionId,
+    required String answerText,
+  });
+
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  });
 }
 
 class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
@@ -388,5 +398,50 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
     }
 
     return _service.getOrganizerEventQuestions(eventId: eventId);
+  }
+
+  @override
+  Future<EventQuestionModel> answerEventQuestion({
+    required String questionId,
+    required String answerText,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return EventQuestionModel(
+        id: questionId,
+        question: 'Câu hỏi mẫu',
+        answer: answerText,
+        answeredBy: 'Organizer',
+        answeredAt: DateTime.now(),
+        timeAgo: 'just now',
+      );
+    }
+
+    return _service.answerEventQuestion(
+      questionId: questionId,
+      answerText: answerText,
+    );
+  }
+
+  @override
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return EventQuestionReplyModel(
+        id: 'mock-reply-${DateTime.now().millisecondsSinceEpoch}',
+        content: content,
+        isOrganizerReply: true,
+        createdAt: DateTime.now(),
+        timeAgo: 'just now',
+      );
+    }
+
+    return _service.createQuestionReply(
+      questionId: questionId,
+      content: content,
+    );
   }
 }

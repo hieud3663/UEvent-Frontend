@@ -18,9 +18,9 @@ import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/section_header.dart';
-import 'package:frontend/features/event_shared/models/event_feedback_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/widgets/team_member_tile.dart';
+import 'package:frontend/features/organizer_events/widgets/organizer_question_thread.dart';
 
 /// Event Detail — Organizer View with Check-in capability.
 /// Push navigation (no bottom nav, ← back button).
@@ -614,14 +614,10 @@ class EventDetailOrganizerView extends ConsumerWidget {
   void _invalidateEventDetailData(WidgetRef ref) {
     ref.invalidate(organizerEventDetailProvider(eventId));
     ref.invalidate(organizerEventQuestionsProvider(eventId));
-    ref.invalidate(organizerEventFeedbacksProvider(eventId));
-    ref.invalidate(organizerEventFeedbackSummaryProvider(eventId));
   }
 
   Future<void> _refreshEventDetailData(WidgetRef ref) {
     ref.invalidate(organizerEventQuestionsProvider(eventId));
-    ref.invalidate(organizerEventFeedbacksProvider(eventId));
-    ref.invalidate(organizerEventFeedbackSummaryProvider(eventId));
     return ref
         .refresh(organizerEventDetailProvider(eventId).future)
         .then<void>((_) {});
@@ -650,28 +646,11 @@ class _OrganizerEngagementSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final questionsState = ref.watch(organizerEventQuestionsProvider(eventId));
-    final feedbacksState = ref.watch(organizerEventFeedbacksProvider(eventId));
-    final summaryState = ref.watch(
-      organizerEventFeedbackSummaryProvider(eventId),
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Bình luận & góp ý', style: AppTextStyles.headlineMedium),
-        const SizedBox(height: 12),
-        summaryState.when(
-          loading: () =>
-              const AppLoadingState(height: 84, padding: EdgeInsets.zero),
-          error: (_, _) => AppErrorState(
-            title: 'Không tải được thống kê feedback',
-            description: 'Vui lòng thử lại sau.',
-            padding: EdgeInsets.zero,
-            onRetry: () =>
-                ref.invalidate(organizerEventFeedbackSummaryProvider(eventId)),
-          ),
-          data: _FeedbackSummaryCard.new,
-        ),
+        Text('Hỏi đáp', style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         questionsState.when(
           loading: () =>
@@ -683,89 +662,19 @@ class _OrganizerEngagementSection extends ConsumerWidget {
             onRetry: () =>
                 ref.invalidate(organizerEventQuestionsProvider(eventId)),
           ),
-          data: (questions) => _QuestionListCard(questions: questions),
-        ),
-        const SizedBox(height: 12),
-        feedbacksState.when(
-          loading: () =>
-              const AppLoadingState(height: 120, padding: EdgeInsets.zero),
-          error: (_, _) => AppErrorState(
-            title: 'Không tải được feedback',
-            description: 'Vui lòng thử lại sau.',
-            padding: EdgeInsets.zero,
-            onRetry: () =>
-                ref.invalidate(organizerEventFeedbacksProvider(eventId)),
-          ),
-          data: (feedbacks) => _FeedbackListCard(feedbacks: feedbacks),
+          data: (questions) =>
+              _QuestionListCard(eventId: eventId, questions: questions),
         ),
       ],
     );
   }
 }
 
-class _FeedbackSummaryCard extends StatelessWidget {
-  final EventFeedbackSummaryModel summary;
-
-  const _FeedbackSummaryCard(this.summary);
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 12,
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.star, color: AppColors.primary),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  summary.averageRating.toStringAsFixed(1),
-                  style: AppTextStyles.headlineMedium,
-                ),
-                Text(
-                  '${summary.total} feedbacks',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            _ratingBreakdown(summary),
-            textAlign: TextAlign.right,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _ratingBreakdown(EventFeedbackSummaryModel summary) {
-    return List.generate(5, (index) {
-      final rating = 5 - index;
-      return '$rating★ ${summary.ratingCounts[rating] ?? 0}';
-    }).join('\n');
-  }
-}
-
 class _QuestionListCard extends StatelessWidget {
+  final String eventId;
   final List<EventQuestionModel> questions;
 
-  const _QuestionListCard({required this.questions});
+  const _QuestionListCard({required this.eventId, required this.questions});
 
   @override
   Widget build(BuildContext context) {
@@ -793,136 +702,16 @@ class _QuestionListCard extends StatelessWidget {
               ),
             )
           else
-            ...visible.take(4).map(_QuestionRow.new),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuestionRow extends StatelessWidget {
-  final EventQuestionModel question;
-
-  const _QuestionRow(this.question);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            question.isPinned ? Icons.push_pin : Icons.forum_outlined,
-            size: 18,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  question.question,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w700,
+            ...visible
+                .take(4)
+                .map(
+                  (question) => OrganizerQuestionThread(
+                    eventId: eventId,
+                    question: question,
+                    showTimestamp: false,
+                    compact: true,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  question.isAnswered
-                      ? question.answer!
-                      : 'Chưa được trả lời • ${question.moderationStatus}',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeedbackListCard extends StatelessWidget {
-  final List<EventFeedbackModel> feedbacks;
-
-  const _FeedbackListCard({required this.feedbacks});
-
-  @override
-  Widget build(BuildContext context) {
-    final visible = [...feedbacks]
-      ..sort((a, b) {
-        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
-      });
-
-    return GlassContainer(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 12,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Góp ý', style: AppTextStyles.titleSmall),
-          const SizedBox(height: 12),
-          if (visible.isEmpty)
-            Text(
-              'Chưa có feedback nào.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            )
-          else
-            ...visible.take(4).map(_FeedbackRow.new),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeedbackRow extends StatelessWidget {
-  final EventFeedbackModel feedback;
-
-  const _FeedbackRow(this.feedback);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.rate_review_outlined,
-            size: 18,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${feedback.authorName} • ${feedback.rating}★',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  feedback.content.isEmpty
-                      ? 'Không có nội dung.'
-                      : feedback.content,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
