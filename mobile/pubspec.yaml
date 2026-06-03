@@ -62,8 +62,6 @@ dependencies:
   url_launcher: ^6.3.2
   mobile_scanner: ^7.1.3
   passkeys: ^2.19.0
-  share_plus: ^11.1.0
-  app_links: ^6.4.1
 
 dev_dependencies:
   flutter_test:
