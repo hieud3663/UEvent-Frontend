@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
+import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 
 final userEventRegistrationControllerProvider =
@@ -30,6 +31,7 @@ class UserEventRegistrationController extends AsyncNotifier<void> {
       await _refreshEventDetail(eventId);
       ref.invalidate(userMyEventsProvider);
       ref.invalidate(userRegisteredEventsProvider);
+      ref.invalidate(profileOverviewProvider);
       state = const AsyncData(null);
       return registration;
     } catch (error, stackTrace) {
@@ -49,6 +51,7 @@ class UserEventRegistrationController extends AsyncNotifier<void> {
       await _refreshEventDetail(eventId);
       ref.invalidate(userMyEventsProvider);
       ref.invalidate(userRegisteredEventsProvider);
+      ref.invalidate(profileOverviewProvider);
     });
 
     state = result;

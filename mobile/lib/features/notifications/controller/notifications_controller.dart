@@ -38,6 +38,30 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
     }
   }
 
+  Future<int> markVisibleAsRead(
+    Iterable<NotificationModel> notifications,
+  ) async {
+    final unreadNotifications = notifications
+        .where((notification) => !notification.isRead)
+        .toList(growable: false);
+
+    if (unreadNotifications.isEmpty) return 0;
+
+    final previousState = state;
+
+    try {
+      final repository = ref.read(notificationRepositoryProvider);
+      for (final notification in unreadNotifications) {
+        await repository.markAsRead(notification.id);
+      }
+      state = await AsyncValue.guard(_fetchNotifications);
+      return unreadNotifications.length;
+    } catch (_) {
+      state = previousState;
+      rethrow;
+    }
+  }
+
   Future<List<NotificationModel>> _fetchNotifications() {
     final repository = ref.read(notificationRepositoryProvider);
     return repository.getNotifications();
