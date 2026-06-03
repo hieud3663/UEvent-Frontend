@@ -270,7 +270,9 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   Future<void> _openSharedEventBySlug(String slug) async {
     try {
-      final event = await ref.read(userEventRepositoryProvider).getEventBySlug(slug);
+      final event = await ref
+          .read(userEventRepositoryProvider)
+          .getEventBySlug(slug);
       if (!mounted) return;
       _pushEventDetail(event);
     } on DioException catch (error) {
@@ -322,8 +324,8 @@ class _AppShellState extends ConsumerState<AppShell> {
               eventId: eventId,
               initialEvent: event,
               onBack: () => Navigator.of(ctx).pop(),
-              onShare: event == null ||
-                      event.visibility != EventVisibility.public
+              onShare:
+                  event == null || event.visibility != EventVisibility.public
                   ? null
                   : () => _shareEvent(ctx, event),
               onRegister: event == null
@@ -364,8 +366,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                   ? null
                   : () => _pushSendNotification(event),
               onManage: event == null ? null : () => _pushManageEventHub(event),
-              onShare: event == null ||
-                      event.visibility != EventVisibility.public
+              onShare:
+                  event == null || event.visibility != EventVisibility.public
                   ? null
                   : () => _shareEvent(ctx, event),
             );
@@ -521,7 +523,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onEditDetailsTap: () => _pushEditEventDetails(event),
           onAttendeeListTap: () => _pushAttendeeList(event),
           onParticipantCheckInTap: () => _pushQrScanner(event),
-          onQuestionsFeedbackTap: () => _pushOrganizerEngagement(event),
+          onQuestionsTap: () => _pushOrganizerEngagement(event),
         ),
       ),
     );

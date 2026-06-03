@@ -16,7 +16,7 @@ class ManageEventView extends StatelessWidget {
   final VoidCallback? onEditDetailsTap;
   final VoidCallback? onAttendeeListTap;
   final VoidCallback? onParticipantCheckInTap;
-  final VoidCallback? onQuestionsFeedbackTap;
+  final VoidCallback? onQuestionsTap;
 
   const ManageEventView({
     super.key,
@@ -25,7 +25,7 @@ class ManageEventView extends StatelessWidget {
     this.onEditDetailsTap,
     this.onAttendeeListTap,
     this.onParticipantCheckInTap,
-    this.onQuestionsFeedbackTap,
+    this.onQuestionsTap,
   });
 
   @override
@@ -146,9 +146,9 @@ class ManageEventView extends StatelessWidget {
                       ),
                       GlassActionTile(
                         icon: Icons.forum_outlined,
-                        title: 'Danh sách câu hỏi và feedback',
-                        subtitle: 'Xem câu hỏi, rating và góp ý từ attendee',
-                        onTap: onQuestionsFeedbackTap ?? () {},
+                        title: 'Danh sách câu hỏi',
+                        subtitle: 'Xem và trả lời câu hỏi từ attendee',
+                        onTap: onQuestionsTap ?? () {},
                       ),
                     ],
                   ),

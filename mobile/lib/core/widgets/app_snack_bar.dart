@@ -25,12 +25,14 @@ void showAppSnackBar(
   Color? foregroundColor,
   Duration duration = const Duration(seconds: 3),
 }) {
-  final colorScheme = Theme.of(context).colorScheme;
+  final colorScheme = backgroundColor == null || foregroundColor == null
+      ? Theme.of(context).colorScheme
+      : null;
   final snackBar = _AppSnackBarMessage(
     id: _nextSnackBarId++,
     text: message,
-    backgroundColor: backgroundColor ?? colorScheme.inverseSurface,
-    foregroundColor: foregroundColor ?? colorScheme.onInverseSurface,
+    backgroundColor: backgroundColor ?? colorScheme!.inverseSurface,
+    foregroundColor: foregroundColor ?? colorScheme!.onInverseSurface,
     duration: duration,
   );
 

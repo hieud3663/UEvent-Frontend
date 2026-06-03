@@ -95,4 +95,23 @@ class UserEventEngagementController extends AsyncNotifier<void> {
     state = result;
     return result.hasValue;
   }
+
+  Future<bool> replyToQuestion({
+    required String eventId,
+    required String questionId,
+    required String content,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(userEventRepositoryProvider)
+          .createQuestionReply(questionId: questionId, content: content);
+
+      ref.invalidate(userPublicEventQuestionsProvider(eventId));
+    });
+
+    state = result;
+    return result.hasValue;
+  }
 }

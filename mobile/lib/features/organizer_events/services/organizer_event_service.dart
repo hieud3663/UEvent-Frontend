@@ -296,4 +296,34 @@ class OrganizerEventService {
       rethrow;
     }
   }
+
+  Future<EventQuestionModel> answerEventQuestion({
+    required String questionId,
+    required String answerText,
+  }) async {
+    try {
+      final response = await _apiClient.dio.patch(
+        '/questions/$questionId/answer/',
+        data: {'answer_text': answerText},
+      );
+      return EventQuestionModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/questions/$questionId/replies/',
+        data: {'content': content},
+      );
+      return EventQuestionReplyModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
 }

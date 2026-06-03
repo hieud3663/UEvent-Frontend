@@ -44,6 +44,11 @@ abstract interface class UserEventRepository {
     required bool isAnonymous,
   });
 
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  });
+
   Future<List<EventFeedbackModel>> getEventFeedbacks({required String eventId});
 
   Future<EventFeedbackSummaryModel> getEventFeedbackSummary({
@@ -240,6 +245,27 @@ class UserEventRepositoryImpl implements UserEventRepository {
       eventId: eventId,
       questionText: questionText,
       isAnonymous: isAnonymous,
+    );
+  }
+
+  @override
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return EventQuestionReplyModel(
+        id: 'mock-reply-${DateTime.now().millisecondsSinceEpoch}',
+        content: content,
+        createdAt: DateTime.now(),
+        timeAgo: 'just now',
+      );
+    }
+
+    return _service.createQuestionReply(
+      questionId: questionId,
+      content: content,
     );
   }
 

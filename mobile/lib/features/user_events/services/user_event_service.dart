@@ -152,6 +152,21 @@ class UserEventService {
     }
   }
 
+  Future<EventQuestionReplyModel> createQuestionReply({
+    required String questionId,
+    required String content,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/questions/$questionId/replies/',
+        data: {'content': content},
+      );
+      return EventQuestionReplyModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<List<EventFeedbackModel>> getEventFeedbacks({
     required String eventId,
   }) async {
