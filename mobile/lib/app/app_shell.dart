@@ -223,41 +223,90 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _pushEventDetail(EventModel event) {
-    if (event.isOrganizer) {
-      Navigator.of(context).push(
-        appRoute(
-          builder: (ctx) => EventDetailOrganizerView(
-            eventId: event.id,
-            initialEvent: event,
-            onBack: () => Navigator.of(ctx).pop(),
-            onCheckIn: () => _pushQrScanner(event),
-            onNotify: () => _pushSendNotification(event),
-            onManage: () => _pushManageEventHub(event),
-            onShare: event.visibility == EventVisibility.public
-                ? () => _shareEvent(ctx, event)
-                : null,
-          ),
-        ),
-      );
-    } else {
-      Navigator.of(context).push(
-        appRoute(
-          builder: (ctx) => EventDetailScreen(
-            eventId: event.id,
-            initialEvent: event,
-            onBack: () => Navigator.of(ctx).pop(),
-            onShare: event.visibility == EventVisibility.public
-                ? () => _shareEvent(ctx, event)
-                : null,
-            onRegister: () => _pushRegistrationConfirmation(ctx, event),
-            onManage: () => _pushManageEventHub(event),
-            onMyTicket: () => _pushMyTicket(ctx, event),
-            onUnregister: () => _showUnregisterConfirmation(ctx, event),
-            onAskQuestion: () => _pushAskQuestion(ctx, event),
-          ),
-        ),
+    if (event.canManageCurrentUser) {
+      _pushOrganizerEventDetail(event);
+      return;
+    }
+
+    final participantRoute = _pushParticipantEventDetail(event);
+    if (!_isStudent) {
+      unawaited(
+        _promoteToOrganizerEventDetailIfAllowed(event, participantRoute),
       );
     }
+  }
+
+  Future<void> _promoteToOrganizerEventDetailIfAllowed(
+    EventModel event,
+    Route<void> participantRoute,
+  ) async {
+    try {
+      final organizerEvent = await ref
+          .read(organizerEventRepositoryProvider)
+          .getOrganizerEventDetail(event.id);
+      if (!mounted || !participantRoute.isCurrent) return;
+
+      Navigator.of(context).replace(
+        oldRoute: participantRoute,
+        newRoute: _organizerEventDetailRoute(organizerEvent),
+      );
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode != 403 &&
+          statusCode != 404 &&
+          mounted &&
+          participantRoute.isCurrent) {
+        _showSnackBar(context, 'Không thể kiểm tra quyền quản lý sự kiện.');
+      }
+    } catch (_) {
+      if (mounted && participantRoute.isCurrent) {
+        _showSnackBar(context, 'Không thể kiểm tra quyền quản lý sự kiện.');
+      }
+    }
+  }
+
+  void _pushOrganizerEventDetail(EventModel event) {
+    Navigator.of(context).push(_organizerEventDetailRoute(event));
+  }
+
+  PageRoute<void> _organizerEventDetailRoute(EventModel event) {
+    return appRoute<void>(
+      builder: (ctx) => EventDetailOrganizerView(
+        eventId: event.id,
+        initialEvent: event,
+        onBack: () => Navigator.of(ctx).pop(),
+        onCheckIn: () => _pushQrScanner(event),
+        onNotify: () => _pushSendNotification(event),
+        onManage: () => _pushManageEventHub(event),
+        onShare: event.visibility == EventVisibility.public
+            ? () => _shareEvent(ctx, event)
+            : null,
+      ),
+    );
+  }
+
+  PageRoute<void> _pushParticipantEventDetail(EventModel event) {
+    final route = _participantEventDetailRoute(event);
+    Navigator.of(context).push(route);
+    return route;
+  }
+
+  PageRoute<void> _participantEventDetailRoute(EventModel event) {
+    return appRoute<void>(
+      builder: (ctx) => EventDetailScreen(
+        eventId: event.id,
+        initialEvent: event,
+        onBack: () => Navigator.of(ctx).pop(),
+        onShare: event.visibility == EventVisibility.public
+            ? () => _shareEvent(ctx, event)
+            : null,
+        onRegister: () => _pushRegistrationConfirmation(ctx, event),
+        onManage: () => _pushManageEventHub(event),
+        onMyTicket: () => _pushMyTicket(ctx, event),
+        onUnregister: () => _showUnregisterConfirmation(ctx, event),
+        onAskQuestion: () => _pushAskQuestion(ctx, event),
+      ),
+    );
   }
 
   Future<void> _openPendingSharedEvent() async {
@@ -289,16 +338,16 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   Future<void> _shareEvent(BuildContext ctx, EventModel event) async {
     try {
-      final shareLink = await ref
-          .read(userEventRepositoryProvider)
-          .getEventShareLink(event.id);
+      final shareUrl = _resolveEventShareUrl(event);
+      if (shareUrl == null) {
+        _showSnackBar(ctx, 'Sự kiện chưa có liên kết chia sẻ.');
+        return;
+      }
+
       if (!ctx.mounted) return;
 
       await SharePlus.instance.share(
-        ShareParams(
-          text: '${event.title}\n${shareLink.shareUrl}',
-          subject: event.title,
-        ),
+        ShareParams(text: '${event.title}\n$shareUrl', subject: event.title),
       );
     } on DioException catch (error) {
       if (!ctx.mounted) return;
@@ -311,6 +360,22 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (!ctx.mounted) return;
       _showSnackBar(ctx, 'Không thể tạo liên kết chia sẻ lúc này.');
     }
+  }
+
+  String? _resolveEventShareUrl(EventModel event) {
+    final payloadShareUrl = event.shareUrl?.trim();
+    if (payloadShareUrl?.isNotEmpty == true) return payloadShareUrl;
+
+    final deepLink = event.deepLink?.trim();
+    final deepLinkUri = deepLink == null ? null : Uri.tryParse(deepLink);
+    if (deepLink?.isNotEmpty == true &&
+        (deepLinkUri?.scheme == 'http' || deepLinkUri?.scheme == 'https')) {
+      return deepLink;
+    }
+
+    final slug = event.slug?.trim();
+    if (slug?.isNotEmpty != true) return null;
+    return 'https://uevent.u-code.dev/events/share/${Uri.encodeComponent(slug!)}';
   }
 
   void _pushStudentEventDetailById(String eventId) {

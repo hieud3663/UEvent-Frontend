@@ -12,6 +12,7 @@ class EventOrganizerCard extends StatelessWidget {
   final int extraOrganizersCount;
   final String organizerName;
   final VoidCallback? onFollow;
+  final bool isFollowing;
 
   const EventOrganizerCard({
     super.key,
@@ -19,6 +20,7 @@ class EventOrganizerCard extends StatelessWidget {
     this.extraOrganizersCount = 0,
     required this.organizerName,
     this.onFollow,
+    this.isFollowing = false,
   });
 
   @override
@@ -57,13 +59,47 @@ class EventOrganizerCard extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: onFollow,
-            child: Text(
-              'Follow',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onFollow,
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isFollowing
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: isFollowing
+                        ? AppColors.primary.withValues(alpha: 0.35)
+                        : AppColors.outlineVariant,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isFollowing
+                          ? Icons.notifications_active
+                          : Icons.person_add_alt_1,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isFollowing ? 'Đang theo dõi' : 'Theo dõi',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -76,6 +112,7 @@ class EventOrganizerCard extends StatelessWidget {
   double get _stackWidth {
     final count =
         organizerAvatarUrls.length + (extraOrganizersCount > 0 ? 1 : 0);
+    if (count <= 1) return 40;
     return 40 + (count - 1) * 26.0;
   }
 

@@ -236,6 +236,51 @@ class OrganizerEventService {
     }
   }
 
+  Future<List<EventOrganizerMemberModel>> getEventOrganizers({
+    required String eventId,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/organizer/events/$eventId/organizers/',
+      );
+      final dataList = extractListData(response.data);
+      return dataList.map(EventOrganizerMemberModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<EventOrganizerMemberModel> addEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/organizer/events/$eventId/organizers/',
+        data: {'email': email},
+      );
+      return EventOrganizerMemberModel.fromJson(
+        extractObjectData(response.data),
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> removeEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    try {
+      await _apiClient.dio.delete(
+        '/organizer/events/$eventId/organizers/',
+        data: {'email': email},
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<CheckInResultModel> checkInRegistration({
     required String eventId,
     String? qrPayload,

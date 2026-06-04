@@ -184,6 +184,9 @@ Anti-patterns:
   2. **Error**: Show an error message with a retry action button. Reuse the existing `EmptyStateView` widget with appropriate icon/text.
   3. **Empty**: Show a meaningful empty state when the data list is empty. Reuse the existing `EmptyStateView` widget.
 - NEVER show a blank screen or an unhandled exception to the user.
+- Bắt buộc hiển thị loading cho mọi nút hoặc action đang gọi API/mutation. Ưu tiên dùng `PrimaryButton.isLoading`, spinner trong icon/action, hoặc loading indicator tương đương.
+- Khi một nút/action đang loading, phải disable thao tác lặp lại cho đến khi request hoàn tất để tránh double-submit.
+- Bất kỳ page, dialog hoặc bottom sheet nào đang chờ dữ liệu API phải có loading state rõ ràng; không để màn hình trống và không giữ các nút gửi/xóa/lưu ở trạng thái có thể bấm tiếp.
 
 # Mobile Shared Widget Rules
 

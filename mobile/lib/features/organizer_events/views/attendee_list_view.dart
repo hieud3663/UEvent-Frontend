@@ -29,7 +29,6 @@ class AttendeeListView extends ConsumerStatefulWidget {
 class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
   String? _selectedRegistrationId;
   String? _pendingRegistrationId;
-  _RegistrationAction? _pendingAction;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +145,7 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     final attendeeEmail = registration.user?.email ?? '';
 
     return SizedBox(
-      width: 142,
+      width: 132,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -154,18 +153,10 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
           PrimaryButton(
             label: isCheckedIn ? 'Đã check-in' : 'Check-in',
             isFullWidth: true,
-            isLoading: isBusy && _pendingAction == _RegistrationAction.checkIn,
+            isLoading: isBusy,
             onPressed: isBusy || isCheckedIn || attendeeEmail.isEmpty
                 ? null
                 : () => _checkInRegistration(registration),
-          ),
-          const SizedBox(height: 8),
-          SecondaryButton(
-            label: 'Co-host',
-            isFullWidth: true,
-            onPressed: isBusy || !registration.canPromoteToCohost
-                ? null
-                : () => _promoteRegistration(registration),
           ),
         ],
       ),
@@ -175,7 +166,6 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
   Future<void> _checkInRegistration(EventRegistrationModel registration) async {
     setState(() {
       _pendingRegistrationId = registration.id;
-      _pendingAction = _RegistrationAction.checkIn;
     });
 
     final result = await ref
@@ -189,39 +179,12 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     if (!mounted) return;
     setState(() {
       _pendingRegistrationId = null;
-      _pendingAction = null;
     });
 
     showAppSnackBar(
       context,
       _checkInMessage(result?.result ?? 'invalid_ticket'),
     );
-  }
-
-  Future<void> _promoteRegistration(EventRegistrationModel registration) async {
-    setState(() {
-      _pendingRegistrationId = registration.id;
-      _pendingAction = _RegistrationAction.promoteToCohost;
-    });
-
-    final ok = await ref
-        .read(organizerEventRegistrationControllerProvider.notifier)
-        .promoteRegistrationToCohost(
-          eventId: widget.eventId,
-          registrationId: registration.id,
-        );
-
-    if (!mounted) return;
-    setState(() {
-      _pendingRegistrationId = null;
-      _pendingAction = null;
-    });
-
-    if (ok) {
-      showAppSnackBar(context, 'Đã cấp quyền co-host.');
-    } else {
-      showAppSnackBar(context, 'Không cấp được quyền co-host.');
-    }
   }
 
   List<EventRegistrationModel> _visibleRegistrations(
@@ -253,5 +216,3 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
     };
   }
 }
-
-enum _RegistrationAction { checkIn, promoteToCohost }

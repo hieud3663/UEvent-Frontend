@@ -222,6 +222,50 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
     return result.hasValue;
   }
 
+  Future<bool> addOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .addEventOrganizerByEmail(eventId: eventId, email: email);
+
+      ref.invalidate(organizerEventOrganizersProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> removeOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .removeEventOrganizerByEmail(eventId: eventId, email: email);
+
+      ref.invalidate(organizerEventOrganizersProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
   String _toApiDate(DateTime date) => date.toUtc().toIso8601String();
 
   String _contentTypeForPath(String path) {

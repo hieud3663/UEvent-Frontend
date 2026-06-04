@@ -17,10 +17,10 @@ import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
-import 'package:frontend/core/widgets/section_header.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/widgets/team_member_tile.dart';
 import 'package:frontend/features/organizer_events/widgets/organizer_question_thread.dart';
+import 'package:frontend/features/organizer_events/views/organizer_team_view.dart';
 
 /// Event Detail — Organizer View with Check-in capability.
 /// Push navigation (no bottom nav, ← back button).
@@ -172,23 +172,23 @@ class EventDetailOrganizerView extends ConsumerWidget {
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.pagePaddingH,
-                    ),
-                    child: _OrganizerEngagementSection(eventId: eventId),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
                 // ── BTC Team ──
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppConstants.pagePaddingH,
                     ),
-                    child: _buildTeamSection(resolvedEvent),
+                    child: _buildTeamSection(context, resolvedEvent),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.pagePaddingH,
+                    ),
+                    child: _OrganizerEngagementSection(eventId: eventId),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -215,7 +215,10 @@ class EventDetailOrganizerView extends ConsumerWidget {
                     isPrimary: true,
                   ),
                   const SizedBox(width: 4),
-                  _buildCircleButton(Icons.more_vert, onTap: () {}),
+                  _buildCircleButton(
+                    Icons.more_vert,
+                    onTap: () => _showMoreActions(context, ref, resolvedEvent),
+                  ),
                 ],
               ),
               onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
@@ -369,6 +372,103 @@ class EventDetailOrganizerView extends ConsumerWidget {
       icon: icon,
       isFullWidth: true,
       onPressed: onTap,
+    );
+  }
+
+  void _showMoreActions(BuildContext context, WidgetRef ref, EventModel event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _MoreActionTile(
+                  icon: Icons.tune,
+                  title: 'Mở trung tâm quản lý',
+                  subtitle: 'Chỉnh thông tin, danh sách khách và hỏi đáp',
+                  onTap: onManage == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onManage?.call();
+                        },
+                ),
+                _MoreActionTile(
+                  icon: Icons.qr_code_scanner,
+                  title: 'Check-in người tham gia',
+                  subtitle: 'Quét vé QR cho sự kiện này',
+                  onTap: onCheckIn == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onCheckIn?.call();
+                        },
+                ),
+                _MoreActionTile(
+                  icon: Icons.notifications_active_outlined,
+                  title: 'Gửi thông báo',
+                  subtitle: 'Thông báo nhanh đến người tham dự',
+                  onTap: onNotify == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onNotify?.call();
+                        },
+                ),
+                _MoreActionTile(
+                  icon: Icons.share_outlined,
+                  title: 'Chia sẻ sự kiện',
+                  subtitle: event.visibility == EventVisibility.public
+                      ? 'Tạo liên kết public cho người tham dự'
+                      : 'Sự kiện riêng tư không hỗ trợ chia sẻ public',
+                  onTap: onShare == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onShare?.call();
+                        },
+                ),
+                _MoreActionTile(
+                  icon: Icons.refresh,
+                  title: 'Làm mới dữ liệu',
+                  subtitle: 'Cập nhật thông tin và câu hỏi mới nhất',
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _refreshEventDetailData(ref);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -563,16 +663,32 @@ class EventDetailOrganizerView extends ConsumerWidget {
   }
 
   // ── BTC Team Section ──
-  Widget _buildTeamSection(EventModel event) {
+  Widget _buildTeamSection(BuildContext context, EventModel event) {
     final teamMembers = _teamMembersFromEvent(event);
 
     return Column(
       children: [
-        SectionHeader(
-          title: 'Đội ngũ BTC',
-          titleStyle: AppTextStyles.headlineMedium,
-          actionText: 'Xem tất cả',
-          onActionTap: () {},
+        Row(
+          children: [
+            Expanded(
+              child: Text('Đội ngũ BTC', style: AppTextStyles.headlineMedium),
+            ),
+            TextButton.icon(
+              onPressed: () => _openOrganizerTeam(context, event.id),
+              icon: const Icon(Icons.groups_2_outlined, size: 18),
+              label: const Text('Xem tất cả'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                textStyle: AppTextStyles.labelLarge.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         ...List.generate(
@@ -585,6 +701,17 @@ class EventDetailOrganizerView extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _openOrganizerTeam(BuildContext context, String eventId) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (ctx) => OrganizerTeamView(
+          eventId: eventId,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
+      ),
     );
   }
 
@@ -666,6 +793,84 @@ class _OrganizerEngagementSection extends ConsumerWidget {
               _QuestionListCard(eventId: eventId, questions: questions),
         ),
       ],
+    );
+  }
+}
+
+class _MoreActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  const _MoreActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: enabled ? AppColors.primary : AppColors.navInactive,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: enabled
+                            ? AppColors.onSurface
+                            : AppColors.navInactive,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: enabled
+                    ? AppColors.onSurfaceVariant
+                    : AppColors.outlineVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

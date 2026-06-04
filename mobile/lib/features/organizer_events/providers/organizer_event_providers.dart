@@ -3,6 +3,7 @@ import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/features/event_shared/models/event_category_model.dart';
 import 'package:frontend/features/event_shared/models/event_feedback_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_organizer_member_model.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/event_shared/models/event_room_model.dart';
@@ -143,6 +144,15 @@ final organizerEventRegistrationsProvider =
     ) async {
       final repository = ref.read(organizerEventRepositoryProvider);
       return repository.getEventRegistrations(eventId: eventId);
+    });
+
+final organizerEventOrganizersProvider =
+    FutureProvider.family<List<EventOrganizerMemberModel>, String>((
+      ref,
+      eventId,
+    ) async {
+      final repository = ref.read(organizerEventRepositoryProvider);
+      return repository.getEventOrganizers(eventId: eventId);
     });
 
 final organizerCheckInLogsProvider =

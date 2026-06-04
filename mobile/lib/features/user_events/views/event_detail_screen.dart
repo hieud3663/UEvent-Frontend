@@ -7,6 +7,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
@@ -48,6 +49,7 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   bool _isFavourited = false;
+  bool _isFollowingOrganizer = false;
 
   void _invalidateEventDetailData() {
     ref.invalidate(userEventDetailProvider(widget.eventId));
@@ -154,12 +156,15 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           ),
                           const SizedBox(height: 20),
                           EventOrganizerCard(
-                            organizerAvatarUrls: const [],
-                            extraOrganizersCount: event?.organizers.length ?? 0,
+                            organizerAvatarUrls: _organizerAvatarUrls(event),
+                            extraOrganizersCount: _extraOrganizerCount(event),
                             organizerName:
                                 event?.createdBy?.displayName ??
                                 _organizerSummary(event),
-                            onFollow: () {},
+                            isFollowing: _isFollowingOrganizer,
+                            onFollow: event == null
+                                ? null
+                                : () => _toggleOrganizerFollow(event),
                           ),
                           if (event?.isRegisteredByCurrentUser == true) ...[
                             const SizedBox(height: 16),
@@ -229,6 +234,36 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     final organizers = event?.organizers ?? const [];
     if (organizers.isEmpty) return 'Ban tổ chức UEvents';
     return organizers.first.user.displayName;
+  }
+
+  List<String> _organizerAvatarUrls(EventModel? event) {
+    final urls =
+        event?.organizers
+            .map((organizer) => organizer.user.avatarUrl)
+            .whereType<String>()
+            .where((url) => url.trim().isNotEmpty)
+            .take(3)
+            .toList() ??
+        const <String>[];
+    return urls;
+  }
+
+  int _extraOrganizerCount(EventModel? event) {
+    final count = event?.organizers.length ?? 0;
+    return count > 3 ? count - 3 : 0;
+  }
+
+  void _toggleOrganizerFollow(EventModel event) {
+    setState(() => _isFollowingOrganizer = !_isFollowingOrganizer);
+
+    final organizerName =
+        event.createdBy?.displayName ?? _organizerSummary(event);
+    showAppSnackBar(
+      context,
+      _isFollowingOrganizer
+          ? 'Đã theo dõi $organizerName.'
+          : 'Đã bỏ theo dõi $organizerName.',
+    );
   }
 }
 

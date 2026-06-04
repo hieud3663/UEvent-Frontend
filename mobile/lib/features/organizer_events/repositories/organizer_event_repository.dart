@@ -54,6 +54,20 @@ abstract interface class OrganizerEventRepository {
     required String registrationId,
   });
 
+  Future<List<EventOrganizerMemberModel>> getEventOrganizers({
+    required String eventId,
+  });
+
+  Future<EventOrganizerMemberModel> addEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  });
+
+  Future<void> removeEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  });
+
   Future<CheckInResultModel> checkInRegistration({
     required String eventId,
     String? qrPayload,
@@ -316,6 +330,54 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
       eventId: eventId,
       registrationId: registrationId,
     );
+  }
+
+  @override
+  Future<List<EventOrganizerMemberModel>> getEventOrganizers({
+    required String eventId,
+  }) async {
+    if (EnvConfig.useMockData) {
+      final event = await getOrganizerEventDetail(eventId);
+      return event.organizers;
+    }
+
+    return _service.getEventOrganizers(eventId: eventId);
+  }
+
+  @override
+  Future<EventOrganizerMemberModel> addEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return EventOrganizerMemberModel(
+        id: 'mock-organizer-${DateTime.now().millisecondsSinceEpoch}',
+        eventId: eventId,
+        user: EventUserSummaryModel(
+          id: 'mock-user-${email.hashCode}',
+          username: email.split('@').first,
+          fullName: email.split('@').first,
+          email: email,
+        ),
+        organizerRole: 'co_host',
+      );
+    }
+
+    return _service.addEventOrganizerByEmail(eventId: eventId, email: email);
+  }
+
+  @override
+  Future<void> removeEventOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return;
+    }
+
+    return _service.removeEventOrganizerByEmail(eventId: eventId, email: email);
   }
 
   @override
