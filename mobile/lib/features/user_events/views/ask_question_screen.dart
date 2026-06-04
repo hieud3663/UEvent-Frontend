@@ -4,9 +4,13 @@
 // Pushed via Navigator, no bottom nav.
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
-import 'package:frontend/core/widgets/glass_icon_button.dart';
+import 'package:frontend/core/widgets/glass_container.dart';
+import 'package:frontend/core/widgets/glass_input_field.dart';
+import 'package:frontend/core/widgets/glass_toggle_tile.dart';
+import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 
 class AskQuestionScreen extends StatefulWidget {
@@ -76,70 +80,43 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ── Glass top app bar ──
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            backgroundColor: Colors.white.withValues(alpha: 0.7),
-            surfaceTintColor: Colors.transparent,
-            shadowColor: Colors.black.withValues(alpha: 0.08),
-            elevation: 1,
-            automaticallyImplyLeading: false,
-            flexibleSpace: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    GlassIconButton(
-                      icon: Icons.arrow_back,
-                      onPressed:
-                          widget.onBack ?? () => Navigator.of(context).pop(),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Đặt câu hỏi',
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(child: SizedBox(height: 108)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildContextCard(),
+                      const SizedBox(height: 20),
+                      _buildFormCard(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Câu hỏi sẽ được kiểm duyệt để giữ chất lượng thảo luận.',
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.titleMedium.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 24), // spacer for symmetry
-                  ],
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Context card ──
-                  _buildContextCard(),
-                  const SizedBox(height: 24),
-                  // ── Question form card ──
-                  _buildFormCard(),
-                  const SizedBox(height: 16),
-                  // ── Footer note ──
-                  Text(
-                    'BY SENDING THIS QUESTION, YOU AGREE TO OUR COMMUNITY GUIDELINES. QUESTIONS ARE MODERATED FOR QUALITY.',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                      fontSize: 9,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: GlassTopBar(
+              title: 'Đặt câu hỏi',
+              leadingIcon: Icons.chevron_left,
+              onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
             ),
           ),
         ],
@@ -148,28 +125,22 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
   }
 
   Widget _buildContextCard() {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
-        ],
-      ),
+      borderRadius: 20,
       child: Row(
         children: [
-          // Event thumbnail
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
             child: SizedBox(
               width: 60,
               height: 60,
-              child: Image.network(
-                widget.eventImageUrl,
+              child: CachedNetworkImage(
+                imageUrl: widget.eventImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
+                memCacheWidth: 180,
+                maxWidthDiskCache: 320,
+                errorWidget: (context, url, error) =>
                     Container(color: AppColors.surfaceVariant),
               ),
             ),
@@ -206,71 +177,38 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
   }
 
   Widget _buildFormCard() {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24),
-        ],
-      ),
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Textarea label
-          Text(
-            'YOUR QUESTION',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Textarea
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: TextField(
-              controller: _controller,
-              maxLines: 6,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Nhập câu hỏi của bạn...',
-                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Toggle rows
-          _buildToggleRow(
-            icon: Icons.visibility_off_outlined,
-            iconBg: AppColors.primaryContainer,
-            iconColor: AppColors.onPrimaryContainer,
-            title: 'Hỏi ẩn danh',
-            subtitle: 'Ẩn tên của bạn với người tham dự',
-            value: _isAnonymous,
-            onChanged: (v) => setState(() => _isAnonymous = v),
+          GlassInputField(
+            label: 'Câu hỏi của bạn',
+            placeholder: 'Nhập câu hỏi của bạn...',
+            leadingIcon: Icons.help_outline,
+            controller: _controller,
+            maxLines: 6,
           ),
           const SizedBox(height: 16),
-          _buildToggleRow(
-            icon: Icons.notifications_active_outlined,
-            iconBg: AppColors.secondaryContainer,
-            iconColor: AppColors.secondary,
-            title: 'Thông báo khi có trả lời',
-            subtitle: 'Nhận thông báo khi diễn giả phản hồi',
-            value: _wantsNotification,
-            onChanged: (v) => setState(() => _wantsNotification = v),
+          GlassContainer(
+            padding: EdgeInsets.zero,
+            borderRadius: 20,
+            child: Column(
+              children: [
+                GlassToggleTile(
+                  title: 'Hỏi ẩn danh',
+                  value: _isAnonymous,
+                  onChanged: (v) => setState(() => _isAnonymous = v),
+                ),
+                GlassToggleTile(
+                  title: 'Thông báo khi có trả lời',
+                  value: _wantsNotification,
+                  showDivider: false,
+                  onChanged: (v) => setState(() => _wantsNotification = v),
+                ),
+              ],
+            ),
           ),
           if (_errorMessage != null) ...[
             const SizedBox(height: 12),
@@ -280,7 +218,6 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             ),
           ],
           const SizedBox(height: 24),
-          // Send button
           PrimaryButton(
             label: 'Gửi câu hỏi',
             icon: Icons.send,
@@ -289,57 +226,6 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildToggleRow({
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-          child: Icon(icon, size: 20, color: iconColor),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppColors.primary,
-          trackColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.selected)
-                ? AppColors.primary.withValues(alpha: 0.5)
-                : AppColors.outline,
-          ),
-        ),
-      ],
     );
   }
 }

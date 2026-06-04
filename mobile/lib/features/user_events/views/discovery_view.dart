@@ -14,9 +14,13 @@ import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
 import 'package:frontend/features/event_shared/widgets/event_card_vertical.dart';
 import 'package:frontend/features/event_shared/widgets/category_filter_chip.dart';
+import 'package:frontend/features/notifications/providers/notification_data_providers.dart';
 import 'package:frontend/core/widgets/section_header.dart';
 import 'package:frontend/core/widgets/async_state_slivers.dart';
-import 'package:frontend/core/widgets/text_action_button.dart';
+import 'package:frontend/features/user_events/widgets/discovery_notification_button.dart';
+import 'package:frontend/features/user_events/widgets/discovery_paging_footer.dart';
+import 'package:frontend/features/user_events/widgets/discovery_profile_avatar.dart';
+import 'package:frontend/features/user_events/widgets/discovery_search_bar.dart';
 
 class DiscoveryView extends ConsumerStatefulWidget {
   final int currentNavIndex;
@@ -25,6 +29,8 @@ class DiscoveryView extends ConsumerStatefulWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onSearchEmpty;
   final ValueChanged<EventModel>? onEventTap;
+  final String? profileAvatarUrl;
+  final String? profileName;
   final List<NavItemModel> navItems;
 
   const DiscoveryView({
@@ -35,6 +41,8 @@ class DiscoveryView extends ConsumerStatefulWidget {
     this.onProfileTap,
     this.onSearchEmpty,
     this.onEventTap,
+    this.profileAvatarUrl,
+    this.profileName,
     this.navItems = GlassBottomNavBar.defaultItems,
   });
 
@@ -76,6 +84,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
     final eventsAsync = ref.watch(
       userDiscoveryEventsPagerProvider(categoryQuery),
     );
+    final unreadCount = ref.watch(notificationUnreadCountProvider).value ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -97,7 +106,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       horizontal: AppConstants.pagePaddingHLarge,
                       vertical: 16,
                     ),
-                    child: _buildSearchBar(),
+                    child: const DiscoverySearchBar(),
                   ),
                 ),
                 // Filter chips
@@ -174,7 +183,8 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                                 child: EventCardVertical(
                                   event: event,
                                   dateBadge: DateFormat(
-                                    'MMM d',
+                                    'd MMM',
+                                    'vi',
                                   ).format(event.startDate),
                                   onTap: widget.onEventTap != null
                                       ? () => widget.onEventTap!(event)
@@ -184,7 +194,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                             }, childCount: events.length),
                           ),
                           SliverToBoxAdapter(
-                            child: _PagingFooter(
+                            child: DiscoveryPagingFooter(
                               hasMore: pagedState.hasMore,
                               isLoadingMore: pagedState.isLoadingMore,
                               hasError: pagedState.loadMoreError != null,
@@ -226,10 +236,15 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
               title: 'Trang chủ',
               leadingWidget: GestureDetector(
                 onTap: widget.onProfileTap,
-                child: _buildAvatar(),
+                child: DiscoveryProfileAvatar(
+                  avatarUrl: widget.profileAvatarUrl,
+                  displayName: widget.profileName,
+                ),
               ),
-              trailingIcon: Icons.notifications_outlined,
-              onTrailingTap: widget.onNotificationsTap,
+              trailingWidget: DiscoveryNotificationButton(
+                unreadCount: unreadCount,
+                onTap: widget.onNotificationsTap,
+              ),
             ),
           ),
           // Bottom Nav
@@ -266,101 +281,5 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
     ref
         .read(userDiscoveryEventsPagerProvider(_selectedCategoryQuery).notifier)
         .loadNextPage();
-  }
-
-  Widget _buildAvatar() {
-    return Container(
-      width: 44,
-      height: 44,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.5),
-          width: 2,
-        ),
-      ),
-      child: ClipOval(
-        child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 4)],
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: AppColors.navInactive, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm sự kiện...',
-                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.navInactive,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PagingFooter extends StatelessWidget {
-  final bool hasMore;
-  final bool isLoadingMore;
-  final bool hasError;
-  final VoidCallback onRetry;
-
-  const _PagingFooter({
-    required this.hasMore,
-    required this.isLoadingMore,
-    required this.hasError,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-
-    if (hasError) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Center(
-          child: TextActionButton(label: 'Thử lại', onPressed: onRetry),
-        ),
-      );
-    }
-
-    if (!hasMore) {
-      return const SizedBox(height: 8);
-    }
-
-    return const SizedBox(height: 24);
   }
 }

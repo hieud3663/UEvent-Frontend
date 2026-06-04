@@ -153,11 +153,6 @@ class _RegistrationQuestionsViewState extends State<RegistrationQuestionsView> {
               title: 'Quản lý sự kiện',
               leadingIcon: Icons.close,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
-              trailingWidget: IconButton(
-                icon: const Icon(Icons.more_vert, color: AppColors.onSurface),
-                onPressed: () {},
-                splashRadius: 24,
-              ),
             ),
           ),
         ],

@@ -69,9 +69,13 @@ class _OrganizerQuestionThreadState
     final question = widget.question;
     final askedAt = question.askedAt;
     final replyWidgets = _buildReplyWidgets(question);
+    final avatarSize = widget.compact ? 34.0 : 38.0;
+    final bubblePadding = widget.compact
+        ? const EdgeInsets.symmetric(horizontal: 14, vertical: 11)
+        : const EdgeInsets.symmetric(horizontal: 16, vertical: 13);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: widget.compact ? 10 : 12),
+      padding: EdgeInsets.only(bottom: widget.compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -82,19 +86,63 @@ class _OrganizerQuestionThreadState
                 icon: question.isPinned ? Icons.push_pin : Icons.person,
                 backgroundColor: AppColors.surfaceVariant,
                 iconColor: AppColors.primary,
+                size: avatarSize,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _Bubble(
                       onTap: _startEditing,
-                      child: Text(
-                        question.question,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      backgroundColor: Colors.white.withValues(alpha: 0.68),
+                      borderColor: question.isAnswered
+                          ? AppColors.primary.withValues(alpha: 0.18)
+                          : AppColors.outlineVariant,
+                      padding: bubblePadding,
+                      radius: 20,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                question.isAnonymous
+                                    ? 'Người tham gia ẩn danh'
+                                    : 'Người tham gia',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              _StatusPill(
+                                label: question.isAnswered
+                                    ? 'Đã trả lời'
+                                    : 'Chờ trả lời',
+                                color: question.isAnswered
+                                    ? const Color(0xFF059669)
+                                    : const Color(0xFFD97706),
+                              ),
+                              if (question.isPinned)
+                                const _StatusPill(
+                                  label: 'Đã ghim',
+                                  color: AppColors.primary,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            question.question,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: widget.compact ? 15 : 16,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -111,14 +159,14 @@ class _OrganizerQuestionThreadState
                             DateFormat(
                               'dd/MM/yyyy HH:mm',
                             ).format(askedAt.toLocal()),
-                            style: AppTextStyles.labelSmall.copyWith(
+                            style: AppTextStyles.labelMedium.copyWith(
                               color: AppColors.navInactive,
                             ),
                           ),
                         if (!question.isAnswered)
                           Text(
                             question.moderationStatus,
-                            style: AppTextStyles.labelSmall.copyWith(
+                            style: AppTextStyles.labelMedium.copyWith(
                               color: AppColors.navInactive,
                             ),
                           ),
@@ -130,7 +178,7 @@ class _OrganizerQuestionThreadState
             ],
           ),
           if (replyWidgets.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             _ReplyPreviewList(
               replies: replyWidgets,
               showAll: _showAllReplies,
@@ -139,16 +187,17 @@ class _OrganizerQuestionThreadState
             ),
           ],
           if (_isEditing) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.only(left: 42),
+              padding: EdgeInsets.only(left: widget.compact ? 20 : 24),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _AvatarIcon(
+                  _AvatarIcon(
                     icon: Icons.admin_panel_settings_outlined,
                     backgroundColor: AppColors.primary,
                     iconColor: Colors.white,
+                    size: avatarSize - 2,
                   ),
                   const SizedBox(width: 10),
                   Expanded(child: _buildReplyEditor()),
@@ -168,6 +217,7 @@ class _OrganizerQuestionThreadState
           author: question.answeredBy ?? 'BTC',
           content: question.answer!,
           isOrganizer: true,
+          compact: widget.compact,
           onTap: _startEditing,
         ),
       ...question.replies.map(
@@ -176,6 +226,7 @@ class _OrganizerQuestionThreadState
           content: reply.content,
           isOrganizer: reply.isOrganizerReply,
           timeAgo: reply.timeAgo,
+          compact: widget.compact,
           onTap: _startEditing,
         ),
       ),
@@ -189,27 +240,31 @@ class _OrganizerQuestionThreadState
         TextField(
           controller: _replyController,
           minLines: 1,
-          maxLines: 4,
+          maxLines: 5,
           enabled: !_isSubmitting,
           textInputAction: TextInputAction.newline,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.onSurface,
+            height: 1.45,
+          ),
           decoration: InputDecoration(
             hintText: 'Viết câu trả lời...',
             filled: true,
             fillColor: AppColors.surfaceVariant,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
+              horizontal: 16,
+              vertical: 13,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide(color: AppColors.outlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide(color: AppColors.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               borderSide: const BorderSide(color: AppColors.primary),
             ),
           ),
@@ -321,7 +376,7 @@ class _ReplyPreviewList extends StatelessWidget {
       children: [
         if (hasHiddenReplies)
           Padding(
-            padding: const EdgeInsets.only(left: 42, bottom: 8),
+            padding: const EdgeInsets.only(left: 28, bottom: 10),
             child: _InlineAction(
               label: showAll
                   ? 'Thu gọn phản hồi'
@@ -329,13 +384,7 @@ class _ReplyPreviewList extends StatelessWidget {
               onTap: onToggle,
             ),
           ),
-        if (hasHiddenReplies && showAll)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 180),
-            child: SingleChildScrollView(child: list),
-          )
-        else
-          list,
+        list,
       ],
     );
   }
@@ -355,6 +404,7 @@ class _ReplyRow extends StatelessWidget {
   final String content;
   final bool isOrganizer;
   final String? timeAgo;
+  final bool compact;
   final VoidCallback? onTap;
 
   const _ReplyRow({
@@ -362,73 +412,108 @@ class _ReplyRow extends StatelessWidget {
     required this.content,
     required this.isOrganizer,
     this.timeAgo,
+    this.compact = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final accent = isOrganizer ? AppColors.primary : AppColors.onSurfaceVariant;
+    final avatarSize = compact ? 30.0 : 32.0;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 42),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AvatarIcon(
-            icon: isOrganizer
-                ? Icons.admin_panel_settings_outlined
-                : Icons.person_outline,
-            backgroundColor: isOrganizer
-                ? AppColors.primary
-                : AppColors.surfaceVariant,
-            iconColor: isOrganizer ? Colors.white : AppColors.primary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _Bubble(
-              onTap: onTap,
-              backgroundColor: isOrganizer
-                  ? AppColors.primary.withValues(alpha: 0.08)
-                  : AppColors.surfaceVariant,
-              borderColor: isOrganizer
-                  ? AppColors.primary.withValues(alpha: 0.18)
-                  : AppColors.outlineVariant,
+      padding: EdgeInsets.only(left: compact ? 18 : 22),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: avatarSize,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    spacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        author,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: accent,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      if (timeAgo?.isNotEmpty == true)
-                        Text(
-                          timeAgo!,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.navInactive,
-                          ),
-                        ),
-                    ],
+                  _AvatarIcon(
+                    icon: isOrganizer
+                        ? Icons.admin_panel_settings_outlined
+                        : Icons.person_outline,
+                    backgroundColor: isOrganizer
+                        ? AppColors.primary
+                        : AppColors.surfaceVariant,
+                    iconColor: isOrganizer ? Colors.white : AppColors.primary,
+                    size: avatarSize,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    content,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                      height: 1.45,
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: AppColors.outlineVariant.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Bubble(
+                    onTap: onTap,
+                    backgroundColor: isOrganizer
+                        ? AppColors.primary.withValues(alpha: 0.08)
+                        : Colors.white.withValues(alpha: 0.72),
+                    borderColor: isOrganizer
+                        ? AppColors.primary.withValues(alpha: 0.18)
+                        : AppColors.outlineVariant,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compact ? 13 : 15,
+                      vertical: compact ? 10 : 12,
+                    ),
+                    radius: 19,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              author,
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: accent,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (timeAgo?.isNotEmpty == true)
+                              Text(
+                                timeAgo!,
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: AppColors.navInactive,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          content,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.onSurface,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _InlineAction(label: 'Trả lời', onTap: onTap),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -438,20 +523,48 @@ class _AvatarIcon extends StatelessWidget {
   final IconData icon;
   final Color backgroundColor;
   final Color iconColor;
+  final double size;
 
   const _AvatarIcon({
     required this.icon,
     required this.backgroundColor,
     required this.iconColor,
+    this.size = 32,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 32,
-      height: 32,
+      width: size,
+      height: size,
       decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
-      child: Icon(icon, color: iconColor, size: 17),
+      child: Icon(icon, color: iconColor, size: size * 0.52),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.labelMedium.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
@@ -460,28 +573,29 @@ class _Bubble extends StatelessWidget {
   final Widget child;
   final Color? backgroundColor;
   final Color? borderColor;
+  final EdgeInsetsGeometry padding;
+  final double radius;
   final VoidCallback? onTap;
 
   const _Bubble({
     required this.child,
     this.backgroundColor,
     this.borderColor,
+    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    this.radius = 18,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(18);
+    final borderRadius = BorderRadius.circular(radius);
     final bubble = DecoratedBox(
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.surfaceVariant,
-        borderRadius: radius,
+        borderRadius: borderRadius,
         border: Border.all(color: borderColor ?? AppColors.outlineVariant),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: child,
-      ),
+      child: Padding(padding: padding, child: child),
     );
 
     if (onTap == null) return bubble;
@@ -491,8 +605,8 @@ class _Bubble extends StatelessWidget {
       label: 'Mở ô trả lời câu hỏi',
       child: Material(
         color: Colors.transparent,
-        borderRadius: radius,
-        child: InkWell(onTap: onTap, borderRadius: radius, child: bubble),
+        borderRadius: borderRadius,
+        child: InkWell(onTap: onTap, borderRadius: borderRadius, child: bubble),
       ),
     );
   }
@@ -513,7 +627,7 @@ class _InlineAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Text(
           label,
-          style: AppTextStyles.labelSmall.copyWith(
+          style: AppTextStyles.labelMedium.copyWith(
             color: onTap == null ? AppColors.navInactive : AppColors.primary,
             fontWeight: FontWeight.w800,
           ),

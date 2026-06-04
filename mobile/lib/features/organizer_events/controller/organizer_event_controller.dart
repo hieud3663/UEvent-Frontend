@@ -38,6 +38,9 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
     required int maxCapacity,
     required DateTime startAt,
     required DateTime endAt,
+    required DateTime registrationOpenAt,
+    required DateTime registrationCloseAt,
+    required DateTime cancellationDeadlineAt,
     required bool isPublic,
     required bool activateImmediately,
   }) async {
@@ -45,9 +48,6 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
 
     final result = await AsyncValue.guard(() async {
       final repository = ref.read(organizerEventRepositoryProvider);
-      final registrationOpenAt = DateTime.now();
-      final registrationCloseAt = startAt.subtract(const Duration(hours: 1));
-      final cancellationDeadlineAt = startAt.subtract(const Duration(hours: 3));
 
       final createdEvent = await repository.createOrganizerEvent({
         'title': title,
@@ -56,16 +56,8 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
         'description': description,
         'visibility': isPublic ? 'public' : 'private',
         'registration_open_at': _toApiDate(registrationOpenAt),
-        'registration_close_at': _toApiDate(
-          registrationCloseAt.isAfter(registrationOpenAt)
-              ? registrationCloseAt
-              : registrationOpenAt,
-        ),
-        'cancellation_deadline_at': _toApiDate(
-          cancellationDeadlineAt.isAfter(registrationOpenAt)
-              ? cancellationDeadlineAt
-              : registrationOpenAt,
-        ),
+        'registration_close_at': _toApiDate(registrationCloseAt),
+        'cancellation_deadline_at': _toApiDate(cancellationDeadlineAt),
         'start_at': _toApiDate(startAt),
         'end_at': _toApiDate(endAt),
         'max_capacity': maxCapacity,
@@ -125,6 +117,9 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
     required int maxCapacity,
     required DateTime startAt,
     required DateTime endAt,
+    required DateTime registrationOpenAt,
+    required DateTime registrationCloseAt,
+    required DateTime cancellationDeadlineAt,
     required bool isPublic,
   }) async {
     state = const AsyncLoading();
@@ -137,6 +132,9 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
         'visibility': isPublic ? 'public' : 'private',
         'start_at': _toApiDate(startAt),
         'end_at': _toApiDate(endAt),
+        'registration_open_at': _toApiDate(registrationOpenAt),
+        'registration_close_at': _toApiDate(registrationCloseAt),
+        'cancellation_deadline_at': _toApiDate(cancellationDeadlineAt),
         'max_capacity': maxCapacity,
       };
 
@@ -215,6 +213,50 @@ class OrganizerEventMutationController extends AsyncNotifier<void> {
       ref.invalidate(organizerEventsPagerProvider);
       ref.invalidate(userDiscoveryEventsProvider);
       ref.invalidate(userDiscoverySearchEventsProvider);
+      ref.invalidate(profileOverviewProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> addOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .addEventOrganizerByEmail(eventId: eventId, email: email);
+
+      ref.invalidate(organizerEventOrganizersProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
+      ref.invalidate(profileOverviewProvider);
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+
+  Future<bool> removeOrganizerByEmail({
+    required String eventId,
+    required String email,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .removeEventOrganizerByEmail(eventId: eventId, email: email);
+
+      ref.invalidate(organizerEventOrganizersProvider(eventId));
+      ref.invalidate(organizerEventDetailProvider(eventId));
+      ref.invalidate(organizerEventsProvider);
+      ref.invalidate(organizerEventsPagerProvider);
       ref.invalidate(profileOverviewProvider);
     });
 

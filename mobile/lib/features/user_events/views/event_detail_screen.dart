@@ -7,9 +7,11 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
+import 'package:frontend/core/widgets/app_snack_bar.dart';
 import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 import 'package:frontend/features/event_shared/widgets/event_action_bar.dart';
 import 'package:frontend/features/event_shared/widgets/event_hero_header.dart';
@@ -48,6 +50,7 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   bool _isFavourited = false;
+  bool _isFollowingOrganizer = false;
 
   void _invalidateEventDetailData() {
     ref.invalidate(userEventDetailProvider(widget.eventId));
@@ -68,6 +71,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final detailState = ref.watch(userEventDetailProvider(widget.eventId));
+    final registrationState = ref.watch(
+      userEventRegistrationControllerProvider,
+    );
     final detailEvent = detailState.whenOrNull(data: (value) => value);
     final event = detailEvent ?? widget.initialEvent;
 
@@ -112,7 +118,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 ),
                 SliverToBoxAdapter(
                   child: Transform.translate(
-                    offset: const Offset(0, -32),
+                    offset: const Offset(0, -20),
                     child: Container(
                       decoration: const BoxDecoration(
                         color: AppColors.background,
@@ -122,14 +128,14 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                       ),
                       padding: const EdgeInsets.fromLTRB(
                         AppConstants.pagePaddingH,
-                        24,
+                        36,
                         AppConstants.pagePaddingH,
                         0,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _CategoryBadge(label: event?.category ?? 'Event'),
+                          _CategoryBadge(label: event?.category ?? 'Sự kiện'),
                           const SizedBox(height: 12),
                           Text(
                             event?.title ?? '',
@@ -154,12 +160,14 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           ),
                           const SizedBox(height: 20),
                           EventOrganizerCard(
-                            organizerAvatarUrls: const [],
-                            extraOrganizersCount: event?.organizers.length ?? 0,
-                            organizerName:
-                                event?.createdBy?.displayName ??
-                                _organizerSummary(event),
-                            onFollow: () {},
+                            organizerAvatarUrls: _organizerAvatarUrls(event),
+                            extraOrganizersCount: _extraOrganizerCount(event),
+                            organizerName: _organizerDisplayName(event),
+                            fallbackAvatarLabel: _organizerDisplayName(event),
+                            isFollowing: _isFollowingOrganizer,
+                            onFollow: event == null
+                                ? null
+                                : () => _toggleOrganizerFollow(event),
                           ),
                           if (event?.isRegisteredByCurrentUser == true) ...[
                             const SizedBox(height: 16),
@@ -192,6 +200,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               onRegister: widget.onRegister,
               onManage: widget.onManage,
               onUnregister: widget.onUnregister,
+              isRegisterLoading: registrationState.isLoading,
+              isUnregisterLoading: registrationState.isLoading,
             ),
           ),
         ],
@@ -211,24 +221,105 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   String _formatDate(DateTime? value) {
     if (value == null) return 'Chưa có thời gian';
-    return DateFormat('EEEE, MMM d, yyyy').format(value.toLocal());
+
+    final formatted = DateFormat(
+      "EEEE, dd 'tháng' MM 'năm' yyyy",
+      'vi',
+    ).format(value.toLocal());
+    return _capitalizeFirstLetter(formatted);
   }
 
   String _formatTimeRange(EventModel? event) {
     if (event == null) return '';
-    if (event.timeRange?.isNotEmpty == true) return event.timeRange!;
 
-    final start = DateFormat('HH:mm').format(event.startDate.toLocal());
-    final end = event.endDate == null
-        ? null
-        : DateFormat('HH:mm').format(event.endDate!.toLocal());
-    return end == null ? start : '$start - $end';
+    final formatter = DateFormat('HH:mm', 'vi');
+    final start = formatter.format(event.startDate.toLocal());
+    final endDate = event.endDate;
+    if (endDate == null) return start;
+
+    final localEndDate = endDate.toLocal();
+    final end = formatter.format(localEndDate);
+    final localStartDate = event.startDate.toLocal();
+    final isSameDay =
+        localStartDate.year == localEndDate.year &&
+        localStartDate.month == localEndDate.month &&
+        localStartDate.day == localEndDate.day;
+
+    if (isSameDay) return '$start - $end';
+    return '$start - ${_formatDate(localEndDate)} lúc $end';
+  }
+
+  String _capitalizeFirstLetter(String value) {
+    if (value.isEmpty) return value;
+    return value.characters.first.toUpperCase() +
+        value.characters.skip(1).join();
   }
 
   String _organizerSummary(EventModel? event) {
     final organizers = event?.organizers ?? const [];
     if (organizers.isEmpty) return 'Ban tổ chức UEvents';
     return organizers.first.user.displayName;
+  }
+
+  String _organizerDisplayName(EventModel? event) {
+    final createdByName = event?.createdBy?.displayName.trim();
+    if (createdByName != null && createdByName.isNotEmpty) {
+      return createdByName;
+    }
+    return _organizerSummary(event);
+  }
+
+  List<String> _organizerAvatarUrls(EventModel? event) {
+    if (event == null) return const <String>[];
+
+    final urls = <String>[];
+    final seen = <String>{};
+
+    void addUserAvatar(EventUserSummaryModel? user) {
+      if (user == null) return;
+      final url = user.avatarUrl.trim();
+      if (url.isEmpty || !seen.add(url)) return;
+      urls.add(url);
+    }
+
+    for (final organizer in event.organizers) {
+      addUserAvatar(organizer.user);
+      if (urls.length >= 3) return urls;
+    }
+
+    addUserAvatar(event.createdBy);
+    return urls.take(3).toList(growable: false);
+  }
+
+  int _extraOrganizerCount(EventModel? event) {
+    final peopleCount = _organizerPeopleCount(event);
+    if (peopleCount <= 1) return 0;
+
+    final visibleAvatarCount = _organizerAvatarUrls(event).length;
+    final primaryVisibleCount = visibleAvatarCount == 0
+        ? 1
+        : visibleAvatarCount;
+    final extraCount = peopleCount - primaryVisibleCount;
+    return extraCount > 0 ? extraCount : 0;
+  }
+
+  int _organizerPeopleCount(EventModel? event) {
+    if (event == null) return 0;
+    if (event.organizers.isNotEmpty) return event.organizers.length;
+    return event.createdBy == null ? 0 : 1;
+  }
+
+  void _toggleOrganizerFollow(EventModel event) {
+    setState(() => _isFollowingOrganizer = !_isFollowingOrganizer);
+
+    final organizerName =
+        event.createdBy?.displayName ?? _organizerSummary(event);
+    showAppSnackBar(
+      context,
+      _isFollowingOrganizer
+          ? 'Đã theo dõi $organizerName.'
+          : 'Đã bỏ theo dõi $organizerName.',
+    );
   }
 }
 

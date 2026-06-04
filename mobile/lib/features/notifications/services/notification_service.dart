@@ -35,6 +35,14 @@ class NotificationService {
     }
   }
 
+  Future<void> markAsOpened(String id) async {
+    try {
+      await _apiClient.dio.post('/notifications/$id/opened/');
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<void> registerDevice({
     required String fcmToken,
     String? deviceName,
@@ -58,6 +66,17 @@ class NotificationService {
       await _apiClient.dio.post(
         '/notifications/unregister-device/',
         data: {'fcm_token': fcmToken},
+      );
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> updatePreferences(Map<String, Object?> preferences) async {
+    try {
+      await _apiClient.dio.patch(
+        '/notifications/preferences/',
+        data: preferences,
       );
     } on DioException {
       rethrow;

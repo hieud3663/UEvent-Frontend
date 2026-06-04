@@ -11,6 +11,7 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetchNotifications);
+    ref.invalidate(notificationUnreadCountProvider);
   }
 
   Future<void> refreshSilently() async {
@@ -23,6 +24,7 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
     }
 
     state = nextState;
+    ref.invalidate(notificationUnreadCountProvider);
   }
 
   Future<void> markAsRead(String id) async {
@@ -32,6 +34,7 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
       final repository = ref.read(notificationRepositoryProvider);
       await repository.markAsRead(id);
       state = await AsyncValue.guard(_fetchNotifications);
+      ref.invalidate(notificationUnreadCountProvider);
     } catch (_) {
       state = previousState;
       rethrow;
@@ -55,6 +58,7 @@ class NotificationsController extends AsyncNotifier<List<NotificationModel>> {
         await repository.markAsRead(notification.id);
       }
       state = await AsyncValue.guard(_fetchNotifications);
+      ref.invalidate(notificationUnreadCountProvider);
       return unreadNotifications.length;
     } catch (_) {
       state = previousState;

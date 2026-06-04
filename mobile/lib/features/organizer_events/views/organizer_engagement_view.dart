@@ -6,9 +6,8 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
-import 'package:frontend/features/event_shared/models/event_question_model.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
-import 'package:frontend/features/organizer_events/widgets/organizer_question_thread.dart';
+import 'package:frontend/features/organizer_events/widgets/organizer_question_list.dart';
 
 class OrganizerEngagementView extends ConsumerWidget {
   final String eventId;
@@ -49,8 +48,6 @@ class OrganizerEngagementView extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text('Câu hỏi', style: AppTextStyles.headlineMedium),
-                    const SizedBox(height: 12),
                     questionsState.when(
                       loading: () => const AppLoadingState(
                         height: 180,
@@ -64,8 +61,10 @@ class OrganizerEngagementView extends ConsumerWidget {
                           organizerEventQuestionsProvider(eventId),
                         ),
                       ),
-                      data: (questions) =>
-                          _QuestionList(eventId: eventId, questions: questions),
+                      data: (questions) => OrganizerQuestionList(
+                        eventId: eventId,
+                        questions: questions,
+                      ),
                     ),
                     const SizedBox(height: 48),
                   ]),
@@ -91,44 +90,6 @@ class OrganizerEngagementView extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _QuestionList extends StatelessWidget {
-  final String eventId;
-  final List<EventQuestionModel> questions;
-
-  const _QuestionList({required this.eventId, required this.questions});
-
-  @override
-  Widget build(BuildContext context) {
-    if (questions.isEmpty) {
-      return const AppSuccessState(
-        isEmpty: true,
-        emptyIcon: Icons.forum_outlined,
-        emptyTitle: 'Chưa có câu hỏi',
-        emptyDescription: 'Câu hỏi từ attendee sẽ hiển thị tại đây.',
-        emptyPadding: EdgeInsets.zero,
-        child: SizedBox.shrink(),
-      );
-    }
-
-    final visible = [...questions]
-      ..sort((a, b) {
-        if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
-        final aDate = a.askedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.askedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
-      });
-
-    return Column(
-      children: visible
-          .map(
-            (question) =>
-                OrganizerQuestionThread(eventId: eventId, question: question),
-          )
-          .toList(),
     );
   }
 }

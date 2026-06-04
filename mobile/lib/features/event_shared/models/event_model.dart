@@ -38,6 +38,8 @@ class EventModel {
   final int? guestCount;
   @JsonKey(name: 'deep_link')
   final String? deepLink;
+  @JsonKey(name: 'share_url', includeToJson: false)
+  final String? shareUrl;
   @JsonKey(includeToJson: false)
   final List<RegistrationFieldModel> registrationFields;
   @JsonKey(includeToJson: false)
@@ -72,6 +74,7 @@ class EventModel {
     this.description,
     this.guestCount,
     this.deepLink,
+    this.shareUrl,
     this.registrationFields = const [],
     this.organizers = const [],
     this.createdBy,
@@ -107,6 +110,7 @@ class EventModel {
     String? description,
     int? guestCount,
     String? deepLink,
+    String? shareUrl,
     List<RegistrationFieldModel>? registrationFields,
     List<EventOrganizerMemberModel>? organizers,
     EventUserSummaryModel? createdBy,
@@ -132,6 +136,7 @@ class EventModel {
       description: description ?? this.description,
       guestCount: guestCount ?? this.guestCount,
       deepLink: deepLink ?? this.deepLink,
+      shareUrl: shareUrl ?? this.shareUrl,
       registrationFields: registrationFields ?? this.registrationFields,
       organizers: organizers ?? this.organizers,
       createdBy: createdBy ?? this.createdBy,
@@ -173,6 +178,7 @@ class EventModel {
       description: json['description'] as String?,
       guestCount: (json['max_capacity'] as num?)?.toInt(),
       deepLink: json['deep_link'] as String?,
+      shareUrl: _parseOptionalString(json['share_url'] ?? json['shareUrl']),
       registrationFields: rawRegistrationFields is List
           ? rawRegistrationFields
                 .whereType<Map<String, dynamic>>()
@@ -197,6 +203,12 @@ class EventModel {
   }
 
   Map<String, dynamic> toJson() => _$EventModelToJson(this);
+}
+
+String? _parseOptionalString(dynamic value) {
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
 
 String _parseImageUrl(Map<String, dynamic> json) {

@@ -84,6 +84,8 @@ class NotificationsView extends ConsumerWidget {
                               description: notification.description,
                               actionLabel: notification.actionLabel,
                               onTap: () => _openNotification(ref, notification),
+                              onActionTap: () =>
+                                  _openNotification(ref, notification),
                               opacity: notification.isRead ? 0.8 : 1,
                             ),
                           );

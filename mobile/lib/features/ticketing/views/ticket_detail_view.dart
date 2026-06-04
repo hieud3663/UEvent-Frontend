@@ -161,14 +161,10 @@ class TicketDetailView extends ConsumerWidget {
                                   });
                                 },
                         ),
-                        const SizedBox(height: 12),
-                        SecondaryButton(
-                          label: 'Hủy đăng ký',
-                          onPressed: ticket.isCheckedIn ? null : onCancelTap,
-                        ),
+                        
                         const SizedBox(height: 12),
                         Text(
-                          'Changes available until 24h before event starts.',
+                          'Nếu bạn gặp vấn đề khi hiển thị mã QR, vui lòng liên hệ ban tổ chức để được hỗ trợ.',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),

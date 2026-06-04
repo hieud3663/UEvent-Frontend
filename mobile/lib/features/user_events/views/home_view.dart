@@ -8,6 +8,7 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/features/event_shared/models/event_model.dart';
+import 'package:frontend/features/notifications/providers/notification_data_providers.dart';
 import 'package:frontend/features/user_events/providers/user_event_providers.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/glass_bottom_nav_bar.dart';
@@ -37,6 +38,7 @@ class HomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final myEventsAsync = ref.watch(userMyEventsProvider);
+    final unreadCount = ref.watch(notificationUnreadCountProvider).value ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -170,8 +172,10 @@ class HomeView extends ConsumerWidget {
                 onTap: onProfileTap,
                 child: _buildAvatar(),
               ),
-              trailingIcon: Icons.notifications_outlined,
-              onTrailingTap: onNotificationsTap,
+              trailingWidget: _NotificationButton(
+                unreadCount: unreadCount,
+                onTap: onNotificationsTap,
+              ),
             ),
           ),
 
@@ -499,4 +503,66 @@ class HomeView extends ConsumerWidget {
   //     ),
   //   );
   // }
+}
+
+class _NotificationButton extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback? onTap;
+
+  const _NotificationButton({required this.unreadCount, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.5),
+      shape: const CircleBorder(),
+      child: InkResponse(
+        onTap: onTap,
+        containedInkWell: true,
+        customBorder: const CircleBorder(),
+        radius: 20,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Center(
+                child: Icon(
+                  Icons.notifications_outlined,
+                  size: 20,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      unreadCount > 9 ? '9+' : '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

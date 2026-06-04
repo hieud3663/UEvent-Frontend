@@ -16,6 +16,8 @@ class EventActionBar extends StatelessWidget {
   final VoidCallback? onRegister;
   final VoidCallback? onManage;
   final VoidCallback? onUnregister;
+  final bool isRegisterLoading;
+  final bool isUnregisterLoading;
 
   const EventActionBar({
     super.key,
@@ -24,6 +26,8 @@ class EventActionBar extends StatelessWidget {
     this.onRegister,
     this.onManage,
     this.onUnregister,
+    this.isRegisterLoading = false,
+    this.isUnregisterLoading = false,
   });
 
   @override
@@ -94,6 +98,7 @@ class EventActionBar extends StatelessWidget {
             label: 'Đăng ký',
             icon: Icons.arrow_forward,
             onPressed: onRegister,
+            isLoading: isRegisterLoading,
           ),
         ),
       ],
@@ -105,6 +110,7 @@ class EventActionBar extends StatelessWidget {
       label: 'Hủy đăng ký',
       icon: Icons.event_busy_outlined,
       onPressed: onUnregister,
+      isLoading: isUnregisterLoading,
     );
   }
 }
