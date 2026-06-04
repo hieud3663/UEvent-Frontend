@@ -51,6 +51,11 @@ You must strictly follow these 5 steps in order:
 
 # CODING STANDARDS
 - **Reuse-First Principle (Nguyên tắc kế thừa):** BEFORE creating any new widget, app config, or model, you MUST scan the existing `lib/core/` and `lib/features/` directories first. If a similar or equivalent component already exists, you MUST reuse and extend it instead of creating a duplicate. Only create a new file when no existing component can reasonably serve the purpose. When extending, preserve the existing API (constructor parameters) and add new ones — NEVER break existing usage.
+- File trong `mobile/lib/features/<feature>/views/` chỉ được assemble màn hình, nhận callback/navigation và render các widget đã tách. Không khai báo các widget phụ có layout riêng như card, tile, list, stats row, bottom sheet, dialog, form section trong cùng file view.
+- Mọi widget phụ của một feature phải đặt trong `mobile/lib/features/<feature>/widgets/`. Nếu widget chỉ dùng nội bộ feature, vẫn tách ra file widget riêng trong thư mục `widgets/`; nếu dùng lại đa feature thì chuyển lên `mobile/lib/core/widgets/`.
+- Chỉ cho phép helper method nhỏ trong view khi nó trả về một đoạn layout rất ngắn, không có state, không gọi provider/controller, không chứa form/action API và không đủ lớn để đặt tên widget riêng.
+- Không tạo private widget (`class _... extends StatelessWidget/StatefulWidget/ConsumerWidget`) trực tiếp trong file view. Nếu phần UI đủ để đặt tên widget riêng, bắt buộc tách sang file trong `mobile/lib/features/<feature>/widgets/`.
+- File view chỉ được giữ private `State` class của chính view và các helper rất nhỏ phục vụ navigation/dialog callback.
 - Write modern Dart code (strictly enforce Null Safety, and use `const` constructors everywhere possible).
 - Use `SizedBox` instead of `Container` if you only need empty spacing.
 - Ensure Responsive UI (the layout must adapt perfectly across different mobile screen sizes).

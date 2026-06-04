@@ -8,8 +8,10 @@ abstract interface class NotificationRepository {
   Future<List<NotificationModel>> getNotifications();
   Future<int> getUnreadCount();
   Future<void> markAsRead(String id);
+  Future<void> markAsOpened(String id);
   Future<void> registerDevice({required String fcmToken, String? deviceName});
   Future<void> unregisterDevice(String fcmToken);
+  Future<void> updatePreferences(Map<String, Object?> preferences);
 }
 
 class NotificationRepositoryImpl implements NotificationRepository {
@@ -50,6 +52,16 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
+  Future<void> markAsOpened(String id) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return;
+    }
+
+    await _service.markAsOpened(id);
+  }
+
+  @override
   Future<void> registerDevice({
     required String fcmToken,
     String? deviceName,
@@ -64,5 +76,12 @@ class NotificationRepositoryImpl implements NotificationRepository {
     if (EnvConfig.useMockData) return;
 
     await _service.unregisterDevice(fcmToken);
+  }
+
+  @override
+  Future<void> updatePreferences(Map<String, Object?> preferences) async {
+    if (EnvConfig.useMockData) return;
+
+    await _service.updatePreferences(preferences);
   }
 }

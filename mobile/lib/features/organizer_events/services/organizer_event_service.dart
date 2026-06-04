@@ -236,6 +236,29 @@ class OrganizerEventService {
     }
   }
 
+  Future<Map<String, dynamic>> sendEventNotification({
+    required String eventId,
+    required String title,
+    required String message,
+    required String audience,
+    bool sendPush = true,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/organizer/events/$eventId/notifications/',
+        data: {
+          'title': title,
+          'message': message,
+          'audience': audience,
+          'send_push': sendPush,
+        },
+      );
+      return extractObjectData(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<List<EventOrganizerMemberModel>> getEventOrganizers({
     required String eventId,
   }) async {

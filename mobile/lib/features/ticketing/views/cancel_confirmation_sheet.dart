@@ -1,5 +1,7 @@
 // File: lib/features/ticketing/views/cancel_confirmation_sheet.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
@@ -8,7 +10,7 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 /// Bottom sheet that asks the user to confirm cancellation of a registration.
 class CancelConfirmationSheet extends StatelessWidget {
   final String eventName;
-  final VoidCallback? onConfirm;
+  final FutureOr<void> Function()? onConfirm;
   final VoidCallback? onKeep;
 
   const CancelConfirmationSheet({
@@ -22,7 +24,7 @@ class CancelConfirmationSheet extends StatelessWidget {
   static Future<void> show(
     BuildContext context, {
     required String eventName,
-    VoidCallback? onConfirm,
+    FutureOr<void> Function()? onConfirm,
     VoidCallback? onKeep,
   }) {
     return showModalBottomSheet(
@@ -36,6 +38,36 @@ class CancelConfirmationSheet extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return _CancelConfirmationSheetBody(
+      eventName: eventName,
+      onConfirm: onConfirm,
+      onKeep: onKeep,
+    );
+  }
+}
+
+class _CancelConfirmationSheetBody extends StatefulWidget {
+  final String eventName;
+  final FutureOr<void> Function()? onConfirm;
+  final VoidCallback? onKeep;
+
+  const _CancelConfirmationSheetBody({
+    required this.eventName,
+    this.onConfirm,
+    this.onKeep,
+  });
+
+  @override
+  State<_CancelConfirmationSheetBody> createState() =>
+      _CancelConfirmationSheetBodyState();
+}
+
+class _CancelConfirmationSheetBodyState
+    extends State<_CancelConfirmationSheetBody> {
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +87,6 @@ class CancelConfirmationSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             width: 40,
             height: 4,
@@ -65,8 +96,6 @@ class CancelConfirmationSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Warning icon
           Container(
             width: 64,
             height: 64,
@@ -81,8 +110,6 @@ class CancelConfirmationSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Title
           Text(
             'Hủy đăng ký?',
             style: AppTextStyles.titleLarge.copyWith(
@@ -91,22 +118,18 @@ class CancelConfirmationSheet extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-
-          // Body
           Text(
-            'Bạn chắc chắn muốn hủy đăng ký $eventName? Hành động này không thể hoàn tác.',
+            'Bạn chắc chắn muốn hủy đăng ký ${widget.eventName}? Hành động này không thể hoàn tác.',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-
-          // Yes, Cancel (destructive)
           SizedBox(
             width: double.infinity,
             child: GestureDetector(
-              onTap: onConfirm,
+              onTap: _isSubmitting ? null : _confirm,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
@@ -121,22 +144,33 @@ class CancelConfirmationSheet extends StatelessWidget {
                   ],
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  'Có, hủy đăng ký',
-                  style: AppTextStyles.buttonLarge.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Có, hủy đăng ký',
+                        style: AppTextStyles.buttonLarge.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-
-          // Keep registration
           SizedBox(
             width: double.infinity,
             child: GestureDetector(
-              onTap: onKeep ?? () => Navigator.of(context).pop(),
+              onTap: _isSubmitting
+                  ? null
+                  : widget.onKeep ?? () => Navigator.of(context).pop(),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
@@ -156,5 +190,19 @@ class CancelConfirmationSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirm() async {
+    final onConfirm = widget.onConfirm;
+    if (onConfirm == null) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      await onConfirm();
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

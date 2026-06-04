@@ -68,7 +68,6 @@ class EmptySearchView extends StatelessWidget {
             child: GlassTopBar(
               title: 'Tìm kiếm',
               leadingIcon: Icons.close,
-              trailingIcon: Icons.more_vert,
               onLeadingTap: onBack ?? () => Navigator.of(context).pop(),
             ),
           ),

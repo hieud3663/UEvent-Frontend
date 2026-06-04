@@ -132,11 +132,6 @@ class _InviteGuestsViewState extends State<InviteGuestsView> {
               title: 'Mời khách',
               leadingIcon: Icons.chevron_left,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
-              trailingWidget: IconButton(
-                icon: const Icon(Icons.more_horiz, color: AppColors.onSurface),
-                onPressed: () {},
-                splashRadius: 24,
-              ),
             ),
           ),
         ],

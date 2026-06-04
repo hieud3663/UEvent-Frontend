@@ -12,6 +12,10 @@ final notificationRepositoryProvider = Provider<NotificationRepository>(
   (ref) => NotificationRepositoryImpl(ref.read(notificationServiceProvider)),
 );
 
+final notificationUnreadCountProvider = FutureProvider<int>((ref) {
+  return ref.read(notificationRepositoryProvider).getUnreadCount();
+});
+
 final pushNotificationServiceProvider = Provider<PushNotificationService>(
   (ref) => PushNotificationService(),
 );

@@ -33,6 +33,8 @@ import 'package:frontend/features/user_events/views/registration_confirmation_sc
 import 'package:frontend/features/user_events/views/student_events_view.dart';
 import 'package:frontend/features/organizer_events/views/send_notification_view.dart';
 import 'package:frontend/features/notifications/models/notification_model.dart';
+import 'package:frontend/features/notifications/models/notification_intent.dart';
+import 'package:frontend/features/notifications/providers/notification_data_providers.dart';
 import 'package:frontend/features/notifications/providers/notification_providers.dart';
 import 'package:frontend/features/notifications/views/notification_detail_view.dart';
 import 'package:frontend/features/notifications/views/notifications_view.dart';
@@ -79,6 +81,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_registerPushDeviceIfEnabled());
       unawaited(_openPendingSharedEvent());
+      unawaited(_consumePendingNotificationIntent());
     });
   }
 
@@ -120,63 +123,72 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _handleNotificationTap(NotificationModel notification) {
-    final eventId = _notificationEventId(notification);
-    if (eventId != null) {
-      if (_isStudent) {
-        _pushStudentEventDetailById(eventId);
-      } else {
-        _pushOrganizerEventDetailById(eventId);
-      }
-      return;
+    unawaited(
+      _dispatchNotificationIntent(
+        NotificationIntent.fromNotificationModel(notification),
+      ),
+    );
+  }
+
+  Future<void> _consumePendingNotificationIntent() async {
+    final intent = ref
+        .read(notificationIntentControllerProvider.notifier)
+        .consume();
+    if (intent == null || !mounted) return;
+    await _dispatchNotificationIntent(intent);
+  }
+
+  Future<void> _dispatchNotificationIntent(NotificationIntent intent) async {
+    final dispatched = _openNotificationTarget(intent);
+    if (!dispatched) {
+      _openNotificationFallback(intent);
     }
 
-    final actionRoute = notification.actionRoute?.trim().toLowerCase();
-    if (actionRoute == null || actionRoute.isEmpty) {
+    final recipientId = intent.recipientId;
+    if (recipientId == null || recipientId.isEmpty) return;
+
+    try {
+      await ref.read(notificationRepositoryProvider).markAsOpened(recipientId);
+      await ref
+          .read(notificationsControllerProvider.notifier)
+          .refreshSilently();
+    } catch (_) {}
+  }
+
+  bool _openNotificationTarget(NotificationIntent intent) {
+    final eventId = intent.eventId?.trim();
+    switch (intent.target) {
+      case NotificationTarget.eventUser:
+      case NotificationTarget.questionDetail:
+        if (eventId == null || eventId.isEmpty) return false;
+        return _pushStudentEventDetailById(eventId);
+      case NotificationTarget.eventOrganizer:
+        if (eventId == null || eventId.isEmpty) return false;
+        return _pushOrganizerEventDetailById(eventId);
+      case NotificationTarget.ticket:
+        if (eventId == null || eventId.isEmpty) return false;
+        return _pushStudentEventDetailById(eventId);
+      case NotificationTarget.organizerRegistrations:
+        if (eventId == null || eventId.isEmpty) return false;
+        return _pushAttendeeListById(eventId);
+      case NotificationTarget.organizerQuestions:
+        if (eventId == null || eventId.isEmpty) return false;
+        return _pushOrganizerEngagementById(eventId);
+      case NotificationTarget.profile:
+        _onNavTap(2);
+        return true;
+      case NotificationTarget.notificationDetail:
+        return false;
+    }
+  }
+
+  void _openNotificationFallback(NotificationIntent intent) {
+    final notification = intent.notification;
+    if (notification != null) {
       _pushNotificationDetail(notification);
       return;
     }
-
-    if (actionRoute.contains('settings') || actionRoute.contains('profile')) {
-      Navigator.of(context).pop();
-      _onNavTap(2);
-      return;
-    }
-
-    _pushNotificationDetail(notification);
-  }
-
-  String? _notificationEventId(NotificationModel notification) {
-    final relatedEventId = notification.relatedEventId?.trim();
-    if (relatedEventId != null && relatedEventId.isNotEmpty) {
-      return relatedEventId;
-    }
-
-    final actionRoute = notification.actionRoute?.trim();
-    if (actionRoute == null || actionRoute.isEmpty) return null;
-
-    final uri = Uri.tryParse(actionRoute);
-    final queryEventId =
-        uri?.queryParameters['event_id'] ?? uri?.queryParameters['eventId'];
-    if (queryEventId != null && queryEventId.trim().isNotEmpty) {
-      return queryEventId.trim();
-    }
-
-    final segments = uri?.pathSegments.isNotEmpty == true
-        ? uri!.pathSegments
-        : actionRoute
-              .split('/')
-              .where((segment) => segment.trim().isNotEmpty)
-              .toList(growable: false);
-
-    final eventSegmentIndex = segments.indexWhere(
-      (segment) => segment == 'events' || segment == 'event',
-    );
-    if (eventSegmentIndex >= 0 && eventSegmentIndex + 1 < segments.length) {
-      final eventId = segments[eventSegmentIndex + 1].trim();
-      if (eventId.isNotEmpty) return eventId;
-    }
-
-    return null;
+    _pushNotifications();
   }
 
   void _pushProfile() {
@@ -378,7 +390,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     return 'https://uevent.u-code.dev/events/share/${Uri.encodeComponent(slug!)}';
   }
 
-  void _pushStudentEventDetailById(String eventId) {
+  bool _pushStudentEventDetailById(String eventId) {
     Navigator.of(context).push(
       appRoute(
         builder: (ctx) => Consumer(
@@ -411,9 +423,10 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       ),
     );
+    return true;
   }
 
-  void _pushOrganizerEventDetailById(String eventId) {
+  bool _pushOrganizerEventDetailById(String eventId) {
     Navigator.of(context).push(
       appRoute(
         builder: (ctx) => Consumer(
@@ -440,6 +453,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       ),
     );
+    return true;
   }
 
   void _pushRegistrationConfirmation(BuildContext ctx, EventModel event) {
@@ -508,11 +522,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       ctx,
       eventName: event.title,
       onConfirm: () async {
-        Navigator.of(ctx).pop();
         final ok = await ref
             .read(userEventRegistrationControllerProvider.notifier)
             .unregisterEvent(eventId: event.id);
         if (!mounted || !ctx.mounted) return;
+
+        if (ok) {
+          Navigator.of(ctx).pop();
+          _showSnackBar(ctx, 'Đã hủy đăng ký sự kiện.');
+          return;
+        }
 
         _showSnackBar(
           ctx,
@@ -573,8 +592,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _pushSendNotification(EventModel event) {
     Navigator.of(context).push(
       appRoute(
-        builder: (_) =>
-            SendNotificationView(onBack: () => Navigator.of(context).pop()),
+        builder: (_) => SendNotificationView(
+          eventId: event.id,
+          eventTitle: event.title,
+          onBack: () => Navigator.of(context).pop(),
+        ),
       ),
     );
   }
@@ -617,6 +639,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
+  bool _pushAttendeeListById(String eventId) {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => AttendeeListView(
+          eventId: eventId,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
+      ),
+    );
+    return true;
+  }
+
   void _pushOrganizerEngagement(EventModel event) {
     Navigator.of(context).push(
       appRoute(
@@ -626,6 +660,18 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       ),
     );
+  }
+
+  bool _pushOrganizerEngagementById(String eventId) {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => OrganizerEngagementView(
+          eventId: eventId,
+          onBack: () => Navigator.of(ctx).pop(),
+        ),
+      ),
+    );
+    return true;
   }
 
   Future<void> _pushQrScanner(EventModel event) async {
@@ -832,6 +878,18 @@ class _AppShellState extends ConsumerState<AppShell> {
       });
     });
 
+    ref.listen<NotificationIntent?>(notificationIntentControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (next == null || identical(previous, next)) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_consumePendingNotificationIntent());
+        }
+      });
+    });
+
     final profile = ref.watch(userProfileProvider).value;
     final isStudent = profile?.primaryRole.trim().toLowerCase() == 'student';
     final navItems = GlassBottomNavBar.itemsForRole(isStudent: isStudent);
@@ -856,6 +914,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           onProfileTap: _pushProfile,
           onSearchEmpty: _pushEmptySearch,
           onEventTap: _pushEventDetail,
+          profileAvatarUrl: profile?.avatarUrl,
+          profileName: profile?.fullName,
         ),
         isStudent
             ? StudentEventsView(

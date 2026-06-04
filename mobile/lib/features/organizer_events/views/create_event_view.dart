@@ -48,6 +48,12 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   final _startTimeController = TextEditingController();
   final _endDateController = TextEditingController();
   final _endTimeController = TextEditingController();
+  final _registrationOpenDateController = TextEditingController();
+  final _registrationOpenTimeController = TextEditingController();
+  final _registrationCloseDateController = TextEditingController();
+  final _registrationCloseTimeController = TextEditingController();
+  final _cancellationDeadlineDateController = TextEditingController();
+  final _cancellationDeadlineTimeController = TextEditingController();
   final _capacityController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imagePicker = ImagePicker();
@@ -77,9 +83,15 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   }
 
   void _setDefaultSchedule() {
-    final start = DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    final start = now.add(const Duration(days: 1));
     final end = start.add(const Duration(hours: 2));
     _setScheduleControllers(startAt: start, endAt: end);
+    _setRegistrationScheduleControllers(
+      registrationOpenAt: now,
+      registrationCloseAt: start.subtract(const Duration(hours: 1)),
+      cancellationDeadlineAt: start.subtract(const Duration(hours: 3)),
+    );
   }
 
   @override
@@ -89,6 +101,12 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _startTimeController.dispose();
     _endDateController.dispose();
     _endTimeController.dispose();
+    _registrationOpenDateController.dispose();
+    _registrationOpenTimeController.dispose();
+    _registrationCloseDateController.dispose();
+    _registrationCloseTimeController.dispose();
+    _cancellationDeadlineDateController.dispose();
+    _cancellationDeadlineTimeController.dispose();
     _capacityController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -204,7 +222,6 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
                 fontWeight: FontWeight.w600,
               ),
               leadingIcon: Icons.arrow_back_ios,
-              trailingIcon: Icons.more_horiz,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
             ),
           ),
@@ -243,6 +260,39 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             icon: Icons.event_available,
             value: _formatPickerDateTime(_currentEndAt),
             onTap: () => _pickDateTime(isStart: false),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GlassInputField(
+          label: 'Mở đăng ký',
+          child: _DateTimePickerButton(
+            icon: Icons.how_to_reg,
+            value: _formatPickerDateTime(_currentRegistrationOpenAt),
+            onTap: () => _pickRegistrationDateTime(
+              field: _RegistrationDateTimeField.open,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GlassInputField(
+          label: 'Đóng đăng ký',
+          child: _DateTimePickerButton(
+            icon: Icons.event_busy,
+            value: _formatPickerDateTime(_currentRegistrationCloseAt),
+            onTap: () => _pickRegistrationDateTime(
+              field: _RegistrationDateTimeField.close,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GlassInputField(
+          label: 'Hạn hủy đăng ký',
+          child: _DateTimePickerButton(
+            icon: Icons.cancel_schedule_send,
+            value: _formatPickerDateTime(_currentCancellationDeadlineAt),
+            onTap: () => _pickRegistrationDateTime(
+              field: _RegistrationDateTimeField.cancellationDeadline,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -487,6 +537,18 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
       _endDateController.text,
       _endTimeController.text,
     );
+    final registrationOpenAt = _parseDateTime(
+      _registrationOpenDateController.text,
+      _registrationOpenTimeController.text,
+    );
+    final registrationCloseAt = _parseDateTime(
+      _registrationCloseDateController.text,
+      _registrationCloseTimeController.text,
+    );
+    final cancellationDeadlineAt = _parseDateTime(
+      _cancellationDeadlineDateController.text,
+      _cancellationDeadlineTimeController.text,
+    );
 
     if (_isEditing) {
       await _submitEventUpdate(
@@ -497,6 +559,9 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         maxCapacity: maxCapacity,
         startAt: startAt,
         endAt: endAt,
+        registrationOpenAt: registrationOpenAt,
+        registrationCloseAt: registrationCloseAt,
+        cancellationDeadlineAt: cancellationDeadlineAt,
       );
       return;
     }
@@ -507,13 +572,21 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         coverImage == null ||
         maxCapacity == null ||
         startAt == null ||
-        endAt == null) {
+        endAt == null ||
+        registrationOpenAt == null ||
+        registrationCloseAt == null ||
+        cancellationDeadlineAt == null) {
       _showMessage('Vui lòng nhập đủ thông tin và chọn ảnh bìa.');
       return;
     }
 
-    if (!endAt.isAfter(startAt)) {
-      _showMessage('Thời gian kết thúc phải sau thời gian bắt đầu.');
+    if (!_validateSchedule(
+      startAt: startAt,
+      endAt: endAt,
+      registrationOpenAt: registrationOpenAt,
+      registrationCloseAt: registrationCloseAt,
+      cancellationDeadlineAt: cancellationDeadlineAt,
+    )) {
       return;
     }
 
@@ -533,6 +606,9 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           maxCapacity: maxCapacity,
           startAt: startAt,
           endAt: endAt,
+          registrationOpenAt: registrationOpenAt,
+          registrationCloseAt: registrationCloseAt,
+          cancellationDeadlineAt: cancellationDeadlineAt,
           isPublic: _isPublic,
           activateImmediately: _activateImmediately,
         );
@@ -557,6 +633,9 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     required int? maxCapacity,
     required DateTime? startAt,
     required DateTime? endAt,
+    required DateTime? registrationOpenAt,
+    required DateTime? registrationCloseAt,
+    required DateTime? cancellationDeadlineAt,
   }) async {
     final eventId = _resolvedEventId;
     if (eventId == null) {
@@ -567,13 +646,21 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     if (title.isEmpty ||
         maxCapacity == null ||
         startAt == null ||
-        endAt == null) {
+        endAt == null ||
+        registrationOpenAt == null ||
+        registrationCloseAt == null ||
+        cancellationDeadlineAt == null) {
       _showMessage('Vui lòng nhập tên, thời gian và sức chứa hợp lệ.');
       return;
     }
 
-    if (!endAt.isAfter(startAt)) {
-      _showMessage('Thời gian kết thúc phải sau thời gian bắt đầu.');
+    if (!_validateSchedule(
+      startAt: startAt,
+      endAt: endAt,
+      registrationOpenAt: registrationOpenAt,
+      registrationCloseAt: registrationCloseAt,
+      cancellationDeadlineAt: cancellationDeadlineAt,
+    )) {
       return;
     }
 
@@ -596,6 +683,9 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
           maxCapacity: maxCapacity,
           startAt: startAt,
           endAt: endAt,
+          registrationOpenAt: registrationOpenAt,
+          registrationCloseAt: registrationCloseAt,
+          cancellationDeadlineAt: cancellationDeadlineAt,
           isPublic: _isPublic,
         );
 
@@ -629,9 +719,54 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   DateTime? get _currentEndAt =>
       _parseDateTime(_endDateController.text, _endTimeController.text);
 
+  DateTime? get _currentRegistrationOpenAt => _parseDateTime(
+    _registrationOpenDateController.text,
+    _registrationOpenTimeController.text,
+  );
+
+  DateTime? get _currentRegistrationCloseAt => _parseDateTime(
+    _registrationCloseDateController.text,
+    _registrationCloseTimeController.text,
+  );
+
+  DateTime? get _currentCancellationDeadlineAt => _parseDateTime(
+    _cancellationDeadlineDateController.text,
+    _cancellationDeadlineTimeController.text,
+  );
+
   String _formatPickerDateTime(DateTime? value) {
     if (value == null) return 'Chọn ngày và giờ';
     return DateFormat('dd/MM/yyyy HH:mm').format(value);
+  }
+
+  bool _validateSchedule({
+    required DateTime startAt,
+    required DateTime endAt,
+    required DateTime registrationOpenAt,
+    required DateTime registrationCloseAt,
+    required DateTime cancellationDeadlineAt,
+  }) {
+    if (!endAt.isAfter(startAt)) {
+      _showMessage('Thời gian kết thúc phải sau thời gian bắt đầu.');
+      return false;
+    }
+
+    if (registrationOpenAt.isAfter(registrationCloseAt)) {
+      _showMessage('Thời gian đóng đăng ký phải sau thời gian mở đăng ký.');
+      return false;
+    }
+
+    if (registrationCloseAt.isAfter(startAt)) {
+      _showMessage('Thời gian đóng đăng ký phải trước thời gian tổ chức.');
+      return false;
+    }
+
+    if (cancellationDeadlineAt.isAfter(startAt)) {
+      _showMessage('Hạn hủy đăng ký phải trước thời gian tổ chức.');
+      return false;
+    }
+
+    return true;
   }
 
   void _setScheduleControllers({
@@ -644,6 +779,16 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _endTimeController.text = DateFormat('HH:mm').format(endAt);
   }
 
+  void _setRegistrationScheduleControllers({
+    required DateTime registrationOpenAt,
+    required DateTime registrationCloseAt,
+    required DateTime cancellationDeadlineAt,
+  }) {
+    _setRegistrationOpenControllers(registrationOpenAt);
+    _setRegistrationCloseControllers(registrationCloseAt);
+    _setCancellationDeadlineControllers(cancellationDeadlineAt);
+  }
+
   void _setStartControllers(DateTime value) {
     _startDateController.text = DateFormat('yyyy-MM-dd').format(value);
     _startTimeController.text = DateFormat('HH:mm').format(value);
@@ -652,6 +797,29 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
   void _setEndControllers(DateTime value) {
     _endDateController.text = DateFormat('yyyy-MM-dd').format(value);
     _endTimeController.text = DateFormat('HH:mm').format(value);
+  }
+
+  void _setRegistrationOpenControllers(DateTime value) {
+    _registrationOpenDateController.text = DateFormat(
+      'yyyy-MM-dd',
+    ).format(value);
+    _registrationOpenTimeController.text = DateFormat('HH:mm').format(value);
+  }
+
+  void _setRegistrationCloseControllers(DateTime value) {
+    _registrationCloseDateController.text = DateFormat(
+      'yyyy-MM-dd',
+    ).format(value);
+    _registrationCloseTimeController.text = DateFormat('HH:mm').format(value);
+  }
+
+  void _setCancellationDeadlineControllers(DateTime value) {
+    _cancellationDeadlineDateController.text = DateFormat(
+      'yyyy-MM-dd',
+    ).format(value);
+    _cancellationDeadlineTimeController.text = DateFormat(
+      'HH:mm',
+    ).format(value);
   }
 
   Future<void> _pickDateTime({required bool isStart}) async {
@@ -693,8 +861,72 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
         if (currentEnd == null || !currentEnd.isAfter(pickedDateTime)) {
           _setEndControllers(pickedDateTime.add(const Duration(hours: 2)));
         }
+        final currentRegistrationClose = _currentRegistrationCloseAt;
+        if (currentRegistrationClose == null ||
+            currentRegistrationClose.isAfter(pickedDateTime)) {
+          _setRegistrationCloseControllers(
+            pickedDateTime.subtract(const Duration(hours: 1)),
+          );
+        }
+        final currentCancellationDeadline = _currentCancellationDeadlineAt;
+        if (currentCancellationDeadline == null ||
+            currentCancellationDeadline.isAfter(pickedDateTime)) {
+          _setCancellationDeadlineControllers(
+            pickedDateTime.subtract(const Duration(hours: 3)),
+          );
+        }
       } else {
         _setEndControllers(pickedDateTime);
+      }
+    });
+  }
+
+  Future<void> _pickRegistrationDateTime({
+    required _RegistrationDateTimeField field,
+  }) async {
+    final now = DateTime.now();
+    final startAt = _currentStartAt ?? now.add(const Duration(days: 1));
+    final current = switch (field) {
+      _RegistrationDateTimeField.open => _currentRegistrationOpenAt ?? now,
+      _RegistrationDateTimeField.close =>
+        _currentRegistrationCloseAt ??
+            startAt.subtract(const Duration(hours: 1)),
+      _RegistrationDateTimeField.cancellationDeadline =>
+        _currentCancellationDeadlineAt ??
+            startAt.subtract(const Duration(hours: 3)),
+    };
+    final initialDate = DateTime(current.year, current.month, current.day);
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final pickedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      switch (field) {
+        case _RegistrationDateTimeField.open:
+          _setRegistrationOpenControllers(pickedDateTime);
+        case _RegistrationDateTimeField.close:
+          _setRegistrationCloseControllers(pickedDateTime);
+        case _RegistrationDateTimeField.cancellationDeadline:
+          _setCancellationDeadlineControllers(pickedDateTime);
       }
     });
   }
@@ -715,6 +947,17 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _descriptionController.text = event.description ?? '';
     final end = event.endDate ?? event.startDate.add(const Duration(hours: 2));
     _setScheduleControllers(startAt: event.startDate, endAt: end);
+    _setRegistrationScheduleControllers(
+      registrationOpenAt:
+          event.registrationOpenAt ??
+          event.startDate.subtract(const Duration(days: 7)),
+      registrationCloseAt:
+          event.registrationCloseAt ??
+          event.startDate.subtract(const Duration(hours: 1)),
+      cancellationDeadlineAt:
+          event.cancellationDeadlineAt ??
+          event.startDate.subtract(const Duration(hours: 3)),
+    );
     _capacityController.text = event.guestCount?.toString() ?? '';
     _isPublic = event.visibility != EventVisibility.private;
     _activateImmediately = event.status != EventStatus.draft;
@@ -729,6 +972,15 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     final activeEnd =
         activeEvent.endDate ??
         activeEvent.startDate.add(const Duration(hours: 2));
+    final activeRegistrationOpen =
+        activeEvent.registrationOpenAt ??
+        activeEvent.startDate.subtract(const Duration(days: 7));
+    final activeRegistrationClose =
+        activeEvent.registrationCloseAt ??
+        activeEvent.startDate.subtract(const Duration(hours: 1));
+    final activeCancellationDeadline =
+        activeEvent.cancellationDeadlineAt ??
+        activeEvent.startDate.subtract(const Duration(hours: 3));
 
     return _titleController.text == activeEvent.title &&
         _descriptionController.text == (activeEvent.description ?? '') &&
@@ -738,6 +990,18 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
             DateFormat('HH:mm').format(activeEvent.startDate) &&
         _endDateController.text == DateFormat('yyyy-MM-dd').format(activeEnd) &&
         _endTimeController.text == DateFormat('HH:mm').format(activeEnd) &&
+        _registrationOpenDateController.text ==
+            DateFormat('yyyy-MM-dd').format(activeRegistrationOpen) &&
+        _registrationOpenTimeController.text ==
+            DateFormat('HH:mm').format(activeRegistrationOpen) &&
+        _registrationCloseDateController.text ==
+            DateFormat('yyyy-MM-dd').format(activeRegistrationClose) &&
+        _registrationCloseTimeController.text ==
+            DateFormat('HH:mm').format(activeRegistrationClose) &&
+        _cancellationDeadlineDateController.text ==
+            DateFormat('yyyy-MM-dd').format(activeCancellationDeadline) &&
+        _cancellationDeadlineTimeController.text ==
+            DateFormat('HH:mm').format(activeCancellationDeadline) &&
         _capacityController.text == (activeEvent.guestCount?.toString() ?? '');
   }
 
@@ -890,6 +1154,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     );
   }
 }
+
+enum _RegistrationDateTimeField { open, close, cancellationDeadline }
 
 class _DateTimePickerButton extends StatelessWidget {
   final IconData icon;

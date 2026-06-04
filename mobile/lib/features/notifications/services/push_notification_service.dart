@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -32,6 +33,8 @@ class PushNotificationService {
 
   final FlutterLocalNotificationsPlugin _localNotifications;
   FirebaseMessaging? _messaging;
+  final StreamController<String?> _localNotificationTapController =
+      StreamController<String?>.broadcast();
 
   bool _initialized = false;
   bool _available = false;
@@ -119,7 +122,6 @@ class PushNotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: 'ic_notification',
-          largeIcon: DrawableResourceAndroidBitmap('ic_notification_large'),
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
@@ -127,7 +129,7 @@ class PushNotificationService {
           presentSound: true,
         ),
       ),
-      payload: message.data['notification_id'],
+      payload: jsonEncode(message.data),
     );
   }
 
@@ -140,7 +142,12 @@ class PushNotificationService {
         requestSoundPermission: false,
       ),
     );
-    await _localNotifications.initialize(settings: initializationSettings);
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (response) {
+        _localNotificationTapController.add(response.payload);
+      },
+    );
     await _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -163,7 +170,16 @@ class PushNotificationService {
   Stream<RemoteMessage> get onNotificationOpenedApp =>
       FirebaseMessaging.onMessageOpenedApp;
 
+  Stream<String?> get onLocalNotificationTap =>
+      _localNotificationTapController.stream;
+
   Future<RemoteMessage?> getInitialMessage() {
     return _messagingInstance.getInitialMessage();
+  }
+
+  Future<String?> getInitialLocalNotificationPayload() async {
+    final details = await _localNotifications.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp != true) return null;
+    return details?.notificationResponse?.payload;
   }
 }

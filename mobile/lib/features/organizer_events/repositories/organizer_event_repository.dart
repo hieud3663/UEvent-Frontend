@@ -54,6 +54,14 @@ abstract interface class OrganizerEventRepository {
     required String registrationId,
   });
 
+  Future<Map<String, dynamic>> sendEventNotification({
+    required String eventId,
+    required String title,
+    required String message,
+    required String audience,
+    bool sendPush = true,
+  });
+
   Future<List<EventOrganizerMemberModel>> getEventOrganizers({
     required String eventId,
   });
@@ -141,7 +149,7 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(seconds: 1));
       return MockEventData.mockEventLaunchParty.copyWith(
-        title: payload['title']?.toString() ?? 'Draft event',
+        title: payload['title']?.toString() ?? 'Sự kiện nháp',
         isOrganizer: true,
       );
     }
@@ -329,6 +337,32 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
     return _service.promoteRegistrationToCohost(
       eventId: eventId,
       registrationId: registrationId,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendEventNotification({
+    required String eventId,
+    required String title,
+    required String message,
+    required String audience,
+    bool sendPush = true,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return {
+        'notification_id': 'mock-notification',
+        'recipient_count': 24,
+        'queued_count': sendPush ? 24 : 0,
+      };
+    }
+
+    return _service.sendEventNotification(
+      eventId: eventId,
+      title: title,
+      message: message,
+      audience: audience,
+      sendPush: sendPush,
     );
   }
 
