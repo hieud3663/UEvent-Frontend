@@ -2,8 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 
-class DiscoverySearchBar extends StatelessWidget {
-  const DiscoverySearchBar({super.key});
+class DiscoverySearchBar extends StatefulWidget {
+  final String value;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onClear;
+
+  const DiscoverySearchBar({
+    super.key,
+    this.value = '',
+    this.onChanged,
+    this.onSubmitted,
+    this.onClear,
+  });
+
+  @override
+  State<DiscoverySearchBar> createState() => _DiscoverySearchBarState();
+}
+
+class _DiscoverySearchBarState extends State<DiscoverySearchBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value);
+  }
+
+  @override
+  void didUpdateWidget(covariant DiscoverySearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value == _controller.text) return;
+
+    _controller
+      ..text = widget.value
+      ..selection = TextSelection.collapsed(offset: widget.value.length);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +60,10 @@ class DiscoverySearchBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
+              controller: _controller,
+              onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
+              textInputAction: TextInputAction.search,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.onSurface,
               ),
@@ -33,6 +77,14 @@ class DiscoverySearchBar extends StatelessWidget {
               ),
             ),
           ),
+          if (widget.value.trim().isNotEmpty) ...[
+            const SizedBox(width: 8),
+            InkResponse(
+              onTap: widget.onClear,
+              radius: 18,
+              child: Icon(Icons.close, color: AppColors.navInactive, size: 18),
+            ),
+          ],
         ],
       ),
     );

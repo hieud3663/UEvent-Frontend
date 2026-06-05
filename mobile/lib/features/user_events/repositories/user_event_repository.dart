@@ -17,6 +17,7 @@ abstract interface class UserEventRepository {
     int page = 1,
     int pageSize = 10,
     String category = '',
+    String search = '',
     String status = 'active',
   });
 
@@ -94,17 +95,32 @@ class UserEventRepositoryImpl implements UserEventRepository {
     int page = 1,
     int pageSize = 10,
     String category = '',
+    String search = '',
     String status = 'active',
   }) async {
     if (EnvConfig.useMockData) {
       await Future.delayed(const Duration(seconds: 1));
-      return MockEventData.discoveryEvents;
+      final normalizedSearch = search.trim().toLowerCase();
+      return MockEventData.discoveryEvents.where((event) {
+        final description = event.description?.toLowerCase() ?? '';
+        final location = event.location.toLowerCase();
+        final matchesCategory =
+            category.isEmpty ||
+            event.category?.toLowerCase() == category.toLowerCase();
+        final matchesSearch =
+            normalizedSearch.isEmpty ||
+            event.title.toLowerCase().contains(normalizedSearch) ||
+            description.contains(normalizedSearch) ||
+            location.contains(normalizedSearch);
+        return matchesCategory && matchesSearch;
+      }).toList();
     }
 
     return _service.searchEvents(
       page: page,
       pageSize: pageSize,
       category: category,
+      search: search,
       status: status,
     );
   }
