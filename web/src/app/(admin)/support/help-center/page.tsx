@@ -453,12 +453,12 @@ export default function HelpCenterAdminPage() {
                 options={articleStatusOptions}
                 ariaLabel="Lọc trạng thái"
               />
-              {/* <AdminSelect
+              <AdminSelect
                 value={locale}
                 onChange={setLocale}
                 options={localeFilterOptions}
                 ariaLabel="Lọc ngôn ngữ"
-              /> */}
+              />
               <AdminSelect
                 value={categoryFilter}
                 onChange={setCategoryFilter}

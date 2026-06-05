@@ -22,6 +22,11 @@ const typeLabels: Record<NotificationType, string> = {
   promotion: 'Ưu đãi',
   invite: 'Lời mời',
   ticket_confirm: 'Xác nhận vé',
+  registration_confirmed: 'Đăng ký được xác nhận',
+  registration_waitlisted: 'Danh sách chờ',
+  new_registration: 'Đăng ký mới',
+  organizer_announcement: 'Thông báo nhà tổ chức',
+  question_answered: 'Câu hỏi đã trả lời',
 };
 
 const audienceLabels: Record<AudienceType, string> = {
@@ -136,7 +141,7 @@ export default function NotificationDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn('rounded-full px-3 py-1 text-xs font-bold', status.className)}>{status.label}</span>
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-              {typeLabels[notification.type]}
+              {typeLabels[notification.type] ?? 'Loại khác'}
             </span>
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight text-on-surface">{notification.title}</h1>
