@@ -9,6 +9,7 @@ import 'package:frontend/core/widgets/glass_icon_button.dart';
 /// Returns a SliverAppBar or use as a plain widget inside CustomScrollView.
 class EventHeroHeader extends StatelessWidget {
   final String imageUrl;
+  final String? imageCacheKey;
   final VoidCallback? onBack;
   final VoidCallback? onShare;
   final VoidCallback? onFavourite;
@@ -17,6 +18,7 @@ class EventHeroHeader extends StatelessWidget {
   const EventHeroHeader({
     super.key,
     required this.imageUrl,
+    this.imageCacheKey,
     this.onBack,
     this.onShare,
     this.onFavourite,
@@ -36,6 +38,7 @@ class EventHeroHeader extends StatelessWidget {
           else
             CachedNetworkImage(
               imageUrl: imageUrl,
+              cacheKey: imageCacheKey,
               fit: BoxFit.cover,
               memCacheWidth: 1400,
               maxWidthDiskCache: 1920,

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:frontend/core/utils/image_cache_key.dart';
 
 part 'user_model.g.dart';
 
@@ -16,6 +17,7 @@ class UserModel {
   final String? faculty;
   final String? className;
   final String? avatarUrl;
+  final String? avatarCacheKey;
 
   const UserModel({
     required this.id,
@@ -29,12 +31,18 @@ class UserModel {
     this.faculty,
     this.className,
     this.avatarUrl,
+    this.avatarCacheKey,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(_normalizeUserJson(json));
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
+
+  String? get stableAvatarCacheKey => stableImageCacheKey(
+    imageUrl: avatarUrl ?? '',
+    explicitCacheKey: avatarCacheKey,
+  );
 }
 
 Map<String, dynamic> _normalizeUserJson(Map<String, dynamic> json) {
@@ -54,6 +62,9 @@ Map<String, dynamic> _normalizeUserJson(Map<String, dynamic> json) {
     'faculty': _nullableStringValue(json['faculty']),
     'class_name': _nullableStringValue(json['class_name']),
     'avatar_url': _nullableStringValue(json['avatar_url']),
+    'avatar_cache_key': _nullableStringValue(
+      json['avatar_cache_key'] ?? json['avatarCacheKey'],
+    ),
   };
 }
 

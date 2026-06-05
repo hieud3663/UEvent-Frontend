@@ -32,6 +32,7 @@ class TeamMemberTile extends StatelessWidget {
               clipBehavior: Clip.hardEdge,
               child: CachedNetworkImage(
                 imageUrl: member.avatarUrl,
+                cacheKey: member.stableAvatarCacheKey,
                 fit: BoxFit.cover,
                 memCacheWidth: 96,
                 maxWidthDiskCache: 192,

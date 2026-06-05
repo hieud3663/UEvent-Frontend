@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ChevronRight, KeyRound, ShieldOff } from 'lucide-react';
 import { AdminSelect, ErrorState, ListSkeleton } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
+import { facultyOptions, normalizeFaculty } from '@/core/lib/facultyConfig';
 import {
   getUserById,
   getUserPasskeys,
@@ -139,6 +140,16 @@ export default function EditUserPage() {
   }
 
   const currentStatus = statusDisplay[user.status];
+  const normalizedFaculty = normalizeFaculty(user.faculty);
+  const baseFacultyOptions = [
+    { value: '', label: 'Chọn khoa/đơn vị', disabled: true },
+    ...facultyOptions,
+  ];
+  const hasCustomFaculty =
+    normalizedFaculty && !facultyOptions.some((option) => option.value === normalizedFaculty);
+  const facultySelectOptions = hasCustomFaculty
+    ? [{ value: normalizedFaculty, label: normalizedFaculty }, ...baseFacultyOptions]
+    : baseFacultyOptions;
 
   return (
     <div className="min-h-screen px-0 pb-20 sm:px-4 lg:px-10">
@@ -328,11 +339,12 @@ export default function EditUserPage() {
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                     Khoa/đơn vị
                   </label>
-                  <input
+                  <AdminSelect
                     name="faculty"
-                    type="text"
-                    defaultValue={user.faculty ?? ''}
-                    className="w-full bg-slate-200/30 border-none rounded-2xl px-5 py-4 text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all outline-none"
+                    defaultValue={normalizedFaculty ?? ''}
+                    options={facultySelectOptions}
+                    ariaLabel="Chọn khoa hoặc đơn vị"
+                    triggerClassName="h-auto rounded-2xl border-none bg-slate-200/30 px-5 py-4 text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
                 <div className="space-y-2">

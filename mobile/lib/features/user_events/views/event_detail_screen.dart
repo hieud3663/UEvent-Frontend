@@ -109,6 +109,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 SliverToBoxAdapter(
                   child: EventHeroHeader(
                     imageUrl: event?.imageUrl ?? '',
+                    imageCacheKey: event?.imageCacheKey,
                     onBack: widget.onBack,
                     onShare: widget.onShare,
                     onFavourite: () =>
@@ -161,6 +162,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           const SizedBox(height: 20),
                           EventOrganizerCard(
                             organizerAvatarUrls: _organizerAvatarUrls(event),
+                            organizerAvatarCacheKeys: _organizerAvatarCacheKeys(
+                              event,
+                            ),
                             extraOrganizersCount: _extraOrganizerCount(event),
                             organizerName: _organizerDisplayName(event),
                             fallbackAvatarLabel: _organizerDisplayName(event),
@@ -289,6 +293,28 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
     addUserAvatar(event.createdBy);
     return urls.take(3).toList(growable: false);
+  }
+
+  List<String?> _organizerAvatarCacheKeys(EventModel? event) {
+    if (event == null) return const <String?>[];
+
+    final cacheKeys = <String?>[];
+    final seen = <String>{};
+
+    void addUserAvatar(EventUserSummaryModel? user) {
+      if (user == null) return;
+      final url = user.avatarUrl.trim();
+      if (url.isEmpty || !seen.add(url)) return;
+      cacheKeys.add(user.stableAvatarCacheKey);
+    }
+
+    for (final organizer in event.organizers) {
+      addUserAvatar(organizer.user);
+      if (cacheKeys.length >= 3) return cacheKeys;
+    }
+
+    addUserAvatar(event.createdBy);
+    return cacheKeys.take(3).toList(growable: false);
   }
 
   int _extraOrganizerCount(EventModel? event) {

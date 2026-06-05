@@ -37,6 +37,7 @@ class EventCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               child: CachedNetworkImage(
                 imageUrl: event.imageUrl,
+                cacheKey: event.imageCacheKey,
                 width: AppConstants.eventThumbnailSize,
                 height: AppConstants.eventThumbnailSize,
                 fit: BoxFit.cover,

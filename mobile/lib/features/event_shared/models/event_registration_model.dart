@@ -1,9 +1,12 @@
+import 'package:frontend/core/utils/image_cache_key.dart';
+
 class EventUserSummaryModel {
   final String id;
   final String username;
   final String fullName;
   final String email;
   final String avatarUrl;
+  final String? avatarCacheKey;
 
   const EventUserSummaryModel({
     required this.id,
@@ -11,6 +14,7 @@ class EventUserSummaryModel {
     required this.fullName,
     required this.email,
     this.avatarUrl = '',
+    this.avatarCacheKey,
   });
 
   String get displayName {
@@ -18,6 +22,11 @@ class EventUserSummaryModel {
     if (username.trim().isNotEmpty) return username;
     return email;
   }
+
+  String? get stableAvatarCacheKey => stableImageCacheKey(
+    imageUrl: avatarUrl,
+    explicitCacheKey: avatarCacheKey,
+  );
 
   factory EventUserSummaryModel.fromJson(Map<String, dynamic> json) {
     return EventUserSummaryModel(
@@ -27,6 +36,9 @@ class EventUserSummaryModel {
       email: json['email']?.toString() ?? '',
       avatarUrl:
           json['avatar_url']?.toString() ?? json['avatarUrl']?.toString() ?? '',
+      avatarCacheKey:
+          json['avatar_cache_key']?.toString() ??
+          json['avatarCacheKey']?.toString(),
     );
   }
 }

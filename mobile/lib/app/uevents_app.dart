@@ -36,6 +36,8 @@ class UEventsApp extends ConsumerStatefulWidget {
 
 class _UEventsAppState extends ConsumerState<UEventsApp> {
   final AppLinks _appLinks = AppLinks();
+  final ValueNotifier<SplashProgress> _splashProgress =
+      ValueNotifier(SplashProgress.initial());
   StreamSubscription<Uri>? _linkSubscription;
 
   @override
@@ -48,6 +50,7 @@ class _UEventsAppState extends ConsumerState<UEventsApp> {
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    _splashProgress.dispose();
     super.dispose();
   }
 
@@ -99,8 +102,15 @@ class _UEventsAppState extends ConsumerState<UEventsApp> {
       },
       home: Builder(
         builder: (context) => SplashView(
+          progressListenable: _splashProgress,
           onInitializationComplete: () {
-            unawaited(_handleInitialSession(context, ref));
+            unawaited(
+              _handleInitialSession(
+                context,
+                ref,
+                splashProgress: _splashProgress,
+              ),
+            );
           },
         ),
       ),
@@ -213,24 +223,49 @@ bool _isValidEmail(String value) {
   return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
 }
 
-Future<void> _handleInitialSession(BuildContext context, WidgetRef ref) async {
+Future<void> _handleInitialSession(
+  BuildContext context,
+  WidgetRef ref, {
+  ValueNotifier<SplashProgress>? splashProgress,
+}) async {
+  _setSplashProgress(
+    splashProgress,
+    0.2,
+    'Đang kiểm tra phiên đăng nhập',
+  );
   final session = await ref.read(authControllerProvider.future);
   if (!context.mounted) return;
 
   if (session == null) {
+    _setSplashProgress(
+      splashProgress,
+      1.0,
+      'Đang chuyển đến đăng nhập',
+    );
     _navigateToLogin(context, ref);
     return;
   }
 
-  await _bootstrapProfileAndNavigate(context, ref, fromSplash: true);
+  await _bootstrapProfileAndNavigate(
+    context,
+    ref,
+    fromSplash: true,
+    splashProgress: splashProgress,
+  );
 }
 
 Future<void> _bootstrapProfileAndNavigate(
   BuildContext context,
   WidgetRef ref, {
   required bool fromSplash,
+  ValueNotifier<SplashProgress>? splashProgress,
 }) async {
   try {
+    _setSplashProgress(
+      splashProgress,
+      0.55,
+      'Đang tải hồ sơ người dùng',
+    );
     final user = await ref.read(profileServiceProvider).getMyProfile();
     if (!context.mounted) return;
 
@@ -238,9 +273,25 @@ Future<void> _bootstrapProfileAndNavigate(
     ref.invalidate(userProfileProvider);
     ref.invalidate(profileOverviewProvider);
 
+    _setSplashProgress(
+      splashProgress,
+      0.85,
+      'Đang chuẩn bị không gian làm việc',
+    );
+
     if (user.isProfileComplete) {
+      _setSplashProgress(
+        splashProgress,
+        1.0,
+        'Sẵn sàng',
+      );
       _navigateToAppShell(context);
     } else {
+      _setSplashProgress(
+        splashProgress,
+        1.0,
+        'Đang chuyển đến hoàn tất hồ sơ',
+      );
       _navigateToProfileSetup(context, initialUser: user);
     }
   } on DioException catch (error) {
@@ -249,11 +300,17 @@ Future<void> _bootstrapProfileAndNavigate(
       ref,
       error,
       fromSplash: fromSplash,
+      splashProgress: splashProgress,
     );
   } catch (_) {
     if (!context.mounted) return;
     _showSnackBar(context, 'Không thể tải hồ sơ. Vui lòng thử lại.');
     if (fromSplash) {
+      _setSplashProgress(
+        splashProgress,
+        1.0,
+        'Đang chuyển đến đăng nhập',
+      );
       _navigateToLogin(context, ref);
     }
   }
@@ -273,6 +330,7 @@ Future<void> _handleProfileBootstrapFailure(
   WidgetRef ref,
   DioException error, {
   required bool fromSplash,
+  ValueNotifier<SplashProgress>? splashProgress,
 }) async {
   final statusCode = error.response?.statusCode;
   final message = _profileBootstrapErrorMessage(error);
@@ -287,8 +345,25 @@ Future<void> _handleProfileBootstrapFailure(
   _showSnackBar(context, message);
 
   if (fromSplash || shouldClearSession) {
+    _setSplashProgress(
+      splashProgress,
+      1.0,
+      'Đang chuyển đến đăng nhập',
+    );
     _navigateToLogin(context, ref);
   }
+}
+
+void _setSplashProgress(
+  ValueNotifier<SplashProgress>? notifier,
+  double value,
+  String label,
+) {
+  if (notifier == null) return;
+  notifier.value = SplashProgress(
+    value: value.clamp(0.0, 1.0),
+    label: label,
+  );
 }
 
 String _profileBootstrapErrorMessage(DioException error) {

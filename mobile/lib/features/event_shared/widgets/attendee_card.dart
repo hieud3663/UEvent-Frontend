@@ -1,5 +1,6 @@
 // File: lib/features/event_shared/widgets/attendee_card.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -8,6 +9,7 @@ enum AttendeeStatus { checkedIn, registered, waitlisted, pending, cancelled }
 
 class AttendeeCard extends StatelessWidget {
   final String imageUrl;
+  final String? imageCacheKey;
   final String name;
   final String studentId;
   final AttendeeStatus status;
@@ -18,6 +20,7 @@ class AttendeeCard extends StatelessWidget {
   const AttendeeCard({
     super.key,
     required this.imageUrl,
+    this.imageCacheKey,
     required this.name,
     required this.studentId,
     required this.status,
@@ -28,6 +31,8 @@ class AttendeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedImageUrl = imageUrl.trim();
+
     // Styling based on status
     final Color badgeColor = switch (status) {
       AttendeeStatus.checkedIn ||
@@ -79,22 +84,17 @@ class AttendeeCard extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          imageUrl,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
+                        child: normalizedImageUrl.isEmpty
+                            ? _AvatarFallback()
+                            : CachedNetworkImage(
+                                imageUrl: normalizedImageUrl,
+                                cacheKey: imageCacheKey,
                                 width: 56,
                                 height: 56,
-                                color: AppColors.surfaceVariant,
-                                child: const Icon(
-                                  Icons.person,
-                                  color: AppColors.onSurfaceVariant,
-                                ),
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) =>
+                                    _AvatarFallback(),
                               ),
-                        ),
                       ),
                       Positioned(
                         bottom: -4,
@@ -184,6 +184,18 @@ class AttendeeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      color: AppColors.surfaceVariant,
+      child: const Icon(Icons.person, color: AppColors.onSurfaceVariant),
     );
   }
 }

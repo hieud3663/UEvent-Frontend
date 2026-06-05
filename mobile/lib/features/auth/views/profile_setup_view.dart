@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/core/config/faculty_config.dart';
 import 'package:frontend/core/providers/service_providers.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
@@ -14,6 +15,33 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/profile/services/profile_service.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildProfileSetupPayload({
+  required String fullName,
+  required String studentCode,
+  required String faculty,
+  String className = '',
+  String phoneNumber = '',
+}) {
+  final payload = <String, dynamic>{
+    'full_name': fullName.trim(),
+    'student_code': studentCode.trim(),
+    'faculty': FacultyConfig.normalize(faculty) ?? faculty.trim(),
+  };
+
+  final normalizedClassName = className.trim();
+  if (normalizedClassName.isNotEmpty) {
+    payload['class_name'] = normalizedClassName;
+  }
+
+  final normalizedPhoneNumber = phoneNumber.trim();
+  if (normalizedPhoneNumber.isNotEmpty) {
+    payload['phone_number'] = normalizedPhoneNumber;
+  }
+
+  return payload;
+}
 
 class ProfileSetupView extends ConsumerStatefulWidget {
   final ProfileService? profileService;
@@ -50,7 +78,7 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
       _studentCodeController.text = user.studentCode ?? '';
       _classNameController.text = user.className ?? '';
       _phoneController.text = user.phoneNumber ?? '';
-      _selectedFaculty = user.faculty;
+      _selectedFaculty = FacultyConfig.normalize(user.faculty);
     }
   }
 
@@ -78,13 +106,14 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
     try {
       final ProfileService profileService =
           widget.profileService ?? ref.read(profileServiceProvider);
-      final updatedUser = await profileService.updateProfile({
-        'full_name': _fullNameController.text.trim(),
-        'student_code': _studentCodeController.text.trim(),
-        'faculty': _selectedFaculty!.trim(),
-        'class_name': _classNameController.text.trim(),
-        'phone_number': _phoneController.text.trim(),
-      });
+      final payload = buildProfileSetupPayload(
+        fullName: _fullNameController.text,
+        studentCode: _studentCodeController.text,
+        faculty: _selectedFaculty ?? '',
+        className: _classNameController.text,
+        phoneNumber: _phoneController.text,
+      );
+      final updatedUser = await profileService.updateProfile(payload);
 
       if (!mounted) return;
       ref.invalidate(userProfileProvider);
@@ -170,35 +199,15 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                     label: 'KHOA',
                     placeholder: 'Chọn khoa của bạn',
                     value: _selectedFaculty,
-                    items: const [
-                      GlassDropdownItem(
-                        value: 'Công nghệ thông tin',
-                        label: 'Công nghệ thông tin',
-                      ),
-                      GlassDropdownItem(value: 'Kinh tế', label: 'Kinh tế'),
-                      GlassDropdownItem(value: 'Ngoại ngữ', label: 'Ngoại ngữ'),
-                      GlassDropdownItem(value: 'Luật', label: 'Luật'),
-                      GlassDropdownItem(value: 'Xây dựng', label: 'Xây dựng'),
-                      GlassDropdownItem(
-                        value: 'Điện - Điện tử',
-                        label: 'Điện - Điện tử',
-                      ),
-                      GlassDropdownItem(value: 'Cơ khí', label: 'Cơ khí'),
-                      GlassDropdownItem(
-                        value: 'Mỹ thuật công nghiệp',
-                        label: 'Mỹ thuật công nghiệp',
-                      ),
-                      GlassDropdownItem(
-                        value: 'Môi trường & Tài nguyên',
-                        label: 'Môi trường & Tài nguyên',
-                      ),
-                      GlassDropdownItem(
-                        value: 'Khoa học ứng dụng',
-                        label: 'Khoa học ứng dụng',
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _selectedFaculty = value),
+                    items: FacultyConfig.values
+                        .map(
+                          (faculty) =>
+                              GlassDropdownItem(value: faculty, label: faculty),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      setState(() => _selectedFaculty = value.trim());
+                    },
                   ),
                   const SizedBox(height: 20),
                   GlassInputField(
@@ -317,6 +326,7 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
                   child: PrimaryButton(
                     label: _isSubmitting ? 'Đang lưu...' : 'Hoàn tất',
                     icon: _isSubmitting ? null : Icons.arrow_forward,
+                    isLoading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _submitProfile,
                   ),
                 ),

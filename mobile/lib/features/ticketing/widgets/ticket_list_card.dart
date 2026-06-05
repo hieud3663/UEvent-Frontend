@@ -40,6 +40,7 @@ class TicketListCard extends StatelessWidget {
               height: 110,
               child: CachedNetworkImage(
                 imageUrl: ticket.eventImageUrl,
+                cacheKey: ticket.stableEventImageCacheKey,
                 fit: BoxFit.cover,
                 memCacheWidth: 220,
                 maxWidthDiskCache: 420,

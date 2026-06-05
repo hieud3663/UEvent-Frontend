@@ -1,6 +1,7 @@
 // File: lib/features/ticketing/views/ticket_detail_view.dart
 
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_colors.dart';
@@ -78,6 +79,7 @@ class EventTicketDetailView extends ConsumerWidget {
           fallbackEventId: event.id,
           eventName: event.title,
           eventImageUrl: event.imageUrl,
+          eventImageCacheKey: event.imageCacheKey,
           date: _formatTicketDate(event.startDate),
           timeRange: event.timeRange ?? _formatTicketTimeRange(event),
           location: event.location,
@@ -161,7 +163,7 @@ class TicketDetailView extends ConsumerWidget {
                                   });
                                 },
                         ),
-                        
+
                         const SizedBox(height: 12),
                         Text(
                           'Nếu bạn gặp vấn đề khi hiển thị mã QR, vui lòng liên hệ ban tổ chức để được hỗ trợ.',
@@ -220,10 +222,11 @@ class TicketDetailView extends ConsumerWidget {
             SizedBox(
               height: 220,
               width: double.infinity,
-              child: Image.network(
-                ticket.eventImageUrl,
+              child: CachedNetworkImage(
+                imageUrl: ticket.eventImageUrl,
+                cacheKey: ticket.stableEventImageCacheKey,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
+                errorWidget: (context, url, error) =>
                     Container(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
             ),

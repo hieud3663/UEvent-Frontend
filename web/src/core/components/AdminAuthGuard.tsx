@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ErrorState, ListSkeleton } from '@/core/components';
+import { AppLoadingScreen, ErrorState } from '@/core/components';
 import { getCurrentAdmin, hasAdminAccessToken } from '@/features/auth/services/auth.service';
 
 interface AdminAuthGuardProps {
@@ -61,8 +61,10 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6">
-      <ListSkeleton rows={6} />
-    </main>
+    <AppLoadingScreen
+      title="Đang xác thực phiên quản trị"
+      description="Vui lòng chờ trong giây lát"
+      className="bg-slate-50"
+    />
   );
 }

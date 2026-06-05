@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, UserPlus } from 'lucide-react';
 import { buildCreateUserPayload, createUser } from '@/features/users/services/users.service';
 import { getApiFieldErrors, type ApiFieldErrors } from '@/core/lib/api';
+import { facultyOptions } from '@/core/lib/facultyConfig';
 import { AdminSelect } from '@/core/components';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
@@ -22,6 +23,10 @@ export default function CreateUserPage() {
     { value: 'organizer', label: 'Nhà tổ chức' },
     { value: 'admin', label: 'Quản trị viên' },
   ] as const;
+  const facultySelectOptions = [
+    { value: '', label: 'Chọn khoa/đơn vị', disabled: true },
+    ...facultyOptions,
+  ];
 
   const getFieldMessages = (...fields: string[]) => fields.flatMap((field) => fieldErrors[field] ?? []);
 
@@ -212,12 +217,13 @@ export default function CreateUserPage() {
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                   Khoa/đơn vị
                 </label>
-                <input
+                <AdminSelect
                   name="faculty"
-                  type="text"
-                  placeholder="VD: Công nghệ thông tin"
-                  aria-invalid={getFieldMessages('faculty').length > 0}
-                  className={getFieldClassName('faculty')}
+                  defaultValue=""
+                  options={facultySelectOptions}
+                  invalid={getFieldMessages('faculty').length > 0}
+                  ariaLabel="Chọn khoa hoặc đơn vị"
+                  triggerClassName={`${getFieldClassName('faculty')} h-auto cursor-pointer py-4`}
                 />
                 <FieldErrorMessages messages={getFieldMessages('faculty')} />
               </div>

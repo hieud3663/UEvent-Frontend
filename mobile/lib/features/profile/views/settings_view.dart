@@ -477,6 +477,7 @@ class _ProfileHeader extends ConsumerWidget {
                           ? ClipOval(
                               child: CachedNetworkImage(
                                 imageUrl: user.avatarUrl!,
+                                cacheKey: user.stableAvatarCacheKey,
                                 fit: BoxFit.cover,
                                 errorWidget: (context, url, error) =>
                                     const Icon(

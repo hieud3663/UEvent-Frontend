@@ -16,6 +16,7 @@ import 'package:frontend/core/widgets/primary_button.dart';
 class AskQuestionScreen extends StatefulWidget {
   final String eventName;
   final String eventImageUrl;
+  final String? eventImageCacheKey;
   final String eventCategory;
   final VoidCallback? onBack;
   final Future<bool> Function(
@@ -30,6 +31,7 @@ class AskQuestionScreen extends StatefulWidget {
     this.eventName = 'Future of Web3 & AI in Entertainment',
     this.eventImageUrl =
         'https://lh3.googleusercontent.com/aida-public/AB6AXuB1jXzh2I8WvzIkfdY-pDri-qHZOm4VuTsi_6k_AYtrtasQRQRey13PHsvB-wIGDb7Ydc-B1bU9clGOnuZPtsUY1bcrFGI-R_tesF8kVqeRTNDsnuW3CV430zYNN1l4MrxiH7Y2dBpMNK1A5luELCSjnF3YC-HEYWXXzTS5zIf6HJ7THn3OTFg-vuE8_FzMNgdzcKp6rxuJbgj7NRPjJuO2SQpT3I8ohI4rTOALWS5bPz67wmCANcCbNZPfnSao75dy_pufJSeB_mc',
+    this.eventImageCacheKey,
     this.eventCategory = 'Live Q&A Session',
     this.onBack,
     this.onSend,
@@ -137,6 +139,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
               height: 60,
               child: CachedNetworkImage(
                 imageUrl: widget.eventImageUrl,
+                cacheKey: widget.eventImageCacheKey,
                 fit: BoxFit.cover,
                 memCacheWidth: 180,
                 maxWidthDiskCache: 320,

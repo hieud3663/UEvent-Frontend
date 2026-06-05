@@ -2,6 +2,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:frontend/core/config/env_config.dart';
+import 'package:frontend/core/utils/image_cache_key.dart';
 import 'package:frontend/features/event_shared/models/event_organizer_member_model.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/event_shared/models/registration_field_model.dart';
@@ -16,6 +17,8 @@ class EventModel {
   final String? slug;
   @JsonKey(name: 'cover_image_url')
   final String imageUrl;
+  @JsonKey(name: 'cover_image_cache_key', includeToJson: false)
+  final String? coverImageCacheKey;
   final String location;
   @JsonKey(name: 'start_at')
   final DateTime startDate;
@@ -61,6 +64,7 @@ class EventModel {
     required this.title,
     this.slug,
     required this.imageUrl,
+    this.coverImageCacheKey,
     required this.location,
     required this.startDate,
     this.endDate,
@@ -89,6 +93,12 @@ class EventModel {
       isOrganizer;
 
   @JsonKey(includeToJson: false)
+  String? get imageCacheKey => stableImageCacheKey(
+    imageUrl: imageUrl,
+    explicitCacheKey: coverImageCacheKey,
+  );
+
+  @JsonKey(includeToJson: false)
   bool get isRegisteredByCurrentUser =>
       userEventRelation == EventUserRelation.registered;
 
@@ -97,6 +107,7 @@ class EventModel {
     String? title,
     String? slug,
     String? imageUrl,
+    String? coverImageCacheKey,
     String? location,
     DateTime? startDate,
     DateTime? endDate,
@@ -122,6 +133,7 @@ class EventModel {
       title: title ?? this.title,
       slug: slug ?? this.slug,
       imageUrl: imageUrl ?? this.imageUrl,
+      coverImageCacheKey: coverImageCacheKey ?? this.coverImageCacheKey,
       location: location ?? this.location,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
@@ -157,6 +169,9 @@ class EventModel {
       title: json['title'] as String,
       slug: json['slug'] as String?,
       imageUrl: _parseImageUrl(json),
+      coverImageCacheKey: _parseOptionalString(
+        json['cover_image_cache_key'] ?? json['coverImageCacheKey'],
+      ),
       location:
           json['location'] as String? ??
           json['location_snapshot'] as String? ??

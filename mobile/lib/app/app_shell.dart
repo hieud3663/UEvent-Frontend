@@ -495,6 +495,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         builder: (_) => AskQuestionScreen(
           eventName: event.title,
           eventImageUrl: event.imageUrl,
+          eventImageCacheKey: event.imageCacheKey,
           eventCategory: event.category ?? 'Phiên hỏi đáp trực tiếp',
           onBack: () => Navigator.of(ctx).pop(),
           onSend: (q, anon, notify) async {
@@ -915,6 +916,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onSearchEmpty: _pushEmptySearch,
           onEventTap: _pushEventDetail,
           profileAvatarUrl: profile?.avatarUrl,
+          profileAvatarCacheKey: profile?.stableAvatarCacheKey,
           profileName: profile?.fullName,
         ),
         isStudent

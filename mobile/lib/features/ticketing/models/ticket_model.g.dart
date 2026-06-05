@@ -12,6 +12,7 @@ TicketModel _$TicketModelFromJson(Map<String, dynamic> json) => TicketModel(
   eventId: json['event_id'] as String,
   eventName: json['event_name'] as String,
   eventImageUrl: json['event_image_url'] as String,
+  eventImageCacheKey: json['event_image_cache_key'] as String?,
   qrPayload: json['qr_payload'] as String?,
   qrSignature: json['qr_signature'] as String?,
   validFrom: json['valid_from'] == null
@@ -48,6 +49,7 @@ Map<String, dynamic> _$TicketModelToJson(TicketModel instance) =>
       'event_id': instance.eventId,
       'event_name': instance.eventName,
       'event_image_url': instance.eventImageUrl,
+      'event_image_cache_key': instance.eventImageCacheKey,
       'qr_payload': instance.qrPayload,
       'qr_signature': instance.qrSignature,
       'valid_from': instance.validFrom?.toIso8601String(),
