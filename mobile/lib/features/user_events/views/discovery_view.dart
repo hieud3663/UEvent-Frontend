@@ -30,6 +30,7 @@ class DiscoveryView extends ConsumerStatefulWidget {
   final VoidCallback? onSearchEmpty;
   final ValueChanged<EventModel>? onEventTap;
   final String? profileAvatarUrl;
+  final String? profileAvatarCacheKey;
   final String? profileName;
   final List<NavItemModel> navItems;
 
@@ -42,6 +43,7 @@ class DiscoveryView extends ConsumerStatefulWidget {
     this.onSearchEmpty,
     this.onEventTap,
     this.profileAvatarUrl,
+    this.profileAvatarCacheKey,
     this.profileName,
     this.navItems = GlassBottomNavBar.defaultItems,
   });
@@ -151,7 +153,6 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                     child: SectionHeader(
                       title: 'Sự kiện nổi bật',
                       titleStyle: AppTextStyles.headlineLarge,
-                      actionText: 'Xem tất cả',
                       onActionTap: () {},
                     ),
                   ),
@@ -238,6 +239,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                 onTap: widget.onProfileTap,
                 child: DiscoveryProfileAvatar(
                   avatarUrl: widget.profileAvatarUrl,
+                  avatarCacheKey: widget.profileAvatarCacheKey,
                   displayName: widget.profileName,
                 ),
               ),

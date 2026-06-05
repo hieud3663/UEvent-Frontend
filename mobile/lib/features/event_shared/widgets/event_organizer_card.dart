@@ -9,6 +9,7 @@ import 'package:frontend/core/theme/app_constants.dart';
 /// Organizer card: stacked avatar row + org name + Follow button.
 class EventOrganizerCard extends StatelessWidget {
   final List<String> organizerAvatarUrls;
+  final List<String?> organizerAvatarCacheKeys;
   final int extraOrganizersCount;
   final String organizerName;
   final String fallbackAvatarLabel;
@@ -18,6 +19,7 @@ class EventOrganizerCard extends StatelessWidget {
   const EventOrganizerCard({
     super.key,
     required this.organizerAvatarUrls,
+    this.organizerAvatarCacheKeys = const [],
     this.extraOrganizersCount = 0,
     required this.organizerName,
     this.fallbackAvatarLabel = '',
@@ -141,7 +143,12 @@ class EventOrganizerCard extends StatelessWidget {
       items.add(
         Positioned(
           left: i * 26.0,
-          child: _buildAvatar(url: organizerAvatarUrls[i]),
+          child: _buildAvatar(
+            url: organizerAvatarUrls[i],
+            cacheKey: i < organizerAvatarCacheKeys.length
+                ? organizerAvatarCacheKeys[i]
+                : null,
+          ),
         ),
       );
     }
@@ -173,7 +180,7 @@ class EventOrganizerCard extends StatelessWidget {
     return normalized.characters.take(2).join().toUpperCase();
   }
 
-  Widget _buildAvatar({String? url, String? label}) {
+  Widget _buildAvatar({String? url, String? cacheKey, String? label}) {
     final avatarLabel = label ?? _fallbackInitials;
     return Container(
       width: 40,
@@ -187,6 +194,7 @@ class EventOrganizerCard extends StatelessWidget {
         child: url != null
             ? CachedNetworkImage(
                 imageUrl: url,
+                cacheKey: cacheKey,
                 fit: BoxFit.cover,
                 memCacheWidth: 96,
                 maxWidthDiskCache: 192,

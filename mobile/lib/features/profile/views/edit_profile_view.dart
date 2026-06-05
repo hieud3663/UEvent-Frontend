@@ -1,14 +1,17 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/core/config/faculty_config.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/app_snack_bar.dart';
-import 'package:frontend/core/widgets/glass_dropdown_field.dart';
-import 'package:frontend/core/widgets/glass_input_field.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/profile/services/profile_service.dart';
+import 'package:frontend/features/profile/widgets/edit_profile_form_sections.dart';
+import 'package:frontend/features/profile/widgets/profile_avatar_editor.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileView extends StatefulWidget {
   final UserModel? user;
@@ -36,7 +39,11 @@ class _EditProfileViewState extends State<EditProfileView> {
   late final TextEditingController _classNameCtrl;
   late final TextEditingController _phoneCtrl;
 
+  final _imagePicker = ImagePicker();
   String? _selectedFaculty;
+  File? _selectedAvatarFile;
+  String? _selectedAvatarFileName;
+  String? _selectedAvatarContentType;
   bool _isSaving = false;
 
   @override
@@ -47,7 +54,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     _studentCodeCtrl = TextEditingController(text: user?.studentCode ?? '');
     _classNameCtrl = TextEditingController(text: user?.className ?? '');
     _phoneCtrl = TextEditingController(text: user?.phoneNumber ?? '');
-    _selectedFaculty = user?.faculty;
+    _selectedFaculty = FacultyConfig.normalize(user?.faculty);
 
     for (final controller in [_fullNameCtrl, _studentCodeCtrl]) {
       controller.addListener(_refreshFormState);
@@ -86,10 +93,16 @@ class _EditProfileViewState extends State<EditProfileView> {
       final className = _classNameCtrl.text.trim();
       if (className.isNotEmpty) updateData['class_name'] = className;
 
-      if (_selectedFaculty != null) updateData['faculty'] = _selectedFaculty;
+      final faculty = FacultyConfig.normalize(_selectedFaculty);
+      if (faculty != null) updateData['faculty'] = faculty;
 
       final phone = _phoneCtrl.text.trim();
       if (phone.isNotEmpty) updateData['phone_number'] = phone;
+
+      final avatarImageKey = await _uploadSelectedAvatarIfNeeded();
+      if (avatarImageKey != null) {
+        updateData['avatar_image_key'] = avatarImageKey;
+      }
 
       await widget.profileService?.updateProfile(updateData);
 
@@ -120,6 +133,70 @@ class _EditProfileViewState extends State<EditProfileView> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Future<void> _pickAvatar() async {
+    if (_isSaving) return;
+
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 88,
+      );
+      if (pickedFile == null || !mounted) return;
+
+      setState(() {
+        _selectedAvatarFile = File(pickedFile.path);
+        _selectedAvatarFileName = pickedFile.name;
+        _selectedAvatarContentType =
+            pickedFile.mimeType ?? _contentTypeFromFileName(pickedFile.name);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        'Không thể chọn ảnh. Vui lòng thử lại.',
+        backgroundColor: Colors.red,
+      );
+    }
+  }
+
+  Future<String?> _uploadSelectedAvatarIfNeeded() async {
+    final file = _selectedAvatarFile;
+    if (file == null) return null;
+
+    final profileService = widget.profileService;
+    if (profileService == null) {
+      throw StateError('ProfileService chưa được cấu hình.');
+    }
+
+    final fileName = _selectedAvatarFileName ?? file.uri.pathSegments.last;
+    final contentType =
+        _selectedAvatarContentType ?? _contentTypeFromFileName(fileName);
+
+    final uploadTarget = await profileService.getAvatarPresignedUrl(
+      fileName: fileName,
+      contentType: contentType,
+    );
+    if (uploadTarget.presignedUrl.isEmpty || uploadTarget.objectKey.isEmpty) {
+      throw StateError('Server không trả URL upload avatar hợp lệ.');
+    }
+
+    await profileService.uploadAvatarImage(
+      imageFile: file,
+      presignedUrl: uploadTarget.presignedUrl,
+      contentType: contentType,
+    );
+    return uploadTarget.objectKey;
+  }
+
+  String _contentTypeFromFileName(String fileName) {
+    final normalizedName = fileName.toLowerCase();
+    if (normalizedName.endsWith('.png')) return 'image/png';
+    if (normalizedName.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 
   String _apiErrorMessage(DioException error) {
@@ -162,11 +239,30 @@ class _EditProfileViewState extends State<EditProfileView> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      _AvatarEditor(user: widget.user),
+                      ProfileAvatarEditor(
+                        avatarUrl: widget.user?.avatarUrl,
+                        avatarCacheKey: widget.user?.stableAvatarCacheKey,
+                        previewFile: _selectedAvatarFile,
+                        isLoading: _isSaving,
+                        onTap: _pickAvatar,
+                      ),
                       const SizedBox(height: 48),
-                      _buildEmailSection(),
+                      EditProfileEmailSection(
+                        email: widget.user?.email,
+                        onChangeEmail: widget.onChangeEmail,
+                      ),
                       const SizedBox(height: 32),
-                      _buildProfileFields(),
+                      EditProfileFormFields(
+                        fullNameController: _fullNameCtrl,
+                        studentCodeController: _studentCodeCtrl,
+                        classNameController: _classNameCtrl,
+                        phoneController: _phoneCtrl,
+                        selectedFaculty: _selectedFaculty,
+                        onFacultyChanged: (value) => setState(
+                          () =>
+                              _selectedFaculty = FacultyConfig.normalize(value),
+                        ),
+                      ),
                       const SizedBox(height: 48),
                       PrimaryButton(
                         label: _isSaving ? 'Đang lưu...' : 'Lưu thay đổi',
@@ -194,159 +290,6 @@ class _EditProfileViewState extends State<EditProfileView> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEmailSection() {
-    final email = widget.user?.email;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        GlassInputField(
-          label: 'Email đăng nhập',
-          leadingIcon: Icons.mail,
-          child: Row(
-            children: [
-              const Icon(Icons.mail, color: AppColors.primary, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  email?.isNotEmpty == true ? email! : '---',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: widget.onChangeEmail,
-                child: const Text('Đổi email'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileFields() {
-    return Column(
-      children: [
-        GlassInputField(
-          label: 'Họ tên',
-          placeholder: 'Nhập họ và tên',
-          controller: _fullNameCtrl,
-          leadingIcon: Icons.person,
-        ),
-        const SizedBox(height: 24),
-        GlassInputField(
-          label: 'Mã số sinh viên (MSSV)',
-          placeholder: 'Nhập MSSV',
-          controller: _studentCodeCtrl,
-          leadingIcon: Icons.badge,
-        ),
-        const SizedBox(height: 24),
-        GlassInputField(
-          label: 'Lớp',
-          placeholder: 'Nhập lớp sinh hoạt',
-          controller: _classNameCtrl,
-          leadingIcon: Icons.school,
-        ),
-        const SizedBox(height: 24),
-        GlassDropdownField<String>(
-          label: 'Khoa',
-          placeholder: 'Chọn khoa của bạn',
-          value: _selectedFaculty,
-          items: const [
-            GlassDropdownItem(value: 'cntt', label: 'Công nghệ thông tin'),
-            GlassDropdownItem(value: 'kt', label: 'Kinh tế'),
-            GlassDropdownItem(value: 'nn', label: 'Ngoại ngữ'),
-            GlassDropdownItem(value: 'luat', label: 'Luật'),
-            GlassDropdownItem(value: 'xd', label: 'Xây dựng'),
-            GlassDropdownItem(value: 'dien', label: 'Điện - Điện tử'),
-            GlassDropdownItem(value: 'co-khi', label: 'Cơ khí'),
-            GlassDropdownItem(value: 'mt', label: 'Mỹ thuật công nghiệp'),
-            GlassDropdownItem(
-              value: 'moi-truong',
-              label: 'Môi trường & Tài nguyên',
-            ),
-            GlassDropdownItem(value: 'khoa-hoc', label: 'Khoa học ứng dụng'),
-          ],
-          onChanged: (value) => setState(() => _selectedFaculty = value),
-        ),
-        const SizedBox(height: 24),
-        GlassInputField(
-          label: 'Số điện thoại',
-          placeholder: 'Nhập số điện thoại',
-          controller: _phoneCtrl,
-          leadingIcon: Icons.phone,
-          keyboardType: TextInputType.phone,
-        ),
-      ],
-    );
-  }
-}
-
-class _AvatarEditor extends StatelessWidget {
-  const _AvatarEditor({required this.user});
-
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              width: 112,
-              height: 112,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
-                color: AppColors.outlineVariant,
-              ),
-              child: ClipOval(
-                child: user?.avatarUrl != null
-                    ? Image.network(
-                        user!.avatarUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.person,
-                          size: 64,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.person, size: 64, color: Colors.white),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Icon(
-                  Icons.edit,
-                  color: AppColors.onPrimaryContainer,
-                  size: 18,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Đổi ảnh',
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 }

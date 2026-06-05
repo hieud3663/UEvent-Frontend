@@ -1,59 +1,37 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 
+class SplashProgress {
+  final double value;
+  final String label;
+
+  const SplashProgress({required this.value, required this.label});
+
+  factory SplashProgress.initial() =>
+      const SplashProgress(value: 0.05, label: 'Đang khởi động ứng dụng');
+}
+
 class SplashView extends StatefulWidget {
   final VoidCallback? onInitializationComplete;
+  final ValueListenable<SplashProgress> progressListenable;
 
-  const SplashView({super.key, this.onInitializationComplete});
+  const SplashView({
+    super.key,
+    required this.progressListenable,
+    this.onInitializationComplete,
+  });
 
   @override
   State<SplashView> createState() => _SplashViewState();
 }
 
 class _SplashViewState extends State<SplashView> {
-  double _progress = 0.0;
-  int _progressStep = 0;
-  Timer? _loadingTimer;
-
   @override
   void initState() {
     super.initState();
-    _simulateLoading();
-  }
-
-  @override
-  void dispose() {
-    _loadingTimer?.cancel();
-    super.dispose();
-  }
-
-  void _simulateLoading() {
-    _scheduleProgressTick(const Duration(milliseconds: 300));
-  }
-
-  void _scheduleProgressTick(Duration delay) {
-    _loadingTimer?.cancel();
-    _loadingTimer = Timer(delay, () {
-      if (!mounted) return;
-
-      if (_progressStep <= 30) {
-        setState(() {
-          _progress = _progressStep / 100.0;
-        });
-        _progressStep += 10;
-        _scheduleProgressTick(const Duration(milliseconds: 300));
-        return;
-      }
-
-      _loadingTimer = Timer(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          widget.onInitializationComplete?.call();
-        }
-      });
-    });
+    widget.onInitializationComplete?.call();
   }
 
   @override
@@ -158,48 +136,58 @@ class _SplashViewState extends State<SplashView> {
               bottom: 80,
               left: 32,
               right: 32,
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: ValueListenableBuilder<SplashProgress>(
+                valueListenable: widget.progressListenable,
+                builder: (context, progress, _) {
+                  final safeValue = progress.value.clamp(0.0, 1.0);
+                  return Column(
                     children: [
-                      Text(
-                        'PREPARING WORKSPACE',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: Colors.black.withValues(alpha: 0.5),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            progress.label.toUpperCase(),
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: Colors.black.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          Text(
+                            '${(safeValue * 100).toInt()}%',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: Colors.black.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${(_progress * 100).toInt()}%',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Container(
+                              height: 6,
+                              width: double.infinity,
+                              color: Colors.black.withValues(alpha: 0.05),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 700),
+                                  curve: Curves.easeOut,
+                                  width: constraints.maxWidth * safeValue,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      height: 6,
-                      width: double.infinity,
-                      color: Colors.black.withValues(alpha: 0.05),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 700),
-                          curve: Curves.easeOut,
-                          width: MediaQuery.of(context).size.width * _progress,
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
 

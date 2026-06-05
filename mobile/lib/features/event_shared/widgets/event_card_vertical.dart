@@ -49,6 +49,7 @@ class EventCardVertical extends StatelessWidget {
                   width: double.infinity,
                   child: CachedNetworkImage(
                     imageUrl: event.imageUrl,
+                    cacheKey: event.imageCacheKey,
                     fit: BoxFit.cover,
                     memCacheWidth: 900,
                     maxWidthDiskCache: 1400,

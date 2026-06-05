@@ -864,7 +864,7 @@ function EntityTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: 
 function CountCell({ value, label, muted = false }: { value: number; label: string; muted?: boolean }) {
   return (
     <td className="px-6 py-5">
-      <span className={cn('rounded-full px-3 py-1 text-sm font-semibold', muted ? 'bg-slate-50 text-slate-400' : 'bg-slate-100 text-slate-600')}>
+      <span className={cn('rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap', muted ? 'bg-slate-50 text-slate-400' : 'bg-slate-100 text-slate-600')}>
         {value} {label}
       </span>
     </td>

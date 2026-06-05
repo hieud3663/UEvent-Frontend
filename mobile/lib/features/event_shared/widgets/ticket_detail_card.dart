@@ -1,6 +1,8 @@
 // File: lib/features/event_shared/widgets/ticket_detail_card.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/core/utils/image_cache_key.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 
@@ -22,6 +24,8 @@ class TicketDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedAvatarUrl = avatarUrl.trim();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -60,10 +64,17 @@ class TicketDetailCard extends StatelessWidget {
                           blurRadius: 4,
                         ),
                       ],
-                      image: DecorationImage(
-                        image: NetworkImage(avatarUrl),
-                        fit: BoxFit.cover,
-                      ),
+                      image: normalizedAvatarUrl.isEmpty
+                          ? null
+                          : DecorationImage(
+                              image: CachedNetworkImageProvider(
+                                normalizedAvatarUrl,
+                                cacheKey: stableImageCacheKey(
+                                  imageUrl: normalizedAvatarUrl,
+                                ),
+                              ),
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                   Positioned(

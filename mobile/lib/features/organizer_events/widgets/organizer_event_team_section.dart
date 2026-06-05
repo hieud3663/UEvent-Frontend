@@ -26,6 +26,7 @@ class OrganizerEventTeamSection extends StatelessWidget {
             name: organizer.user.displayName,
             role: organizerRoleLabel(organizer.organizerRole),
             avatarUrl: organizer.user.avatarUrl,
+            avatarCacheKey: organizer.user.stableAvatarCacheKey,
           ),
         )
         .toList(growable: false);

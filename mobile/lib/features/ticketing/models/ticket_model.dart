@@ -1,6 +1,7 @@
 // File: lib/features/ticketing/models/ticket_model.dart
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:frontend/core/utils/image_cache_key.dart';
 
 part 'ticket_model.g.dart';
 
@@ -12,6 +13,7 @@ class TicketModel {
   final String eventId;
   final String eventName;
   final String eventImageUrl;
+  final String? eventImageCacheKey;
   final String? qrPayload;
   final String? qrSignature;
   final DateTime? validFrom;
@@ -35,6 +37,7 @@ class TicketModel {
     required this.eventId,
     required this.eventName,
     required this.eventImageUrl,
+    this.eventImageCacheKey,
     this.qrPayload,
     this.qrSignature,
     this.validFrom,
@@ -58,6 +61,7 @@ class TicketModel {
     String? eventId,
     String? eventName,
     String? eventImageUrl,
+    String? eventImageCacheKey,
     String? qrPayload,
     String? qrSignature,
     DateTime? validFrom,
@@ -80,6 +84,7 @@ class TicketModel {
       eventId: eventId ?? this.eventId,
       eventName: eventName ?? this.eventName,
       eventImageUrl: eventImageUrl ?? this.eventImageUrl,
+      eventImageCacheKey: eventImageCacheKey ?? this.eventImageCacheKey,
       qrPayload: qrPayload ?? this.qrPayload,
       qrSignature: qrSignature ?? this.qrSignature,
       validFrom: validFrom ?? this.validFrom,
@@ -102,6 +107,11 @@ class TicketModel {
       _$TicketModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$TicketModelToJson(this);
+
+  String? get stableEventImageCacheKey => stableImageCacheKey(
+    imageUrl: eventImageUrl,
+    explicitCacheKey: eventImageCacheKey,
+  );
 
   bool get isCheckedIn =>
       status == TicketStatus.checkedIn ||
@@ -165,6 +175,7 @@ class RegistrationTicketModel {
     required String fallbackEventId,
     required String eventName,
     required String eventImageUrl,
+    String? eventImageCacheKey,
     required String date,
     required String timeRange,
     required String location,
@@ -175,6 +186,7 @@ class RegistrationTicketModel {
       eventId: eventId.isNotEmpty ? eventId : fallbackEventId,
       eventName: eventName,
       eventImageUrl: eventImageUrl,
+      eventImageCacheKey: eventImageCacheKey,
       date: date,
       timeRange: timeRange,
       location: location,

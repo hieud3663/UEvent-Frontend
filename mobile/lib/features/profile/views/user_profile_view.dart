@@ -1,5 +1,6 @@
 // File: lib/features/profile/views/user_profile_view.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -58,6 +59,7 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                           faculty: overview.user.faculty ?? '---',
                           className: overview.user.className ?? '---',
                           avatarUrl: overview.user.avatarUrl,
+                          avatarCacheKey: overview.user.stableAvatarCacheKey,
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -142,7 +144,10 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
     required String faculty,
     required String className,
     required String? avatarUrl,
+    required String? avatarCacheKey,
   }) {
+    final normalizedAvatarUrl = avatarUrl?.trim() ?? '';
+
     return Column(
       children: [
         Stack(
@@ -159,12 +164,15 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                 ],
               ),
               child: ClipOval(
-                child: Image.network(
-                  avatarUrl ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Container(color: AppColors.surfaceVariant),
-                ),
+                child: normalizedAvatarUrl.isEmpty
+                    ? Container(color: AppColors.surfaceVariant)
+                    : CachedNetworkImage(
+                        imageUrl: normalizedAvatarUrl,
+                        cacheKey: avatarCacheKey,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            Container(color: AppColors.surfaceVariant),
+                      ),
               ),
             ),
             GlassIconButton(
@@ -260,10 +268,11 @@ class _UserProfileViewState extends ConsumerState<UserProfileView> {
                               topLeft: Radius.circular(12),
                               bottomLeft: Radius.circular(12),
                             ),
-                            child: Image.network(
-                              e.imageUrl,
+                            child: CachedNetworkImage(
+                              imageUrl: e.imageUrl,
+                              cacheKey: e.imageCacheKey,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
+                              errorWidget: (context, url, error) =>
                                   Container(color: AppColors.surfaceVariant),
                             ),
                           ),

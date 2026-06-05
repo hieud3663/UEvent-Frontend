@@ -126,6 +126,7 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
 
     return AttendeeCard(
       imageUrl: user?.avatarUrl ?? '',
+      imageCacheKey: user?.stableAvatarCacheKey,
       name: user?.displayName ?? 'Người tham gia',
       studentId: user?.email ?? user?.username ?? registration.id,
       status: _statusFromApi(registration.status),

@@ -5,9 +5,15 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 
 class DiscoveryProfileAvatar extends StatelessWidget {
   final String? avatarUrl;
+  final String? avatarCacheKey;
   final String? displayName;
 
-  const DiscoveryProfileAvatar({super.key, this.avatarUrl, this.displayName});
+  const DiscoveryProfileAvatar({
+    super.key,
+    this.avatarUrl,
+    this.avatarCacheKey,
+    this.displayName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +36,7 @@ class DiscoveryProfileAvatar extends StatelessWidget {
             ? _AvatarFallback(label: _initials)
             : CachedNetworkImage(
                 imageUrl: normalizedUrl,
+                cacheKey: avatarCacheKey,
                 fit: BoxFit.cover,
                 memCacheWidth: 96,
                 maxWidthDiskCache: 192,

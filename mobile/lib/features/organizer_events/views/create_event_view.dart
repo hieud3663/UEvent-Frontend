@@ -505,6 +505,8 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     try {
       pickedImage = await _imagePicker.pickImage(
         source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
         imageQuality: 90,
       );
     } on PlatformException {

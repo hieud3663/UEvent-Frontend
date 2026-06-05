@@ -35,6 +35,7 @@ class ManageEventLocationCard extends StatelessWidget {
           else
             CachedNetworkImage(
               imageUrl: imageUrl,
+              cacheKey: event.imageCacheKey,
               fit: BoxFit.cover,
               memCacheWidth: 1200,
               maxWidthDiskCache: 1800,

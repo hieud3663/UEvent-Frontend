@@ -18,6 +18,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   faculty: json['faculty'] as String?,
   className: json['class_name'] as String?,
   avatarUrl: json['avatar_url'] as String?,
+  avatarCacheKey: json['avatar_cache_key'] as String?,
 );
 
 Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
@@ -32,6 +33,7 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
   'faculty': instance.faculty,
   'class_name': instance.className,
   'avatar_url': instance.avatarUrl,
+  'avatar_cache_key': instance.avatarCacheKey,
 };
 
 AuthResponseModel _$AuthResponseModelFromJson(Map<String, dynamic> json) =>

@@ -29,6 +29,7 @@ class OrganizerEventHeroImage extends StatelessWidget {
           else
             CachedNetworkImage(
               imageUrl: event.imageUrl,
+              cacheKey: event.imageCacheKey,
               fit: BoxFit.cover,
               memCacheWidth: 1200,
               maxWidthDiskCache: 1800,

@@ -122,6 +122,7 @@ class OrganizerTeamMemberTile extends StatelessWidget {
             clipBehavior: Clip.hardEdge,
             child: CachedNetworkImage(
               imageUrl: organizer.user.avatarUrl,
+              cacheKey: organizer.user.stableAvatarCacheKey,
               fit: BoxFit.cover,
               memCacheWidth: 96,
               maxWidthDiskCache: 192,
