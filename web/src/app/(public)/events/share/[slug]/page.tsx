@@ -147,17 +147,17 @@ export default async function EventShareLandingPage({ params }: PageProps) {
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <Link
               href={appDeepLink}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary-container px-4 text-sm font-bold text-on-primary-container transition hover:shadow-lg hover:shadow-primary-container/30"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-container px-4 text-sm font-bold text-on-primary-container transition hover:shadow-lg hover:shadow-primary-container/30 sm:flex-1 lg:flex-none"
             >
-              <Smartphone className="h-4 w-4" />
+              <Smartphone className="h-6 w-6" />
               Mở trong ứng dụng
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-6 w-6" />
             </Link>
             <Link
               href="/download"
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-bold text-neutral-700 transition hover:bg-neutral-50"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-bold text-neutral-700 transition hover:bg-neutral-50 sm:flex-1 lg:flex-none"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-6 w-6" />
               Tải ứng dụng
             </Link>
           </div>

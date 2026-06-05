@@ -123,7 +123,7 @@ function LoginForm() {
       {/* Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-8 flex justify-between items-end opacity-40 pointer-events-none">
         <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-          © 2024 UEvents Inc.
+          © 2026 UEvents Inc.
         </div>
         <div className="flex gap-4">
           <div className="w-8 h-[2px] bg-primary-container" />

@@ -14,6 +14,7 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/event_shared/models/event_registration_model.dart';
 import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
+import 'package:frontend/features/organizer_events/services/attendee_export_service.dart';
 import 'package:frontend/features/event_shared/widgets/attendee_card.dart';
 
 class AttendeeListView extends ConsumerStatefulWidget {
@@ -27,8 +28,10 @@ class AttendeeListView extends ConsumerStatefulWidget {
 }
 
 class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
+  final AttendeeExportService _exportService = const AttendeeExportService();
   String? _selectedRegistrationId;
   String? _pendingRegistrationId;
+  bool _isExporting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -107,11 +110,25 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
               title: 'Quản lý sự kiện',
               leadingIcon: Icons.close,
               onLeadingTap: widget.onBack ?? () => Navigator.of(context).pop(),
-              trailingWidget: GlassIconButton(
-                icon: Icons.refresh,
-                onPressed: () => ref.invalidate(
-                  organizerEventRegistrationsProvider(widget.eventId),
-                ),
+              trailingWidget: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GlassIconButton(
+                    icon: Icons.download,
+                    iconSize: 20,
+                    onPressed: _isExporting ? null : _exportRegistrations,
+                  ),
+                  const SizedBox(width: 4),
+                  GlassIconButton(
+                    icon: Icons.refresh,
+                    iconSize: 20,
+                    onPressed: _isExporting
+                        ? null
+                        : () => ref.invalidate(
+                            organizerEventRegistrationsProvider(widget.eventId),
+                          ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -186,6 +203,41 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       context,
       _checkInMessage(result?.result ?? 'invalid_ticket'),
     );
+  }
+
+  Future<void> _exportRegistrations() async {
+    setState(() {
+      _isExporting = true;
+    });
+
+    try {
+      final registrations = await ref.read(
+        organizerEventRegistrationsProvider(widget.eventId).future,
+      );
+
+      if (!mounted) return;
+      if (registrations.isEmpty) {
+        showAppSnackBar(context, 'Chưa có người đăng ký để xuất.');
+        return;
+      }
+
+      final file = await _exportService.exportRegistrationsToXlsx(
+        eventId: widget.eventId,
+        registrations: registrations,
+      );
+
+      if (!mounted) return;
+      showAppSnackBar(context, 'Đã lưu ${file.fileName} vào Downloads.');
+    } catch (_) {
+      if (!mounted) return;
+      showAppSnackBar(context, 'Không thể xuất danh sách người đăng ký.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExporting = false;
+        });
+      }
+    }
   }
 
   List<EventRegistrationModel> _visibleRegistrations(

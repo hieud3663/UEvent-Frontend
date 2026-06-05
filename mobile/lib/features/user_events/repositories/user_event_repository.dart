@@ -158,7 +158,7 @@ class UserEventRepositoryImpl implements UserEventRepository {
       return EventShareLinkModel(
         eventId: eventId,
         slug: slug,
-        shareUrl: 'https://uevent.u-code.dev/events/share/$slug',
+        shareUrl: 'https://uevent-web.u-code.dev/events/share/$slug',
         visibility: event.visibility.name,
       );
     }
