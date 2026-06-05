@@ -64,6 +64,8 @@ dependencies:
   passkeys: ^2.19.0
   share_plus: ^11.1.0
   app_links: ^6.4.1
+  excel: ^4.0.6
+  file_saver: ^0.4.0
 
 dev_dependencies:
   flutter_test:

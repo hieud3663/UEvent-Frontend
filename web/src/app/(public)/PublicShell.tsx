@@ -10,7 +10,7 @@ interface PublicShellProps {
 
 export function PublicShell({ children }: PublicShellProps) {
   return (
-    <PublicPageTransition className="relative min-h-screen overflow-hidden bg-ethereal text-on-surface">
+    <PublicPageTransition className="relative min-h-screen overflow-x-clip bg-ethereal text-on-surface">
       <div className="pointer-events-none absolute left-[-12%] top-[-18%] h-[40rem] w-[40rem] rounded-full bg-primary-container/20 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-18%] right-[-12%] h-[34rem] w-[34rem] rounded-full bg-secondary-container/30 blur-[120px]" />
 

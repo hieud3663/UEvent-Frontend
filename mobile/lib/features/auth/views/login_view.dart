@@ -9,6 +9,11 @@ import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/social_login_button.dart';
 import 'package:frontend/core/widgets/text_action_button.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+final Uri _termsAndPoliciesUrl = Uri.parse(
+  'https://uevent.u-code.dev/terms',
+);
 
 class LoginView extends StatefulWidget {
   final FutureOr<void> Function(String email)? onLoginWithEmail;
@@ -103,6 +108,10 @@ class _LoginViewState extends State<LoginView> {
         setState(() => _isSubmittingPasskey = false);
       }
     }
+  }
+
+  Future<void> _openTermsAndPolicies() async {
+    await launchUrl(_termsAndPoliciesUrl, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -329,6 +338,22 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -24),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: TextActionButton(
+                    label: 'Điều khoản và chính sách của ứng dụng',
+                    height: 44,
+                    onPressed: _openTermsAndPolicies,
+                    foregroundColor: AppColors.onSurfaceVariant,
+                    textStyle: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

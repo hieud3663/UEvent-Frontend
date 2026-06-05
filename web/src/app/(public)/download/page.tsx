@@ -60,7 +60,7 @@ export default function DownloadPage() {
               </button>
             )}
             <p className="mt-3 text-xs font-medium leading-5 text-on-surface-variant">
-              Đường dẫn tải APK sẽ được cập nhật khi bản phát hành chính thức sẵn sàng.
+              File APK phát hành chính thức đã sẵn sàng để tải trực tiếp.
             </p>
           </article>
 
