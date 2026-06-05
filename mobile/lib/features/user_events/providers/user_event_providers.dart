@@ -9,6 +9,25 @@ import 'package:frontend/features/user_events/services/user_event_service.dart';
 
 const _eventsPageSize = 10;
 
+class DiscoveryEventFilters {
+  final String? category;
+  final String search;
+
+  const DiscoveryEventFilters({this.category, this.search = ''});
+
+  String get normalizedSearch => search.trim();
+
+  @override
+  bool operator ==(Object other) {
+    return other is DiscoveryEventFilters &&
+        other.category == category &&
+        other.normalizedSearch == normalizedSearch;
+  }
+
+  @override
+  int get hashCode => Object.hash(category, normalizedSearch);
+}
+
 final userEventServiceProvider = Provider<UserEventService>(
   (ref) => UserEventService(ref.read(apiClientProvider)),
 );
@@ -58,9 +77,9 @@ class PaginatedUserEventsState {
 }
 
 class UserDiscoveryEventsPager extends AsyncNotifier<PaginatedUserEventsState> {
-  final String? category;
+  final DiscoveryEventFilters filters;
 
-  UserDiscoveryEventsPager(this.category);
+  UserDiscoveryEventsPager(this.filters);
 
   @override
   Future<PaginatedUserEventsState> build() async {
@@ -103,7 +122,8 @@ class UserDiscoveryEventsPager extends AsyncNotifier<PaginatedUserEventsState> {
     return repository.searchEvents(
       page: page,
       pageSize: _eventsPageSize,
-      category: category ?? '',
+      category: filters.category ?? '',
+      search: filters.normalizedSearch,
       status: 'active',
     );
   }
@@ -113,14 +133,18 @@ final userDiscoveryEventsPagerProvider =
     AsyncNotifierProvider.family<
       UserDiscoveryEventsPager,
       PaginatedUserEventsState,
-      String?
-    >((category) => UserDiscoveryEventsPager(category));
+      DiscoveryEventFilters
+    >((filters) => UserDiscoveryEventsPager(filters));
 
 final userDiscoverySearchEventsProvider =
-    FutureProvider.family<List<EventModel>, String?>((ref, category) async {
+    FutureProvider.family<List<EventModel>, DiscoveryEventFilters>((
+      ref,
+      filters,
+    ) async {
       final repository = ref.read(userEventRepositoryProvider);
       return repository.searchEvents(
-        category: category ?? '',
+        category: filters.category ?? '',
+        search: filters.normalizedSearch,
         status: 'active',
         pageSize: 10,
       );
@@ -129,7 +153,9 @@ final userDiscoverySearchEventsProvider =
 final userDiscoveryEventsProvider = FutureProvider<List<EventModel>>((
   ref,
 ) async {
-  return ref.watch(userDiscoverySearchEventsProvider(null).future);
+  return ref.watch(
+    userDiscoverySearchEventsProvider(const DiscoveryEventFilters()).future,
+  );
 });
 
 final userEventCategoriesProvider = FutureProvider<List<EventCategoryModel>>((

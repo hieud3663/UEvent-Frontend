@@ -42,15 +42,18 @@ class UserEventService {
     int page = 1,
     int pageSize = 10,
     String category = '',
+    String search = '',
     String status = 'active',
   }) async {
+    final normalizedSearch = search.trim();
     try {
       final response = await _apiClient.dio.get(
         '/events/search/',
         queryParameters: {
           'page': page,
           'page_size': pageSize,
-          'category': category,
+          if (category.trim().isNotEmpty) 'category': category.trim(),
+          if (normalizedSearch.isNotEmpty) 'search': normalizedSearch,
           'status': status,
         },
       );

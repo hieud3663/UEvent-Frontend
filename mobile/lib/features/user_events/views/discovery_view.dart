@@ -1,5 +1,7 @@
 // File: lib/features/user_events/views/discovery_view.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -56,6 +58,14 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
   final _scrollController = ScrollController();
   int _selectedCategoryIndex = 0;
   String? _selectedCategoryQuery;
+  String _searchText = '';
+  String _searchQuery = '';
+  Timer? _searchDebounce;
+
+  DiscoveryEventFilters get _currentFilters => DiscoveryEventFilters(
+    category: _selectedCategoryQuery,
+    search: _searchQuery,
+  );
 
   @override
   void initState() {
@@ -65,6 +75,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController
       ..removeListener(_maybeLoadNextPage)
       ..dispose();
@@ -83,10 +94,13 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
         ? 0
         : _selectedCategoryIndex;
     final categoryQuery = _selectedCategoryQuery;
-    final eventsAsync = ref.watch(
-      userDiscoveryEventsPagerProvider(categoryQuery),
+    final filters = DiscoveryEventFilters(
+      category: categoryQuery,
+      search: _searchQuery,
     );
+    final eventsAsync = ref.watch(userDiscoveryEventsPagerProvider(filters));
     final unreadCount = ref.watch(notificationUnreadCountProvider).value ?? 0;
+    final isSearching = _searchQuery.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -108,7 +122,12 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       horizontal: AppConstants.pagePaddingHLarge,
                       vertical: 16,
                     ),
-                    child: const DiscoverySearchBar(),
+                    child: DiscoverySearchBar(
+                      value: _searchText,
+                      onChanged: _onSearchChanged,
+                      onSubmitted: _applySearch,
+                      onClear: _clearSearch,
+                    ),
                   ),
                 ),
                 // Filter chips
@@ -151,7 +170,9 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       horizontal: AppConstants.pagePaddingH,
                     ),
                     child: SectionHeader(
-                      title: 'Sự kiện nổi bật',
+                      title: isSearching
+                          ? 'Kết quả tìm kiếm'
+                          : 'Sự kiện nổi bật',
                       titleStyle: AppTextStyles.headlineLarge,
                       onActionTap: () {},
                     ),
@@ -166,9 +187,12 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       AppSuccessSliver(
                         isEmpty: events.isEmpty,
                         emptyIcon: Icons.explore_off,
-                        emptyTitle: 'Không có sự kiện',
-                        emptyDescription:
-                            'Không tìm thấy sự kiện phù hợp hiện tại.',
+                        emptyTitle: isSearching
+                            ? 'Không tìm thấy sự kiện'
+                            : 'Không có sự kiện',
+                        emptyDescription: isSearching
+                            ? 'Thử từ khóa ngắn hơn hoặc chọn danh mục khác.'
+                            : 'Không tìm thấy sự kiện phù hợp hiện tại.',
                         contentSlivers: [
                           SliverList(
                             delegate: SliverChildBuilderDelegate((
@@ -202,7 +226,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                               onRetry: () => ref
                                   .read(
                                     userDiscoveryEventsPagerProvider(
-                                      categoryQuery,
+                                      filters,
                                     ).notifier,
                                   )
                                   .loadNextPage(),
@@ -219,7 +243,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                       title: 'Không tải dữ liệu được',
                       description: 'Vui lòng thử lại sau.',
                       onRetry: () => ref.invalidate(
-                        userDiscoveryEventsPagerProvider(categoryQuery),
+                        userDiscoveryEventsPagerProvider(filters),
                       ),
                     ),
                   ],
@@ -261,11 +285,15 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
   }
 
   Future<void> _refreshDiscovery(String? categoryQuery) async {
+    final filters = DiscoveryEventFilters(
+      category: categoryQuery,
+      search: _searchQuery,
+    );
     try {
       await Future.wait([
         ref.refresh(userEventCategoriesProvider.future).then((_) {}),
         ref
-            .read(userDiscoveryEventsPagerProvider(categoryQuery).notifier)
+            .read(userDiscoveryEventsPagerProvider(filters).notifier)
             .refreshPage()
             .then((_) {}),
       ]);
@@ -281,7 +309,32 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
     if (position.extentAfter > 700) return;
 
     ref
-        .read(userDiscoveryEventsPagerProvider(_selectedCategoryQuery).notifier)
+        .read(userDiscoveryEventsPagerProvider(_currentFilters).notifier)
         .loadNextPage();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _searchText = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => _applySearch(value),
+    );
+  }
+
+  void _applySearch(String value) {
+    _searchDebounce?.cancel();
+    final normalized = value.trim();
+    if (normalized == _searchQuery) return;
+    setState(() => _searchQuery = normalized);
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    if (_searchText.isEmpty && _searchQuery.isEmpty) return;
+    setState(() {
+      _searchText = '';
+      _searchQuery = '';
+    });
   }
 }
