@@ -88,8 +88,8 @@ class HomeView extends ConsumerWidget {
                               child: EventCard(
                                 event: event,
                                 formattedDate: DateFormat(
-                                  'EEE, d MMM',
-                                ).format(event.startDate),
+                                  'MMM d',
+                                ).format(event.startDate.toLocal()),
                                 trailing: _buildQrButton(),
                                 onTap: onEventTap != null
                                     ? () => onEventTap!(event)

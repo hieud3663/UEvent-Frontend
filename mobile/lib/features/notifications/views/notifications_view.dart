@@ -40,8 +40,14 @@ class NotificationsView extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
+          RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => ref
+                .read(notificationsControllerProvider.notifier)
+                .refresh(),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
 
               ...notificationsAsync.when(
@@ -109,6 +115,7 @@ class NotificationsView extends ConsumerWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 140)),
             ],
+          ),
           ),
           Positioned(
             top: 0,
