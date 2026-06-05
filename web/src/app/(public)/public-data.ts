@@ -8,7 +8,7 @@ export const publicNavItems = [
 
 export const appDownloadLinks = {
   android: {
-    href: process.env.NEXT_PUBLIC_ANDROID_APK_URL || null,
+    href: process.env.NEXT_PUBLIC_ANDROID_APK_URL || '/downloads/uevent.apk',
     label: 'Tải APK',
     platform: 'Android',
     unavailableLabel: 'APK đang cập nhật',

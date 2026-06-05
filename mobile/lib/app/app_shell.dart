@@ -387,7 +387,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final slug = event.slug?.trim();
     if (slug?.isNotEmpty != true) return null;
-    return 'https://uevent-web.u-code.dev/events/share/${Uri.encodeComponent(slug!)}';
+    return 'https://uevent.u-code.dev/events/share/${Uri.encodeComponent(slug!)}';
   }
 
   bool _pushStudentEventDetailById(String eventId) {

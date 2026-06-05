@@ -12,7 +12,7 @@ import 'package:frontend/core/widgets/text_action_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final Uri _termsAndPoliciesUrl = Uri.parse(
-  'https://uevent-web.u-code.dev/terms',
+  'https://uevent.u-code.dev/terms',
 );
 
 class LoginView extends StatefulWidget {
