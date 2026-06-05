@@ -110,7 +110,7 @@ class EventCardVertical extends StatelessWidget {
                   _buildInfoRow(
                     Icons.schedule,
                     event.timeRange ??
-                        '${DateFormat('HH:mm').format(event.startDate)} - ${DateFormat('HH:mm').format(event.endDate ?? event.startDate)}',
+                        '${DateFormat('HH:mm').format(event.startDate.toLocal())} - ${DateFormat('HH:mm').format((event.endDate ?? event.startDate).toLocal())}',
                   ),
                 ],
               ),

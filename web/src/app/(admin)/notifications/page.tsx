@@ -6,12 +6,15 @@ import type { ReactNode } from 'react';
 import {
   AlertCircle,
   Calendar,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Download,
   Eye,
   FileSpreadsheet,
   Gift,
+  HelpCircle,
   Megaphone,
   Pencil,
   Plus,
@@ -19,6 +22,7 @@ import {
   Search,
   Send,
   Trash2,
+  UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { AdminSelect, Button, Card, ConfirmActionDialog, EmptyState, ErrorState } from '@/core/components';
@@ -43,13 +47,27 @@ import type {
 } from '@/features/notifications/types';
 import { runActionWithToast } from '@/core/lib/runActionWithToast';
 
-const notificationTypeConfig: Record<NotificationType, { icon: ElementType; color: string; bg: string; label: string }> = {
+type NotificationTypeDisplayConfig = { icon: ElementType; color: string; bg: string; label: string };
+
+const fallbackNotificationTypeConfig: NotificationTypeDisplayConfig = {
+  icon: Megaphone,
+  color: 'text-slate-600',
+  bg: 'bg-slate-100',
+  label: 'Loại khác',
+};
+
+const notificationTypeConfig: Record<NotificationType, NotificationTypeDisplayConfig> = {
   announcement: { icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Thông báo' },
   alert: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-100', label: 'Cảnh báo' },
   reminder: { icon: Megaphone, color: 'text-amber-600', bg: 'bg-amber-100', label: 'Nhắc lịch' },
   promotion: { icon: Gift, color: 'text-purple-600', bg: 'bg-purple-100', label: 'Ưu đãi' },
   invite: { icon: Send, color: 'text-cyan-600', bg: 'bg-cyan-100', label: 'Lời mời' },
-  ticket_confirm: { icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Vé' },
+  ticket_confirm: { icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Xác nhận vé' },
+  registration_confirmed: { icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Đăng ký được xác nhận' },
+  registration_waitlisted: { icon: ClipboardList, color: 'text-amber-600', bg: 'bg-amber-100', label: 'Danh sách chờ' },
+  new_registration: { icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Đăng ký mới' },
+  organizer_announcement: { icon: Megaphone, color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Thông báo nhà tổ chức' },
+  question_answered: { icon: HelpCircle, color: 'text-violet-600', bg: 'bg-violet-100', label: 'Câu hỏi đã trả lời' },
 };
 
 const notificationStatusConfig: Record<NotificationStatus, { label: string; color: string; bg: string; dotColor: string }> = {
@@ -91,7 +109,12 @@ const typeOptions = [
   { value: 'reminder', label: 'Nhắc lịch' },
   { value: 'promotion', label: 'Ưu đãi' },
   { value: 'invite', label: 'Lời mời' },
-  { value: 'ticket_confirm', label: 'Vé' },
+  { value: 'ticket_confirm', label: 'Xác nhận vé' },
+  { value: 'registration_confirmed', label: 'Đăng ký được xác nhận' },
+  { value: 'registration_waitlisted', label: 'Danh sách chờ' },
+  { value: 'new_registration', label: 'Đăng ký mới' },
+  { value: 'organizer_announcement', label: 'Thông báo nhà tổ chức' },
+  { value: 'question_answered', label: 'Câu hỏi đã trả lời' },
 ] as const;
 
 export default function NotificationsPage() {
@@ -405,7 +428,7 @@ function NotificationRow({
   detailHref: string;
   editHref: string;
 }) {
-  const type = notificationTypeConfig[notification.type];
+  const type = notificationTypeConfig[notification.type] ?? fallbackNotificationTypeConfig;
   const status = notificationStatusConfig[notification.status];
   const audience = notificationAudienceConfig[notification.audience];
   const TypeIcon = type.icon;

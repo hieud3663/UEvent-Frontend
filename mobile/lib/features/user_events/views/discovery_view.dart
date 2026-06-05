@@ -186,7 +186,7 @@ class _DiscoveryViewState extends ConsumerState<DiscoveryView> {
                                   dateBadge: DateFormat(
                                     'd MMM',
                                     'vi',
-                                  ).format(event.startDate),
+                                  ).format(event.startDate.toLocal()),
                                   onTap: widget.onEventTap != null
                                       ? () => widget.onEventTap!(event)
                                       : null,

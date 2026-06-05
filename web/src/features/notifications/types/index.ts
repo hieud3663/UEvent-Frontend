@@ -1,6 +1,17 @@
 // File: src/features/notifications/types/index.ts
 
-export type NotificationType = 'announcement' | 'alert' | 'reminder' | 'promotion' | 'invite' | 'ticket_confirm';
+export type NotificationType =
+  | 'announcement'
+  | 'alert'
+  | 'reminder'
+  | 'promotion'
+  | 'invite'
+  | 'ticket_confirm'
+  | 'registration_confirmed'
+  | 'registration_waitlisted'
+  | 'new_registration'
+  | 'organizer_announcement'
+  | 'question_answered';
 export type NotificationStatus = 'draft' | 'scheduled' | 'sent' | 'failed';
 export type AudienceType = 'all' | 'students' | 'organizers' | 'admins' | 'custom';
 

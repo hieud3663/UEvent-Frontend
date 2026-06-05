@@ -948,17 +948,17 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     _titleController.text = event.title;
     _descriptionController.text = event.description ?? '';
     final end = event.endDate ?? event.startDate.add(const Duration(hours: 2));
-    _setScheduleControllers(startAt: event.startDate, endAt: end);
+    _setScheduleControllers(startAt: event.startDate.toLocal(), endAt: end.toLocal());
     _setRegistrationScheduleControllers(
       registrationOpenAt:
-          event.registrationOpenAt ??
-          event.startDate.subtract(const Duration(days: 7)),
+          (event.registrationOpenAt ??
+          event.startDate.subtract(const Duration(days: 7))).toLocal(),
       registrationCloseAt:
-          event.registrationCloseAt ??
-          event.startDate.subtract(const Duration(hours: 1)),
+          (event.registrationCloseAt ??
+          event.startDate.subtract(const Duration(hours: 1))).toLocal(),
       cancellationDeadlineAt:
-          event.cancellationDeadlineAt ??
-          event.startDate.subtract(const Duration(hours: 3)),
+          (event.cancellationDeadlineAt ??
+          event.startDate.subtract(const Duration(hours: 3))).toLocal(),
     );
     _capacityController.text = event.guestCount?.toString() ?? '';
     _isPublic = event.visibility != EventVisibility.private;
@@ -987,23 +987,23 @@ class _CreateEventViewState extends ConsumerState<CreateEventView> {
     return _titleController.text == activeEvent.title &&
         _descriptionController.text == (activeEvent.description ?? '') &&
         _startDateController.text ==
-            DateFormat('yyyy-MM-dd').format(activeEvent.startDate) &&
+            DateFormat('yyyy-MM-dd').format(activeEvent.startDate.toLocal()) &&
         _startTimeController.text ==
-            DateFormat('HH:mm').format(activeEvent.startDate) &&
-        _endDateController.text == DateFormat('yyyy-MM-dd').format(activeEnd) &&
-        _endTimeController.text == DateFormat('HH:mm').format(activeEnd) &&
+            DateFormat('HH:mm').format(activeEvent.startDate.toLocal()) &&
+        _endDateController.text == DateFormat('yyyy-MM-dd').format(activeEnd.toLocal()) &&
+        _endTimeController.text == DateFormat('HH:mm').format(activeEnd.toLocal()) &&
         _registrationOpenDateController.text ==
-            DateFormat('yyyy-MM-dd').format(activeRegistrationOpen) &&
+            DateFormat('yyyy-MM-dd').format(activeRegistrationOpen.toLocal()) &&
         _registrationOpenTimeController.text ==
-            DateFormat('HH:mm').format(activeRegistrationOpen) &&
+            DateFormat('HH:mm').format(activeRegistrationOpen.toLocal()) &&
         _registrationCloseDateController.text ==
-            DateFormat('yyyy-MM-dd').format(activeRegistrationClose) &&
+            DateFormat('yyyy-MM-dd').format(activeRegistrationClose.toLocal()) &&
         _registrationCloseTimeController.text ==
-            DateFormat('HH:mm').format(activeRegistrationClose) &&
+            DateFormat('HH:mm').format(activeRegistrationClose.toLocal()) &&
         _cancellationDeadlineDateController.text ==
-            DateFormat('yyyy-MM-dd').format(activeCancellationDeadline) &&
+            DateFormat('yyyy-MM-dd').format(activeCancellationDeadline.toLocal()) &&
         _cancellationDeadlineTimeController.text ==
-            DateFormat('HH:mm').format(activeCancellationDeadline) &&
+            DateFormat('HH:mm').format(activeCancellationDeadline.toLocal()) &&
         _capacityController.text == (activeEvent.guestCount?.toString() ?? '');
   }
 

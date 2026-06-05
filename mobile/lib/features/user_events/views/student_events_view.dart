@@ -81,7 +81,7 @@ class StudentEventsView extends ConsumerWidget {
                                 event: event,
                                 dateBadge: DateFormat(
                                   'MMM d',
-                                ).format(event.startDate),
+                                ).format(event.startDate.toLocal()),
                                 onTap: onEventTap == null
                                     ? null
                                     : () => onEventTap!(event),

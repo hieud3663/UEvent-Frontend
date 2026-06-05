@@ -52,6 +52,11 @@ export default function CreateNotificationPage() {
     { value: 'promotion', label: 'Ưu đãi' },
     { value: 'invite', label: 'Lời mời' },
     { value: 'ticket_confirm', label: 'Xác nhận vé' },
+    { value: 'registration_confirmed', label: 'Đăng ký được xác nhận' },
+    { value: 'registration_waitlisted', label: 'Danh sách chờ' },
+    { value: 'new_registration', label: 'Đăng ký mới' },
+    { value: 'organizer_announcement', label: 'Thông báo nhà tổ chức' },
+    { value: 'question_answered', label: 'Câu hỏi đã trả lời' },
   ] as const;
   const baseInputClass =
     'w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/10';
