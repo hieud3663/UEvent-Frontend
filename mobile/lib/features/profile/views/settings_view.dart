@@ -25,6 +25,7 @@ class SettingsView extends ConsumerStatefulWidget {
   final VoidCallback? onHelpCenter;
   final VoidCallback? onSendFeedback;
   final VoidCallback? onPrivacyPolicy;
+  final VoidCallback? onOrganizerRequest;
   final VoidCallback? onSignOut;
   final List<NavItemModel> navItems;
 
@@ -38,6 +39,7 @@ class SettingsView extends ConsumerStatefulWidget {
     this.onHelpCenter,
     this.onSendFeedback,
     this.onPrivacyPolicy,
+    this.onOrganizerRequest,
     this.onSignOut,
     this.navItems = GlassBottomNavBar.defaultItems,
   });
@@ -69,6 +71,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         .watch(privacyPolicyProvider('vi'))
         .value
         ?.version;
+    final currentUser = ref.watch(userProfileProvider).value;
+    final isOrganizer =
+        currentUser?.primaryRole.trim().toLowerCase() == 'organizer';
     final settingsReady = settings != null;
 
     return Scaffold(
@@ -120,6 +125,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   child: Column(
                     children: [
                       _ProfileHeader(onEditProfile: widget.onEditProfile),
+                      AccountSettingsSection(
+                        isOrganizer: isOrganizer,
+                        onOrganizerRequest: widget.onOrganizerRequest,
+                      ),
                       SecuritySettingsSection(
                         settings: settings,
                         settingsReady: settingsReady,
