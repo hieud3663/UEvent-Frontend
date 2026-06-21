@@ -61,8 +61,18 @@ Map<String, dynamic> _$NotificationModelToJson(NotificationModel instance) =>
     };
 
 const _$NotificationTypeEnumMap = {
-  NotificationType.eventInvite: 'eventInvite',
   NotificationType.announcement: 'announcement',
+  NotificationType.alert: 'alert',
   NotificationType.reminder: 'reminder',
-  NotificationType.ticketConfirm: 'ticketConfirm',
+  NotificationType.promotion: 'promotion',
+  NotificationType.eventInvite: 'invite',
+  NotificationType.ticketConfirm: 'ticket_confirm',
+  NotificationType.registrationConfirmed: 'registration_confirmed',
+  NotificationType.registrationWaitlisted: 'registration_waitlisted',
+  NotificationType.newRegistration: 'new_registration',
+  NotificationType.organizerAnnouncement: 'organizer_announcement',
+  NotificationType.questionAnswered: 'question_answered',
+  NotificationType.organizerRequestApproved: 'organizer_request_approved',
+  NotificationType.organizerRequestRejected: 'organizer_request_rejected',
+  NotificationType.eventUpdate: 'event_update',
 };

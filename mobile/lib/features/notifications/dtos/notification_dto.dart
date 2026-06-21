@@ -84,15 +84,35 @@ extension NotificationDtoMapping on NotificationDto {
 
   NotificationType _toNotificationType(String rawType) {
     switch (rawType) {
+      case 'invite':
       case 'event_invite':
-      case 'eventInvite':
         return NotificationType.eventInvite;
+      case 'event_update':
+        return NotificationType.eventUpdate;
       case 'reminder':
         return NotificationType.reminder;
-      case 'ticket_confirm':
-      case 'ticketConfirm':
-        return NotificationType.ticketConfirm;
       case 'announcement':
+        return NotificationType.announcement;
+      case 'alert':
+        return NotificationType.alert;
+      case 'promotion':
+        return NotificationType.promotion;
+      case 'ticket_confirm':
+        return NotificationType.ticketConfirm;
+      case 'registration_confirmed':
+        return NotificationType.registrationConfirmed;
+      case 'registration_waitlisted':
+        return NotificationType.registrationWaitlisted;
+      case 'new_registration':
+        return NotificationType.newRegistration;
+      case 'organizer_announcement':
+        return NotificationType.organizerAnnouncement;
+      case 'question_answered':
+        return NotificationType.questionAnswered;
+      case 'organizer_request_approved':
+        return NotificationType.organizerRequestApproved;
+      case 'organizer_request_rejected':
+        return NotificationType.organizerRequestRejected;
       default:
         return NotificationType.announcement;
     }

@@ -256,7 +256,14 @@ class NotificationsView extends ConsumerWidget {
           bgColor: AppColors.primaryFixed,
           iconColor: AppColors.primary,
         );
+      case NotificationType.eventUpdate:
+        return const _NotificationIconConfig(
+          icon: Icons.update,
+          bgColor: AppColors.secondaryContainer,
+          iconColor: AppColors.secondary,
+        );
       case NotificationType.announcement:
+      case NotificationType.organizerAnnouncement:
         return const _NotificationIconConfig(
           icon: Icons.campaign,
           bgColor: AppColors.secondaryContainer,
@@ -269,10 +276,53 @@ class NotificationsView extends ConsumerWidget {
           iconColor: AppColors.error,
         );
       case NotificationType.ticketConfirm:
+      case NotificationType.registrationConfirmed:
         return const _NotificationIconConfig(
           icon: Icons.confirmation_number,
           bgColor: AppColors.primaryFixed,
           iconColor: AppColors.primary,
+        );
+      case NotificationType.registrationWaitlisted:
+        return const _NotificationIconConfig(
+          icon: Icons.hourglass_top,
+          bgColor: AppColors.secondaryContainer,
+          iconColor: AppColors.secondary,
+        );
+      case NotificationType.newRegistration:
+        return const _NotificationIconConfig(
+          icon: Icons.person_add,
+          bgColor: AppColors.primaryFixed,
+          iconColor: AppColors.primary,
+        );
+      case NotificationType.questionAnswered:
+        return const _NotificationIconConfig(
+          icon: Icons.question_answer,
+          bgColor: AppColors.primaryFixed,
+          iconColor: AppColors.primary,
+        );
+      case NotificationType.organizerRequestApproved:
+        return const _NotificationIconConfig(
+          icon: Icons.verified_user,
+          bgColor: AppColors.primaryFixed,
+          iconColor: AppColors.primary,
+        );
+      case NotificationType.organizerRequestRejected:
+        return const _NotificationIconConfig(
+          icon: Icons.gpp_bad,
+          bgColor: AppColors.errorContainer,
+          iconColor: AppColors.error,
+        );
+      case NotificationType.alert:
+        return const _NotificationIconConfig(
+          icon: Icons.warning_amber_rounded,
+          bgColor: AppColors.errorContainer,
+          iconColor: AppColors.error,
+        );
+      case NotificationType.promotion:
+        return const _NotificationIconConfig(
+          icon: Icons.local_offer,
+          bgColor: AppColors.secondaryContainer,
+          iconColor: AppColors.secondary,
         );
     }
   }

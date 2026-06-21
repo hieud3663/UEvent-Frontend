@@ -113,12 +113,30 @@ class _NotificationHero extends StatelessWidget {
     switch (type) {
       case NotificationType.eventInvite:
         return 'Lời mời sự kiện';
+      case NotificationType.eventUpdate:
+        return 'Cập nhật sự kiện';
       case NotificationType.announcement:
+      case NotificationType.organizerAnnouncement:
         return 'Thông báo chung';
       case NotificationType.reminder:
         return 'Nhắc nhở';
       case NotificationType.ticketConfirm:
-        return 'Vé và đăng ký';
+      case NotificationType.registrationConfirmed:
+        return 'Xác nhận đăng ký';
+      case NotificationType.registrationWaitlisted:
+        return 'Danh sách chờ';
+      case NotificationType.newRegistration:
+        return 'Đăng ký mới';
+      case NotificationType.questionAnswered:
+        return 'Trả lời câu hỏi';
+      case NotificationType.organizerRequestApproved:
+        return 'Yêu cầu được duyệt';
+      case NotificationType.organizerRequestRejected:
+        return 'Yêu cầu bị từ chối';
+      case NotificationType.alert:
+        return 'Cảnh báo';
+      case NotificationType.promotion:
+        return 'Khuyến mãi';
     }
   }
 
@@ -144,8 +162,6 @@ class _NotificationMeta extends StatelessWidget {
           label: 'Sự kiện liên quan',
           value: notification.relatedEventId!,
         ),
-      if (notification.actionRoute?.isNotEmpty == true)
-        _MetaRow(label: 'Đường dẫn', value: notification.actionRoute!),
     ];
 
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -174,9 +190,19 @@ class _NotificationIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = switch (type) {
       NotificationType.eventInvite => Icons.event,
+      NotificationType.eventUpdate => Icons.update,
       NotificationType.announcement => Icons.campaign,
+      NotificationType.organizerAnnouncement => Icons.campaign,
       NotificationType.reminder => Icons.alarm,
       NotificationType.ticketConfirm => Icons.confirmation_number,
+      NotificationType.registrationConfirmed => Icons.confirmation_number,
+      NotificationType.registrationWaitlisted => Icons.hourglass_top,
+      NotificationType.newRegistration => Icons.person_add,
+      NotificationType.questionAnswered => Icons.question_answer,
+      NotificationType.organizerRequestApproved => Icons.verified_user,
+      NotificationType.organizerRequestRejected => Icons.gpp_bad,
+      NotificationType.alert => Icons.warning_amber_rounded,
+      NotificationType.promotion => Icons.local_offer,
     };
 
     return Container(
