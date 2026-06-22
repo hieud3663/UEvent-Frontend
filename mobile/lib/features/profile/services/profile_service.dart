@@ -7,6 +7,7 @@ import 'package:frontend/core/network/response_parsing.dart';
 import 'package:frontend/features/auth/mock/mock_user_data.dart';
 import 'package:frontend/features/auth/models/user_model.dart';
 import 'package:frontend/features/profile/models/avatar_upload_model.dart';
+import 'package:frontend/features/profile/models/organizer_request_model.dart';
 
 class ProfileService {
   final ApiClient _apiClient;
@@ -116,6 +117,113 @@ class ProfileService {
         bytes: bytes,
         contentType: contentType,
       );
+    }
+  }
+
+  Future<List<OrganizerRequestModel>> getMyOrganizerRequests() async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return const [];
+    }
+
+    try {
+      final response = await _apiClient.dio.get('/organizer-requests/');
+      return extractListData(
+        response.data,
+      ).map(OrganizerRequestModel.fromJson).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<AvatarUploadModel> getOrganizerRequestProofPresignedUrl({
+    required String fileName,
+    required String contentType,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return const AvatarUploadModel(
+        objectKey: 'users/mock/organizer-proofs/proof.jpg',
+        presignedUrl: 'https://example.com/mock-organizer-proof-upload-url',
+        method: 'PUT',
+        expiresIn: 900,
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.post(
+        '/organizer-requests/proof-upload-url/',
+        data: {'file_name': fileName, 'content_type': contentType},
+      );
+      return AvatarUploadModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> uploadOrganizerRequestProof({
+    required File proofFile,
+    required String presignedUrl,
+    required String contentType,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return;
+    }
+
+    final uploadClient = Dio();
+    final bytes = await proofFile.readAsBytes();
+
+    try {
+      await _putPresignedObject(
+        uploadClient: uploadClient,
+        presignedUrl: presignedUrl,
+        bytes: bytes,
+        contentType: contentType,
+      );
+    } on DioException catch (error) {
+      final redirectUrl = _s3TemporaryRedirectUrl(error, presignedUrl);
+      if (redirectUrl == null) rethrow;
+
+      await _putPresignedObject(
+        uploadClient: uploadClient,
+        presignedUrl: redirectUrl,
+        bytes: bytes,
+        contentType: contentType,
+      );
+    }
+  }
+
+  Future<OrganizerRequestModel> createOrganizerRequest({
+    required String reason,
+    required String proofFileKey,
+    required String proofFileName,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return OrganizerRequestModel(
+        id: 'mock-organizer-request',
+        status: 'pending',
+        reason: reason,
+        proofFileName: proofFileName,
+        proofFileUrl: '',
+        reviewNote: '',
+        createdAt: DateTime.now(),
+      );
+    }
+
+    try {
+      final response = await _apiClient.dio.post(
+        '/organizer-requests/',
+        data: {
+          'reason': reason,
+          'proof_file_key': proofFileKey,
+          'proof_file_name': proofFileName,
+        },
+      );
+      return OrganizerRequestModel.fromJson(extractObjectData(response.data));
+    } on DioException {
+      rethrow;
     }
   }
 

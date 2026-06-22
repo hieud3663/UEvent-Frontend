@@ -12,6 +12,7 @@ export { Badge } from './Badge';
 export { AdminSelect } from './AdminSelect';
 export type { AdminSelectOption } from './AdminSelect';
 export { ConfirmActionDialog } from './ConfirmActionDialog';
+export { PromptActionDialog } from './PromptActionDialog';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { Skeleton, ListSkeleton } from './Skeleton';

@@ -21,6 +21,7 @@ class GlassInputField extends StatelessWidget {
   final Widget? trailing;
   final Widget? labelTrailing;
   final bool obscureText;
+  final bool readOnly;
 
   const GlassInputField({
     super.key,
@@ -35,6 +36,7 @@ class GlassInputField extends StatelessWidget {
     this.trailing,
     this.labelTrailing,
     this.obscureText = false,
+    this.readOnly = false,
   });
 
   @override
@@ -90,6 +92,7 @@ class GlassInputField extends StatelessWidget {
                     keyboardType: keyboardType,
                     inputFormatters: inputFormatters,
                     obscureText: obscureText,
+                    readOnly: readOnly,
                     maxLines: maxLines,
                     style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(

@@ -62,4 +62,34 @@ class NotificationModel {
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 }
 
-enum NotificationType { eventInvite, announcement, reminder, ticketConfirm }
+enum NotificationType {
+  // --- Match exactly with backend TextChoices ---
+  @JsonValue('announcement')
+  announcement,
+  @JsonValue('alert')
+  alert,
+  @JsonValue('reminder')
+  reminder,
+  @JsonValue('promotion')
+  promotion,
+  @JsonValue('invite')
+  eventInvite,
+  @JsonValue('ticket_confirm')
+  ticketConfirm,
+  @JsonValue('registration_confirmed')
+  registrationConfirmed,
+  @JsonValue('registration_waitlisted')
+  registrationWaitlisted,
+  @JsonValue('new_registration')
+  newRegistration,
+  @JsonValue('organizer_announcement')
+  organizerAnnouncement,
+  @JsonValue('question_answered')
+  questionAnswered,
+  @JsonValue('organizer_request_approved')
+  organizerRequestApproved,
+  @JsonValue('organizer_request_rejected')
+  organizerRequestRejected,
+  @JsonValue('event_update')
+  eventUpdate,
+}

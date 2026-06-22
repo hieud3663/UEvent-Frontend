@@ -42,6 +42,7 @@ import 'package:frontend/features/profile/providers/profile_providers.dart';
 import 'package:frontend/features/profile/views/change_email_view.dart';
 import 'package:frontend/features/profile/views/edit_profile_view.dart';
 import 'package:frontend/features/profile/views/help_center_view.dart';
+import 'package:frontend/features/profile/views/organizer_request_view.dart';
 import 'package:frontend/features/profile/views/privacy_policy_view.dart';
 import 'package:frontend/features/profile/views/send_feedback_view.dart';
 import 'package:frontend/features/profile/views/settings_view.dart';
@@ -752,6 +753,21 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
+  void _pushOrganizerRequest() {
+    Navigator.of(context).push(
+      appRoute(
+        builder: (ctx) => OrganizerRequestView(
+          profileService: ref.read(profileServiceProvider),
+          onBack: () => Navigator.of(ctx).pop(),
+          onSubmitted: () {
+            ref.invalidate(userProfileProvider);
+            ref.invalidate(profileOverviewProvider);
+          },
+        ),
+      ),
+    );
+  }
+
   void _pushSendFeedback() {
     Navigator.of(context).push(
       appRoute(
@@ -944,6 +960,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           onHelpCenter: _pushHelpCenter,
           onSendFeedback: _pushSendFeedback,
           onPrivacyPolicy: _pushPrivacyPolicy,
+          onOrganizerRequest: _pushOrganizerRequest,
           onSignOut: _signOut,
         ),
       ],
