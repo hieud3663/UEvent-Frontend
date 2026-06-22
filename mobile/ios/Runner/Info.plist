@@ -67,6 +67,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>app.uevent</string>
+				<string>uevent</string>
 			</array>
 		</dict>
 	</array>

@@ -167,6 +167,14 @@ final organizerEventQuestionsProvider =
       return repository.getOrganizerEventQuestions(eventId: eventId);
     });
 
+final organizerAiAssistantProvider = FutureProvider.family<bool, String>((
+  ref,
+  eventId,
+) {
+  final repository = ref.read(organizerEventRepositoryProvider);
+  return repository.getAiAssistantEnabled(eventId: eventId);
+});
+
 final organizerEventFeedbacksProvider =
     FutureProvider.family<List<EventFeedbackModel>, String>((ref, eventId) {
       return ref.watch(userEventFeedbacksProvider(eventId).future);
