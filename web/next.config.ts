@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/api-docs',
+        destination: '/api--document.html',
+        permanent: false,
+      },
+      {
+        source: '/docs',
+        destination: '/api--document.html',
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
