@@ -365,6 +365,40 @@ class OrganizerEventService {
     }
   }
 
+  Future<bool> getAiAssistantEnabled({required String eventId}) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/events/$eventId/ai-assistant/',
+      );
+      return _parseAiAssistantEnabled(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<bool> updateAiAssistantEnabled({
+    required String eventId,
+    required bool isEnabled,
+  }) async {
+    try {
+      final response = await _apiClient.dio.patch(
+        '/events/$eventId/ai-assistant/',
+        data: {'is_enabled': isEnabled},
+      );
+      if (response.data == null || response.data == '') return isEnabled;
+      return _parseAiAssistantEnabled(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  bool _parseAiAssistantEnabled(dynamic responseData) {
+    final data = extractObjectData(responseData);
+    final isEnabled = data['is_enabled'];
+    if (isEnabled is bool) return isEnabled;
+    throw const FormatException('Expected is_enabled to be a boolean');
+  }
+
   Future<EventQuestionModel> answerEventQuestion({
     required String questionId,
     required String answerText,

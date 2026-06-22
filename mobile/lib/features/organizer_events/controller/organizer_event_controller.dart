@@ -25,6 +25,11 @@ final organizerEventQuestionControllerProvider =
       OrganizerEventQuestionController.new,
     );
 
+final organizerAiAssistantControllerProvider =
+    AsyncNotifierProvider<OrganizerAiAssistantController, void>(
+      OrganizerAiAssistantController.new,
+    );
+
 class OrganizerEventMutationController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
@@ -326,6 +331,28 @@ class OrganizerEventQuestionController extends AsyncNotifier<void> {
 
       ref.invalidate(organizerEventQuestionsProvider(eventId));
       ref.invalidate(userPublicEventQuestionsProvider(eventId));
+    });
+
+    state = result;
+    return result.hasValue;
+  }
+}
+
+class OrganizerAiAssistantController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> setEnabled({
+    required String eventId,
+    required bool isEnabled,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await AsyncValue.guard(() async {
+      await ref
+          .read(organizerEventRepositoryProvider)
+          .updateAiAssistantEnabled(eventId: eventId, isEnabled: isEnabled);
+      ref.invalidate(organizerAiAssistantProvider(eventId));
     });
 
     state = result;

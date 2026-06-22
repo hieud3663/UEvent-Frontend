@@ -4,8 +4,11 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_constants.dart';
 import 'package:frontend/core/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/async_state_widgets.dart';
+import 'package:frontend/core/widgets/glass_container.dart';
 import 'package:frontend/core/widgets/glass_icon_button.dart';
+import 'package:frontend/core/widgets/glass_toggle_tile.dart';
 import 'package:frontend/core/widgets/glass_top_bar.dart';
+import 'package:frontend/features/organizer_events/controller/organizer_event_controller.dart';
 import 'package:frontend/features/organizer_events/providers/organizer_event_providers.dart';
 import 'package:frontend/features/organizer_events/widgets/organizer_question_list.dart';
 
@@ -22,6 +25,10 @@ class OrganizerEngagementView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final questionsState = ref.watch(organizerEventQuestionsProvider(eventId));
+    final aiAssistantState = ref.watch(organizerAiAssistantProvider(eventId));
+    final aiAssistantMutation = ref.watch(
+      organizerAiAssistantControllerProvider,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -45,6 +52,51 @@ class OrganizerEngagementView extends ConsumerWidget {
                       'Theo dõi và trả lời câu hỏi từ người tham gia.',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    aiAssistantState.when(
+                      loading: () => const AppLoadingState(
+                        height: 88,
+                        padding: EdgeInsets.zero,
+                      ),
+                      error: (_, _) => AppErrorState(
+                        title: 'Không tải được trạng thái AI',
+                        description: 'Vui lòng thử lại.',
+                        padding: EdgeInsets.zero,
+                        onRetry: () => ref.invalidate(
+                          organizerAiAssistantProvider(eventId),
+                        ),
+                      ),
+                      data: (isEnabled) => GlassContainer(
+                        padding: EdgeInsets.zero,
+                        borderRadius: 20,
+                        child: GlassToggleTile(
+                          title: 'Trả lời câu hỏi bằng AI',
+                          value: isEnabled,
+                          showDivider: false,
+                          onChanged: aiAssistantMutation.isLoading
+                              ? (_) {}
+                              : (value) async {
+                                  final succeeded = await ref
+                                      .read(
+                                        organizerAiAssistantControllerProvider
+                                            .notifier,
+                                      )
+                                      .setEnabled(
+                                        eventId: eventId,
+                                        isEnabled: value,
+                                      );
+                                  if (!context.mounted || succeeded) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Không thể cập nhật trạng thái AI. Vui lòng thử lại.',
+                                      ),
+                                    ),
+                                  );
+                                },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
