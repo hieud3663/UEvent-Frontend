@@ -96,6 +96,13 @@ abstract interface class OrganizerEventRepository {
     required String eventId,
   });
 
+  Future<bool> getAiAssistantEnabled({required String eventId});
+
+  Future<bool> updateAiAssistantEnabled({
+    required String eventId,
+    required bool isEnabled,
+  });
+
   Future<EventQuestionModel> answerEventQuestion({
     required String questionId,
     required String answerText,
@@ -109,6 +116,7 @@ abstract interface class OrganizerEventRepository {
 
 class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
   final OrganizerEventService _service;
+  bool _mockAiAssistantEnabled = false;
 
   OrganizerEventRepositoryImpl(this._service);
 
@@ -494,6 +502,33 @@ class OrganizerEventRepositoryImpl implements OrganizerEventRepository {
     }
 
     return _service.getOrganizerEventQuestions(eventId: eventId);
+  }
+
+  @override
+  Future<bool> getAiAssistantEnabled({required String eventId}) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return _mockAiAssistantEnabled;
+    }
+
+    return _service.getAiAssistantEnabled(eventId: eventId);
+  }
+
+  @override
+  Future<bool> updateAiAssistantEnabled({
+    required String eventId,
+    required bool isEnabled,
+  }) async {
+    if (EnvConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      _mockAiAssistantEnabled = isEnabled;
+      return _mockAiAssistantEnabled;
+    }
+
+    return _service.updateAiAssistantEnabled(
+      eventId: eventId,
+      isEnabled: isEnabled,
+    );
   }
 
   @override
