@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Users, Ticket, CalendarCheck, Headphones, Plus, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { ErrorState } from '@/core/components';
+import { ErrorState, AppLoadingScreen } from '@/core/components';
 import { StatsCard } from '@/features/dashboard/components';
 import { useDashboardOverview } from '@/features/dashboard/hooks/useDashboardOverview';
 import { cn } from '@/core/lib/utils';
@@ -26,7 +26,7 @@ export default function DashboardPage() {
   };
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-slate-500">Đang tải tổng quan hệ thống...</div>;
+    return <AppLoadingScreen title="Đang tải tổng quan hệ thống" description="Vui lòng chờ trong giây lát..." />;
   }
 
   if (error) {

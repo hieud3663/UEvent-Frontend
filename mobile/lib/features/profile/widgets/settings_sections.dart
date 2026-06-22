@@ -6,6 +6,34 @@ import 'package:frontend/features/app_setting/models/app_setting_state.dart';
 import 'package:frontend/features/profile/widgets/settings_group.dart';
 import 'package:frontend/features/profile/widgets/settings_tiles.dart';
 
+class AccountSettingsSection extends StatelessWidget {
+  const AccountSettingsSection({
+    super.key,
+    required this.isOrganizer,
+    required this.onOrganizerRequest,
+  });
+
+  final bool isOrganizer;
+  final VoidCallback? onOrganizerRequest;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isOrganizer) return const SizedBox.shrink();
+
+    return SettingsGroup(
+      title: 'Tài khoản',
+      children: [
+        SettingsActionTile(
+          icon: Icons.verified_user,
+          title: 'Yêu cầu trở thành người tổ chức',
+          subtitle: 'Gửi lý do kèm ảnh tài liệu chứng minh để admin duyệt',
+          onTap: onOrganizerRequest ?? () {},
+        ),
+      ],
+    );
+  }
+}
+
 class SecuritySettingsSection extends StatelessWidget {
   const SecuritySettingsSection({
     super.key,
