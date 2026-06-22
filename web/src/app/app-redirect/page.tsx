@@ -3,25 +3,36 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+type SearchParamsReader = {
+  get(name: string): string | null;
+};
+
+function buildAppUri(searchParams: SearchParamsReader): string {
+  const target = searchParams.get('target');
+  const eventSlug = searchParams.get('event_slug')?.trim();
+
+  if (target === 'event_user' && eventSlug) {
+    return `uevent://events/share/${encodeURIComponent(eventSlug)}`;
+  }
+
+  const eventId = searchParams.get('event_id');
+  const ticketId = searchParams.get('ticket_id');
+  const params = new URLSearchParams();
+  if (target) params.append('target', target);
+  if (eventId) params.append('event_id', eventId);
+  if (ticketId) params.append('ticket_id', ticketId);
+
+  const query = params.toString();
+  return `uevent://notifications/open${query ? `?${query}` : ''}`;
+}
+
 function RedirectLogic() {
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    const target = searchParams.get('target');
-    const eventId = searchParams.get('event_id');
-    const ticketId = searchParams.get('ticket_id');
-
-    // Build the uevent:// URL
-    const params = new URLSearchParams();
-    if (target) params.append('target', target);
-    if (eventId) params.append('event_id', eventId);
-    if (ticketId) params.append('ticket_id', ticketId);
-
-    const appUri = `uevent://notifications/open?${params.toString()}`;
-
     // Redirect to app
-    window.location.href = appUri;
+    window.location.href = buildAppUri(searchParams);
 
     // Optional countdown logic for UI
     const timer = setInterval(() => {
@@ -33,14 +44,7 @@ function RedirectLogic() {
 
   const handleManualRetry = (e: React.MouseEvent) => {
     e.preventDefault();
-    const target = searchParams.get('target');
-    const eventId = searchParams.get('event_id');
-    const ticketId = searchParams.get('ticket_id');
-    const params = new URLSearchParams();
-    if (target) params.append('target', target);
-    if (eventId) params.append('event_id', eventId);
-    if (ticketId) params.append('ticket_id', ticketId);
-    window.location.href = `uevent://notifications/open?${params.toString()}`;
+    window.location.href = buildAppUri(searchParams);
   };
 
   return (
